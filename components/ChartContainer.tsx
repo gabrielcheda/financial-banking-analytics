@@ -1,4 +1,6 @@
-import React from 'react'
+'use client'
+
+import { memo } from 'react'
 import { Card, CardHeader, CardTitle, CardContent } from './ui/Card'
 
 interface ChartContainerProps {
@@ -8,7 +10,12 @@ interface ChartContainerProps {
   action?: React.ReactNode
 }
 
-export function ChartContainer({ title, description, children, action }: ChartContainerProps) {
+export const ChartContainer = memo(function ChartContainer({
+  title,
+  description,
+  children,
+  action
+}: ChartContainerProps) {
   return (
     <Card>
       <CardHeader className="flex flex-row items-center justify-between">
@@ -27,4 +34,4 @@ export function ChartContainer({ title, description, children, action }: ChartCo
       </CardContent>
     </Card>
   )
-}
+})
