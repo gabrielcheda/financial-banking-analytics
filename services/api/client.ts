@@ -55,7 +55,7 @@ class ApiClient {
         config.withCredentials = true
 
         if (!config.headers) {
-          config.headers = {}
+          (config as any).headers = {}
         }
 
         if (typeof window === 'undefined') {

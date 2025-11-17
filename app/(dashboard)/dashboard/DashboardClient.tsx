@@ -95,7 +95,7 @@ export default function DashboardClient() {
   // Transform cash flow data for chart
   const dailySpendingData = (cashFlowData || []).map((item) => ({
     date: format(new Date(item.date), 'MMM dd'),
-    amount: Math.abs(Number(item.expenses ?? item.amount ?? 0)),
+    amount: Math.abs(Number(item.expenses ?? (item as any).amount ?? 0)),
   }))
 
   const recentTransactions = recentTransactionsData || []
@@ -365,7 +365,7 @@ export default function DashboardClient() {
                 </div>
               ) : budgets.length > 0 ? (
                 <div className="space-y-4">
-                {(budgets || []).slice(0, 4).map((budget: any) => {
+                  {(budgets || []).slice(0, 4).map((budget: any) => {
                     const spent = Number(budget.spent ?? 0)
                     const limit = Number(budget.limit ?? budget.limitAmount ?? 0)
                     const percentage = limit > 0 ? (spent / limit) * 100 : 0
