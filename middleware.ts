@@ -4,9 +4,6 @@ import type { NextRequest } from 'next/server'
 // Public routes that don't require authentication
 const PUBLIC_ROUTES = ['/login', '/register', '/forgot-password', '/reset-password']
 
-// API routes that should bypass middleware
-const API_ROUTES = ['/api']
-
 /**
  * ✅ Gera token CSRF usando Web Crypto API (compatível com Edge Runtime)
  */
@@ -77,7 +74,7 @@ export function middleware(request: NextRequest) {
   // If trying to access protected route without token, redirect to login
   if (!isPublicRoute && !token) {
     const loginUrl = new URL('/login', request.url)
-    loginUrl.searchParams.set('from', pathname)
+    loginUrl.searchParams.set('redirect', pathname)
     return NextResponse.redirect(loginUrl)
   }
 

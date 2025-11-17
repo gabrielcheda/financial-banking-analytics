@@ -8,6 +8,7 @@ import { useCategories } from '@/hooks/useCategories'
 import { useActiveAccounts } from '@/hooks/useAccounts'
 import { format } from 'date-fns'
 import { useState } from 'react'
+import { parseLocaleInteger, parseLocaleNumber } from '@/lib/numberUtils'
 
 interface BillFormProps {
   onSubmit: (data: CreateBillInput | UpdateBillInput) => Promise<void> | void
@@ -98,12 +99,11 @@ export function BillForm({
             $
           </span>
           <input
-            type="number"
+            type="text"
             id="amount"
-            step="0.01"
-            min="0"
-            {...register('amount', { valueAsNumber: true })}
-            placeholder="0.00"
+            inputMode="decimal"
+            {...register('amount', { setValueAs: parseLocaleNumber })}
+            placeholder="0,00"
             className="w-full pl-8 pr-4 py-2 rounded-lg border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-900 dark:text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500"
           />
         </div>
@@ -293,11 +293,10 @@ export function BillForm({
                 Remind me (days before due date)
               </label>
               <input
-                type="number"
+                type="text"
                 id="reminderDays"
-                min="0"
-                max="30"
-                {...register('reminders.0.daysBefore', { valueAsNumber: true })}
+                inputMode="numeric"
+                {...register('reminders.0.daysBefore', { setValueAs: parseLocaleInteger })}
                 defaultValue={3}
                 className="w-full px-4 py-2 rounded-lg border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-900 dark:text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500"
               />

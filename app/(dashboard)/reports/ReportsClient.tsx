@@ -217,15 +217,15 @@ export default function ReportsClient() {
           </tr>
           <tr class="income">
             <td>Total Income</td>
-            <td>$${preview.totalIncome.toFixed(2)}</td>
+            <td>$${Number(preview.totalIncome).toFixed(2)}</td>
           </tr>
           <tr class="expense">
             <td>Total Expenses</td>
-            <td>$${preview.totalExpenses.toFixed(2)}</td>
+            <td>$${Number(preview.totalExpenses).toFixed(2)}</td>
           </tr>
           <tr class="summary">
             <td>Net Income</td>
-            <td>$${preview.netIncome.toFixed(2)}</td>
+            <td>$${Number(preview.netIncome).toFixed(2)}</td>
           </tr>
         </table>
 
@@ -395,7 +395,7 @@ export default function ReportsClient() {
           </div>
           <div class="summary-card">
             <div class="label">Total Income</div>
-            <div class="value income">$${preview.totalIncome.toFixed(2)}</div>
+            <div class="value income">$${Number(preview.totalIncome).toFixed(2)}</div>
           </div>
           <div class="summary-card">
             <div class="label">Total Expenses</div>
@@ -729,7 +729,7 @@ export default function ReportsClient() {
                         Total Income
                       </p>
                       <p className="text-2xl font-bold text-green-600">
-                        ${preview.totalIncome.toFixed(2)}
+                        ${Number(preview.totalIncome).toFixed(2)}
                       </p>
                     </div>
                     <div className="text-center">

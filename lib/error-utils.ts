@@ -2,6 +2,7 @@
  * Error Utilities - Funções para tratamento de erros
  */
 
+import { createElement } from 'react'
 import { NormalizedError } from '@/types/dto'
 import { toast } from 'sonner'
 
@@ -84,17 +85,19 @@ export function showErrorToast(error: unknown, title?: string): void {
     })
   } else {
     // Múltiplos erros de validação
-    toast.error(title || 'Validation Error', {
-      description: (
-        `<ul className="list-disc list-inside space-y-1">
-          {messages.map((msg, i) => (
-            <li key={i} className="text-sm">
-              {msg}
-            </li>
-          ))}
-        </ul>`
-      ),
-    })
+    const description = createElement(
+      'ul',
+      { className: 'list-disc list-inside space-y-1' },
+      messages.map((msg, index) =>
+        createElement(
+          'li',
+          { key: `error-${index}`, className: 'text-sm' },
+          msg
+        )
+      )
+    )
+
+    toast.error(title || 'Validation Error', { description })
   }
 }
 

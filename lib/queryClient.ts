@@ -26,8 +26,8 @@ const queryConfig: DefaultOptions = {
     // Refetch ao reconectar internet
     refetchOnReconnect: true,
 
-    // Refetch ao montar componente se dados estiverem stale
-    refetchOnMount: true,
+    // NÃ£o refetch ao montar se dados jÃ¡ estiverem no cache; rely on invalidations
+    refetchOnMount: false,
   },
   mutations: {
     // Retry em mutations (desabilitado por padrão)

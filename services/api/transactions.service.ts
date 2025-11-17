@@ -4,7 +4,7 @@
  * Serviço para gerenciar transações financeiras
  */
 
-import { apiClient } from './client'
+import { apiClient, unwrapResponse } from './client'
 import type {
   TransactionDTO,
   TransactionDetailsDTO,
@@ -26,7 +26,7 @@ class TransactionService {
    */
   async getTransactions(
     filters: TransactionFiltersDTO = {}
-  ): Promise<{ data: TransactionDTO[]; meta: { total: number; page: number; limit: number; totalPages: number } }> {
+  ): Promise<PaginatedResponse<TransactionDTO>> {
     const params = new URLSearchParams()
 
     // Adicionar filtros como query params
@@ -40,14 +40,17 @@ class TransactionService {
       }
     })
 
-    return apiClient.get(`${this.baseUrl}?${params.toString()}`)
+    return apiClient.get<PaginatedResponse<TransactionDTO>>(
+      `${this.baseUrl}?${params.toString()}`
+    )
   }
 
   /**
    * Busca uma transação específica por ID
    */
   async getTransactionById(id: string): Promise<TransactionDetailsDTO> {
-    return apiClient.get<TransactionDetailsDTO>(`${this.baseUrl}/${id}`)
+    const response = await apiClient.get<ApiResponse<TransactionDetailsDTO>>(`${this.baseUrl}/${id}`)
+    return unwrapResponse(response)
   }
 
   /**
@@ -56,7 +59,8 @@ class TransactionService {
   async createTransaction(
     data: CreateTransactionDTO
   ): Promise<TransactionDTO> {
-    return apiClient.post<TransactionDTO>(this.baseUrl, data)
+    const response = await apiClient.post<ApiResponse<TransactionDTO>>(this.baseUrl, data)
+    return unwrapResponse(response)
   }
 
   /**
@@ -66,14 +70,15 @@ class TransactionService {
     id: string,
     data: UpdateTransactionDTO
   ): Promise<TransactionDTO> {
-    return apiClient.patch<TransactionDTO>(`${this.baseUrl}/${id}`, data)
+    const response = await apiClient.patch<ApiResponse<TransactionDTO>>(`${this.baseUrl}/${id}`, data)
+    return unwrapResponse(response)
   }
 
   /**
    * Deleta uma transação
    */
   async deleteTransaction(id: string): Promise<void> {
-    return apiClient.delete<void>(`${this.baseUrl}/${id}`)
+    await apiClient.delete<void>(`${this.baseUrl}/${id}`)
   }
 
   /**
@@ -81,7 +86,10 @@ class TransactionService {
    */
   async searchTransactions(query: string): Promise<TransactionDTO[]> {
     const params = new URLSearchParams({ q: query })
-    return apiClient.get<TransactionDTO[]>(`${this.baseUrl}/search?${params.toString()}`)
+    const response = await apiClient.get<ApiResponse<TransactionDTO[]>>(
+      `${this.baseUrl}/search?${params.toString()}`
+    )
+    return unwrapResponse(response)
   }
 
   /**
@@ -112,7 +120,25 @@ class TransactionService {
       month: String(month),
     })
 
-    return apiClient.get(`${this.baseUrl}/stats/monthly?${params.toString()}`)
+    const response = await apiClient.get<ApiResponse<{
+      totalIncome: number
+      totalExpense: number
+      netIncome: number
+      transactionCount: number
+      byCategory: {
+        categoryId: string
+        categoryName: string
+        total: number
+        count: number
+      }[]
+      byDay: {
+        day: number
+        income: number
+        expense: number
+      }[]
+    }>>(`${this.baseUrl}/stats/monthly?${params.toString()}`)
+
+    return unwrapResponse(response)
   }
 
   /**
@@ -123,11 +149,12 @@ class TransactionService {
     failed: number
     errors: string[]
   }> {
-    return apiClient.upload<{
+    const response = await apiClient.upload<ApiResponse<{
       imported: number
       failed: number
       errors: string[]
-    }>(`${this.baseUrl}/import/csv`, file)
+    }>>(`${this.baseUrl}/import/csv`, file)
+    return unwrapResponse(response)
   }
 
   /**

@@ -39,7 +39,7 @@ export function useBudgets(
 ) {
   return useQuery({
     queryKey: budgetKeys.list(params),
-    queryFn: () => budgetService.getBudgets(),
+    queryFn: () => budgetService.getBudgets(params),
     staleTime: 1000 * 60 * 5, // 5 minutes
     ...options,
   })
@@ -70,6 +70,8 @@ export function useCreateBudget() {
     mutationFn: (data: CreateBudgetDTO) => budgetService.createBudget(data),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: budgetKeys.lists() })
+      queryClient.invalidateQueries({ queryKey: [...budgetKeys.all, 'current-month'] })
+      queryClient.invalidateQueries({ queryKey: budgetKeys.alerts() })
       // Invalidar analytics para atualizar gráficos e estatísticas
       queryClient.invalidateQueries({ queryKey: ['analytics'] })
       toast.success('Budget created successfully!')
@@ -92,6 +94,8 @@ export function useUpdateBudget() {
     onSuccess: (_, variables) => {
       queryClient.invalidateQueries({ queryKey: budgetKeys.lists() })
       queryClient.invalidateQueries({ queryKey: budgetKeys.detail(variables.id) })
+      queryClient.invalidateQueries({ queryKey: [...budgetKeys.all, 'current-month'] })
+      queryClient.invalidateQueries({ queryKey: budgetKeys.alerts() })
       // Invalidar analytics para atualizar gráficos e estatísticas
       queryClient.invalidateQueries({ queryKey: ['analytics'] })
       toast.success('Budget updated successfully!')
@@ -113,6 +117,8 @@ export function useDeleteBudget() {
     onSuccess: (_, id) => {
       queryClient.invalidateQueries({ queryKey: budgetKeys.lists() })
       queryClient.removeQueries({ queryKey: budgetKeys.detail(id) })
+      queryClient.invalidateQueries({ queryKey: [...budgetKeys.all, 'current-month'] })
+      queryClient.invalidateQueries({ queryKey: budgetKeys.alerts() })
       // Invalidar analytics para atualizar gráficos e estatísticas
       queryClient.invalidateQueries({ queryKey: ['analytics'] })
       toast.success('Budget deleted successfully!')

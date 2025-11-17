@@ -85,18 +85,27 @@ export default function TransactionsClient() {
 
   // Get data from API response
   const transactions = transactionsData?.data || []
-  const pagination = transactionsData?.meta
+  const pagination = transactionsData?.pagination
   const categories = categoriesData || []
+
+  const normalizeAmount = (amount: number | string | null | undefined) => {
+    if (typeof amount === 'number') return amount
+    if (typeof amount === 'string') {
+      const parsed = Number(amount)
+      return Number.isNaN(parsed) ? 0 : parsed
+    }
+    return 0
+  }
 
   // Calculate stats from current page data
   const totalIncome = transactions
     .filter((t) => t.type === 'income')
-    .reduce((sum, t) => sum + t.amount, 0)
+    .reduce((sum, t) => sum + normalizeAmount(t.amount), 0)
 
   const totalExpenses = Math.abs(
     transactions
       .filter((t) => t.type === 'expense')
-      .reduce((sum, t) => sum + t.amount, 0)
+      .reduce((sum, t) => sum + normalizeAmount(t.amount), 0)
   )
 
   const totalTransactions = pagination?.total || 0

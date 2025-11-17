@@ -4,7 +4,7 @@
  * React Query hooks for analytics and insights
  */
 
-import { useQuery, UseQueryOptions } from '@tanstack/react-query'
+import { useQuery, UseQueryOptions, useQueryClient } from '@tanstack/react-query'
 import { analyticsService } from '@/services/api/analytics.service'
 import type {
   AnalyticsOverviewDTO,
@@ -92,9 +92,22 @@ export function useCashFlow(
   },
   options?: Omit<UseQueryOptions<CashFlowDTO[]>, 'queryKey' | 'queryFn'>
 ) {
+  const queryClient = useQueryClient()
+
   return useQuery({
     queryKey: analyticsKeys.cashFlow(params),
-    queryFn: () => analyticsService.getCashFlow(params),
+    queryFn: async () => {
+      const overviewKey = analyticsKeys.overview(params)
+      const cachedOverview = queryClient.getQueryData<AnalyticsOverviewDTO>(overviewKey)
+
+      if (cachedOverview) {
+        return cachedOverview.cashFlow || []
+      }
+
+      const overview = await analyticsService.getOverview(params)
+      queryClient.setQueryData(overviewKey, overview)
+      return overview.cashFlow || []
+    },
     enabled: !!params.startDate && !!params.endDate,
     staleTime: 1000 * 60 * 5, // 5 minutes
     ...options,

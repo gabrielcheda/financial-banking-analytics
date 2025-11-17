@@ -11,12 +11,14 @@
 import axios, { AxiosInstance, AxiosError, InternalAxiosRequestConfig } from 'axios'
 import { ApiError, NormalizedError } from '@/types/dto'
 
+const METHODS_WITH_BODY = new Set(['POST', 'PUT', 'PATCH', 'DELETE'])
+
 class ApiClient {
   private client: AxiosInstance
 
   constructor() {
     this.client = axios.create({
-      baseURL: process.env.NEXT_PUBLIC_BACKEND_API_URL || 'http://localhost:3001/api/v1',
+      baseURL: this.resolveBaseUrl(),
       timeout: 10000,
       headers: {
         'Content-Type': 'application/json',
@@ -26,20 +28,69 @@ class ApiClient {
     this.setupInterceptors()
   }
 
+  private resolveBaseUrl() {
+    const proxyBase = process.env.NEXT_PUBLIC_API_PROXY_BASE_URL || '/api/internal'
+
+    if (typeof window !== 'undefined') {
+      return proxyBase
+    }
+
+    if (proxyBase.startsWith('http://') || proxyBase.startsWith('https://')) {
+      return proxyBase
+    }
+
+    const origin =
+      process.env.NEXT_PUBLIC_SITE_URL ||
+      process.env.NEXT_SERVER_URL ||
+      (process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : `http://localhost:${process.env.PORT || 3000}`)
+
+    return `${origin}${proxyBase.startsWith('/') ? proxyBase : `/${proxyBase}`}`
+  }
+
   private setupInterceptors() {
     // Request Interceptor - Adiciona CSRF token
     this.client.interceptors.request.use(
-      (config: InternalAxiosRequestConfig) => {
-        // ✅ Tokens são enviados automaticamente via httpOnly cookies
-        // Não precisamos adicionar Authorization header manualmente
-
+      async (config: InternalAxiosRequestConfig) => {
         // ✅ Garantir que cookies sejam enviados com a requisição
         config.withCredentials = true
 
+        if (!config.headers) {
+          config.headers = {}
+        }
+
+        if (typeof window === 'undefined') {
+          // ✅ Ambiente servidor: encaminhar cookies originais para o backend
+          try {
+            const { cookies } = await import('next/headers')
+            const cookieStore = cookies()
+            const cookieHeader = cookieStore
+              .getAll()
+              .map(({ name, value }) => `${name}=${value}`)
+              .join('; ')
+
+            if (cookieHeader) {
+              config.headers.Cookie = cookieHeader
+            }
+          } catch (error) {
+            console.warn('[apiClient] Failed to attach server cookies', error)
+          }
+        } else {
+          // ✅ Adicionar Authorization header se tivermos o token legível
+          let accessToken = this.getCookie('accessTokenPublic') || this.getCookie('accessToken')
+
+          if (!accessToken) {
+            accessToken = this.getLocalStorageItem('accessToken')
+          }
+
+          if (accessToken) {
+            config.headers.Authorization = `Bearer ${accessToken}`
+          }
+        }
+
         // ✅ Adicionar CSRF token para requisições state-changing
-        if (['POST', 'PUT', 'PATCH', 'DELETE'].includes(config.method?.toUpperCase() || '')) {
+        if (config.method && METHODS_WITH_BODY.has(config.method.toUpperCase())) {
           const csrfToken = this.getCookie('csrf-token')
-          if (csrfToken && config.headers) {
+          if (csrfToken) {
             config.headers['X-CSRF-Token'] = csrfToken
           }
         }
@@ -82,6 +133,9 @@ class ApiClient {
       async (error: AxiosError<ApiError>) => {
         // Log error em desenvolvimento
         if (process.env.NODE_ENV === 'development') {
+
+          console.log('❌ API normalized error:', this.normalizeError(error));
+
           console.error('❌ API Error:', {
             url: error.config?.url,
             status: error.response?.status,
@@ -155,6 +209,13 @@ class ApiClient {
     return null
   }
 
+  private getLocalStorageItem(name: string): string | null {
+    if (typeof window === 'undefined') return null
+
+    return window.localStorage.getItem(name)
+  }
+
+
   /**
    * Handle 401 Unauthorized - Redirect to login
    * Cookies httpOnly são gerenciados pelo servidor
@@ -170,7 +231,7 @@ class ApiClient {
 
     // Redirect para login com mensagem
     const currentPath = window.location.pathname
-    const redirectUrl = currentPath !== '/login' ? `?from=${encodeURIComponent(currentPath)}` : ''
+    const redirectUrl = currentPath !== '/login' ? `?redirect=${encodeURIComponent(currentPath)}` : ''
 
     window.location.href = `/login${redirectUrl}`
   }
@@ -231,3 +292,10 @@ class ApiClient {
 
 // Export singleton instance
 export const apiClient = new ApiClient()
+
+export function unwrapResponse<T>(response: T | { data: T }): T {
+  if (response && typeof response === 'object' && 'data' in response) {
+    return (response as { data: T }).data
+  }
+  return response as T
+}

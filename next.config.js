@@ -1,3 +1,34 @@
+const backendApiUrl = process.env.NEXT_PUBLIC_BACKEND_API_URL || process.env.API_URL || 'http://localhost:3001/api/v1'
+const additionalConnectSrc = []
+
+try {
+  additionalConnectSrc.push(new URL(backendApiUrl).origin)
+} catch {
+  additionalConnectSrc.push('http://localhost:3001')
+}
+
+if (process.env.NEXT_PUBLIC_API_URL) {
+  try {
+    additionalConnectSrc.push(new URL(process.env.NEXT_PUBLIC_API_URL).origin)
+  } catch {
+    // noop
+  }
+}
+
+if (process.env.NEXT_PUBLIC_WS_URL) {
+  additionalConnectSrc.push(process.env.NEXT_PUBLIC_WS_URL)
+}
+
+const connectSrcValues = [
+  "'self'",
+  ...additionalConnectSrc,
+  'https://vitals.vercel-insights.com',
+  'ws://localhost:3000',
+  'ws://localhost:3001',
+]
+  .filter(Boolean)
+  .filter((value, index, array) => array.indexOf(value) === index)
+
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   reactStrictMode: true,
@@ -124,7 +155,7 @@ const nextConfig = {
               "style-src 'self' 'unsafe-inline'",
               "img-src 'self' data: https:",
               "font-src 'self' data:",
-              "connect-src 'self' http://localhost:3001",
+              `connect-src ${connectSrcValues.join(' ')}`,
               "frame-ancestors 'none'",
               "base-uri 'self'",
               "form-action 'self'",

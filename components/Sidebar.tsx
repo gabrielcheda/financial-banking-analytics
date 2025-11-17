@@ -19,8 +19,10 @@ import {
   Tag,
   Store
 } from 'lucide-react'
-import { useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { usePrefetch } from '@/hooks/usePrefetch'
+import { useProfile } from '@/hooks/useUser'
+import { useLogout } from '@/hooks/useAuth'
 
 const navigation = [
   { name: 'Dashboard', href: '/dashboard', icon: LayoutDashboard },
@@ -41,6 +43,10 @@ const navigation = [
 export function Sidebar() {
   const pathname = usePathname()
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false)
+  const [isProfileMenuOpen, setIsProfileMenuOpen] = useState(false)
+  const profileMenuRef = useRef<HTMLDivElement>(null)
+  const { data: profile } = useProfile()
+  const logout = useLogout()
   const {
     prefetchDashboardData,
     prefetchAccountsPage,
@@ -55,7 +61,10 @@ export function Sidebar() {
     prefetchPlanningPage,
   } = usePrefetch()
 
-  const handlePrefetch = (href: string) => {
+  const prefetchedRoutesRef = useRef<Set<string>>(new Set())
+  const prefetchTimeoutsRef = useRef<Record<string, number>>({})
+
+  const executePrefetch = (href: string) => {
     switch (href) {
       case '/dashboard':
         prefetchDashboardData()
@@ -92,6 +101,50 @@ export function Sidebar() {
         break
     }
   }
+
+  const schedulePrefetch = (href: string) => {
+    if (prefetchedRoutesRef.current.has(href)) return
+
+    if (typeof window === 'undefined') {
+      executePrefetch(href)
+      prefetchedRoutesRef.current.add(href)
+      return
+    }
+
+    if (prefetchTimeoutsRef.current[href]) return
+
+    prefetchTimeoutsRef.current[href] = window.setTimeout(() => {
+      executePrefetch(href)
+      prefetchedRoutesRef.current.add(href)
+      delete prefetchTimeoutsRef.current[href]
+    }, 250)
+  }
+
+  const cancelScheduledPrefetch = (href: string) => {
+    const timeoutId = prefetchTimeoutsRef.current[href]
+    if (timeoutId) {
+      clearTimeout(timeoutId)
+      delete prefetchTimeoutsRef.current[href]
+    }
+  }
+
+  useEffect(() => {
+    function handleClickOutside(event: MouseEvent) {
+      if (profileMenuRef.current && !profileMenuRef.current.contains(event.target as Node)) {
+        setIsProfileMenuOpen(false)
+      }
+    }
+
+    document.addEventListener('mousedown', handleClickOutside)
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside)
+      Object.values(prefetchTimeoutsRef.current).forEach((timeoutId) => clearTimeout(timeoutId))
+    }
+  }, [])
+
+  const initials = profile
+    ? `${profile.firstName?.[0] ?? ''}${profile.lastName?.[0] ?? ''}`.toUpperCase() || profile.email?.[0]?.toUpperCase() || 'U'
+    : '...'
 
   return (
     <>
@@ -152,7 +205,9 @@ export function Sidebar() {
                   key={item.name}
                   href={item.href}
                   onClick={() => setIsMobileMenuOpen(false)}
-                  onMouseEnter={() => handlePrefetch(item.href)}
+                  onMouseEnter={() => schedulePrefetch(item.href)}
+                  onFocus={() => schedulePrefetch(item.href)}
+                  onMouseLeave={() => cancelScheduledPrefetch(item.href)}
                   className={`
                     flex items-center gap-3 px-4 py-3 rounded-lg transition-all duration-200
                     ${
@@ -172,20 +227,42 @@ export function Sidebar() {
           </nav>
 
           {/* User profile */}
-          <div className="p-4 border-t border-gray-200 dark:border-gray-800">
-            <div className="flex items-center gap-3 px-4 py-3 rounded-lg bg-gray-50 dark:bg-gray-800">
-              <div className="w-10 h-10 rounded-full bg-gradient-to-r from-blue-600 to-purple-600 flex items-center justify-center text-white font-semibold">
-                JD
+          <div className="p-4 border-t border-gray-200 dark:border-gray-800" ref={profileMenuRef}>
+            <button
+              type="button"
+              onClick={() => setIsProfileMenuOpen((prev) => !prev)}
+              className="w-full flex items-center gap-3 px-4 py-3 rounded-lg bg-gray-50 dark:bg-gray-800 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
+              aria-haspopup="true"
+              aria-expanded={isProfileMenuOpen}
+            >
+              <div className="w-10 h-10 rounded-full bg-gradient-to-r from-blue-600 to-purple-600 flex items-center justify-center text-white font-semibold uppercase">
+                {initials}
               </div>
-              <div className="flex-1">
-                <p className="text-sm font-medium text-gray-900 dark:text-white">
-                  John Doe
+              <div className="flex-1 text-left">
+                <p className="text-sm font-medium text-gray-900 dark:text-white line-clamp-1">
+                  {profile ? `${profile.firstName ?? ''} ${profile.lastName ?? ''}`.trim() || profile.email : 'Loading...'}
                 </p>
-                <p className="text-xs text-gray-500 dark:text-gray-400">
-                  john@example.com
+                <p className="text-xs text-gray-500 dark:text-gray-400 line-clamp-1">
+                  {profile?.email || 'Fetching profile'}
                 </p>
               </div>
-            </div>
+            </button>
+            {isProfileMenuOpen && (
+              <div className="mt-2 bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-lg shadow-lg overflow-hidden">
+                <button
+                  type="button"
+                  onClick={() => {
+                    setIsProfileMenuOpen(false)
+                    logout.mutate()
+                  }}
+                  className="w-full text-left px-4 py-2 text-sm text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-800 flex items-center justify-between"
+                  disabled={logout.isPending}
+                >
+                  Logout
+                  {logout.isPending && <span className="text-xs text-gray-400">...</span>}
+                </button>
+              </div>
+            )}
           </div>
         </div>
       </aside>

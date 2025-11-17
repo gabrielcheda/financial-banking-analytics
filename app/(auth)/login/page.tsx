@@ -79,6 +79,7 @@ function SuccessMessages() {
 
 function LoginForm() {
   const [showPassword, setShowPassword] = useState(false)
+  const [rememberMeChecked, setRememberMeChecked] = useState(false)
   const [state, formAction] = useFormState(loginAction, { error: null })
   const searchParams = useSearchParams()
   const redirect = searchParams.get('redirect')
@@ -87,9 +88,17 @@ function LoginForm() {
   // Handle successful login redirect
   useEffect(() => {
     if (state?.success && state?.redirectTo) {
+      window.localStorage.setItem("accessToken", state?.tokens?.accessToken);
+      window.localStorage.setItem("refreshToken", state?.tokens?.refreshToken);
       router.push(state.redirectTo)
     }
+
   }, [state, router])
+
+  useEffect(() => {
+    if (typeof document === 'undefined') return
+    setRememberMeChecked(document.cookie.includes('rememberMe=true'))
+  }, [])
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-500 via-purple-500 to-pink-500 flex items-center justify-center p-4">
@@ -174,6 +183,8 @@ function LoginForm() {
                 <input
                   name="rememberMe"
                   type="checkbox"
+                  checked={rememberMeChecked}
+                  onChange={(e) => setRememberMeChecked(e.target.checked)}
                   className="w-4 h-4 text-blue-600 rounded focus:ring-blue-500"
                 />
                 <span className="text-sm text-gray-600 dark:text-gray-400">

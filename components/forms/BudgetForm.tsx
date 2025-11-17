@@ -6,6 +6,7 @@ import { createBudgetSchema, updateBudgetSchema, type CreateBudgetInput, type Up
 import { Button } from '@/components/ui/Button'
 import { useCategories } from '@/hooks/useCategories'
 import { format } from 'date-fns'
+import { parseLocaleInteger, parseLocaleNumber } from '@/lib/numberUtils'
 
 interface BudgetFormProps {
   onSubmit: (data: CreateBudgetInput | UpdateBudgetInput) => Promise<void> | void
@@ -98,12 +99,11 @@ export function BudgetForm({
               $
             </span>
             <input
-              type="number"
+              type="text"
               id="limit"
-              step="0.01"
-              min="0"
-              {...register('limit', { valueAsNumber: true })}
-              placeholder="0.00"
+              inputMode="decimal"
+              {...register('limit', { setValueAs: parseLocaleNumber })}
+              placeholder="0,00"
               className="w-full pl-8 pr-4 py-2 rounded-lg border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-900 dark:text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500"
             />
           </div>
@@ -200,11 +200,10 @@ export function BudgetForm({
               Alert Threshold (%)
             </label>
             <input
-              type="number"
+              type="text"
               id="alerts.threshold"
-              min="0"
-              max="100"
-              {...register('alerts.threshold', { valueAsNumber: true })}
+              inputMode="numeric"
+              {...register('alerts.threshold', { setValueAs: parseLocaleInteger })}
               placeholder="80"
               className="w-full px-4 py-2 rounded-lg border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-900 dark:text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500"
             />

@@ -43,16 +43,39 @@ export default function BudgetsClient() {
   const updateBudget = useUpdateBudget()
   const deleteBudget = useDeleteBudget()
 
+  const toNumber = (value: number | string | null | undefined) => {
+    if (typeof value === 'number') return value
+    if (typeof value === 'string') {
+      const parsed = Number(value)
+      return Number.isNaN(parsed) ? 0 : parsed
+    }
+    return 0
+  }
+
   // Get data from API response
   const budgets = budgetsData || []
   const currentMonthBudgets = currentMonthData || []
 
   // Calculate statistics from current month budgets which includes spent/remaining
   const stats = useMemo(() => {
-    const totalBudgeted = currentMonthBudgets.reduce((sum: number, b: any) => sum + (b.limit || b.limitAmount || 0), 0)
-    const totalSpent = currentMonthBudgets.reduce((sum: number, b: any) => sum + (b.spent || 0), 0)
-    const totalRemaining = currentMonthBudgets.reduce((sum: number, b: any) => sum + (b.remaining || 0), 0)
-    const criticalBudgets = currentMonthBudgets.filter((b: any) => (b.percentage || 0) >= 90).length
+    const totalBudgeted = currentMonthBudgets.reduce(
+      (sum: number, b: any) => sum + toNumber(b.limit ?? b.limitAmount),
+      0
+    )
+    const totalSpent = currentMonthBudgets.reduce(
+      (sum: number, b: any) => sum + toNumber(b.spent),
+      0
+    )
+    const totalRemaining = currentMonthBudgets.reduce(
+      (sum: number, b: any) => sum + toNumber(b.remaining),
+      0
+    )
+    const criticalBudgets = currentMonthBudgets.filter((b: any) => {
+      const limit = toNumber(b.limit ?? b.limitAmount)
+      const spent = toNumber(b.spent)
+      const percentage = b.percentage ?? (limit > 0 ? (spent / limit) * 100 : 0)
+      return percentage >= 90
+    }).length
 
     return {
       totalBudgeted,
@@ -282,11 +305,12 @@ export default function BudgetsClient() {
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           {filteredBudgets.map((budget: any) => {
             // Calculate budget status from data (backend returns these fields in getCurrentPeriodBudgets)
-            const spent = budget.spent || 0
-            const limit = budget.limit || budget.limitAmount || 0
-            const percentage = budget.percentage || (limit > 0 ? (spent / limit) * 100 : 0)
+            const spent = toNumber(budget.spent)
+            const limit = toNumber(budget.limit ?? budget.limitAmount)
+            const percentage = budget.percentage ?? (limit > 0 ? (spent / limit) * 100 : 0)
             const isOverBudget = percentage > 100
-            const isNearLimit = percentage >= 80 && percentage <= 100
+            const alertThreshold = budget.alerts?.threshold ?? 80
+            const isNearLimit = percentage >= alertThreshold && percentage <= 100
             const isCritical = percentage >= 90
 
             return (
@@ -351,9 +375,9 @@ export default function BudgetsClient() {
                     </div>
 
                     {/* Alert Settings */}
-                    {budget.alerts.enabled && (
+                    {budget.alerts?.enabled && (
                       <div className="text-xs text-gray-500 dark:text-gray-400 border-t border-gray-200 dark:border-gray-700 pt-3">
-                        Alert at {budget.alerts.threshold}% usage
+                        Alert at {(budget.alerts.threshold ?? 80)}% usage
                       </div>
                     )}
 
@@ -373,7 +397,7 @@ export default function BudgetsClient() {
                         <div className="flex items-center gap-2">
                           <AlertTriangle className="w-4 h-4 text-yellow-600 dark:text-yellow-400 flex-shrink-0" />
                           <p className="text-xs text-yellow-800 dark:text-yellow-300">
-                            Approaching budget limit ({percentage.toFixed(0)}%)
+                            Approaching budget limit ({percentage.toFixed(0)}% of {alertThreshold}% threshold)
                           </p>
                         </div>
                       </div>

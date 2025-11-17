@@ -4,12 +4,12 @@
  * Service for managing transaction categories
  */
 
-import { apiClient } from './client'
+import { apiClient, unwrapResponse } from './client'
 import type {
   CategoryDTO,
   CreateCategoryDTO,
   UpdateCategoryDTO,
-  CategorySpendingDTO,
+  ApiResponse,
 } from '@/types/dto'
 
 class CategoryService {
@@ -28,37 +28,42 @@ class CategoryService {
     }
 
     const query = queryParams.toString()
-    return apiClient.get<CategoryDTO[]>(
+    const response = await apiClient.get<ApiResponse<CategoryDTO[]>>(
       `${this.baseUrl}${query ? `?${query}` : ''}`
     )
+    return unwrapResponse(response)
   }
 
   /**
    * Get default categories
    */
   async getDefaultCategories(): Promise<CategoryDTO[]> {
-    return apiClient.get<CategoryDTO[]>(`${this.baseUrl}/defaults`)
+    const response = await apiClient.get<ApiResponse<CategoryDTO[]>>(`${this.baseUrl}/defaults`)
+    return unwrapResponse(response)
   }
 
   /**
    * Get category by ID
    */
   async getCategoryById(id: string): Promise<CategoryDTO> {
-    return apiClient.get<CategoryDTO>(`${this.baseUrl}/${id}`)
+    const response = await apiClient.get<ApiResponse<CategoryDTO>>(`${this.baseUrl}/${id}`)
+    return unwrapResponse(response)
   }
 
   /**
    * Create a new category
    */
   async createCategory(data: CreateCategoryDTO): Promise<CategoryDTO> {
-    return apiClient.post<CategoryDTO>(this.baseUrl, data)
+    const response = await apiClient.post<ApiResponse<CategoryDTO>>(this.baseUrl, data)
+    return unwrapResponse(response)
   }
 
   /**
    * Update an existing category
    */
   async updateCategory(id: string, data: UpdateCategoryDTO): Promise<CategoryDTO> {
-    return apiClient.patch<CategoryDTO>(`${this.baseUrl}/${id}`, data)
+    const response = await apiClient.patch<ApiResponse<CategoryDTO>>(`${this.baseUrl}/${id}`, data)
+    return unwrapResponse(response)
   }
 
   /**
@@ -67,9 +72,10 @@ class CategoryService {
   async deleteCategory(id: string, reassignTo: string): Promise<{ message: string; transactionsReassigned: number }> {
     const params = new URLSearchParams()
     params.append('reassignTo', reassignTo)
-    return apiClient.delete<{ message: string; transactionsReassigned: number }>(
+    const response = await apiClient.delete<ApiResponse<{ message: string; transactionsReassigned: number }>>(
       `${this.baseUrl}/${id}?${params.toString()}`
     )
+    return unwrapResponse(response)
   }
 
   /**

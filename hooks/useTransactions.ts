@@ -15,7 +15,6 @@ import type {
   CreateTransactionDTO,
   UpdateTransactionDTO,
   TransactionFiltersDTO,
-  TransactionStatsDTO,
   PaginatedResponse,
 } from '@/types/dto'
 
@@ -35,9 +34,9 @@ export const transactionKeys = {
  */
 export function useTransactions(
   filters: TransactionFiltersDTO = {},
-  options?: Omit<UseQueryOptions<{ data: TransactionDTO[]; meta: { total: number; page: number; limit: number; totalPages: number } }>, 'queryKey' | 'queryFn'>
+  options?: Omit<UseQueryOptions<PaginatedResponse<TransactionDTO>>, 'queryKey' | 'queryFn'>
 ) {
-  return useQuery({
+  return useQuery<PaginatedResponse<TransactionDTO>>({
     queryKey: transactionKeys.list(filters),
     queryFn: () => transactionService.getTransactions(filters),
     staleTime: 1000 * 60 * 5, // 5 minutos

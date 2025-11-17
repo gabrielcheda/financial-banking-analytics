@@ -6,19 +6,13 @@ import { NextResponse } from 'next/server'
 export async function POST(request: Request) {
     const body = await request.json()
     try {
-
-        console.log("this is request", `${process.env.API_URL}/auth/login`)
-        console.log("this is request", body)
-
         const response = await fetch(`${process.env.API_URL}/auth/login`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify(body),
         })
 
-        console.log("[route.ts] response", response);
         const result = await response.json()
-
 
         if (!response.ok) {
             return NextResponse.json({
@@ -31,36 +25,47 @@ export async function POST(request: Request) {
         }
 
         const authResponse: AuthResponseDTO = result.data
-
-
-        console.log("[route.ts] authResponse", authResponse);
+        const rememberMe = Boolean(body.rememberMe)
+        const accessTokenMaxAge = rememberMe ? 60 * 60 * 24 * 30 : 60 * 60
+        const refreshTokenMaxAge = rememberMe ? 60 * 60 * 24 * 60 : 60 * 60 * 24 * 7
 
         const cookieStore = await cookies()
 
-        if (body.rememberMe) {
+        if (rememberMe) {
             cookieStore.set('rememberMe', 'true', {
-                httpOnly: true,
+                httpOnly: false,
                 secure: process.env.NODE_ENV === 'production',
                 sameSite: 'lax',
                 maxAge: 60 * 60 * 24 * 30,
                 path: '/',
             })
+        } else {
+            cookieStore.delete('rememberMe')
         }
 
         // Salva tokens em cookies httpOnly (seguros!)
-        cookieStore.set('accessToken', authResponse.tokens.accessToken, {
-            httpOnly: true,
+        const accessTokenCookiesOptions = {
             secure: process.env.NODE_ENV === 'production',
-            sameSite: 'lax',
-            maxAge: 60 * 60 * 24 * 7, // 7 dias
+            sameSite: 'lax' as const,
+            maxAge: accessTokenMaxAge,
             path: '/',
+        }
+
+        cookieStore.set('accessToken', authResponse.tokens.accessToken, {
+            ...accessTokenCookiesOptions,
+            httpOnly: true,
+        })
+
+        cookieStore.set('accessTokenPublic', authResponse.tokens.accessToken, {
+            ...accessTokenCookiesOptions,
+            httpOnly: false,
         })
 
         cookieStore.set('refreshToken', authResponse.tokens.refreshToken, {
             httpOnly: true,
             secure: process.env.NODE_ENV === 'production',
             sameSite: 'lax',
-            maxAge: 60 * 60 * 24 * 7, // 7 dias
+            maxAge: refreshTokenMaxAge,
             path: '/',
         })
 
@@ -71,9 +76,6 @@ export async function POST(request: Request) {
             status: response.status
         })
     } catch (error) {
-
-        console.log("[route.ts] error", error);
-
         return NextResponse.json(
             {
                 message: 'Internal Server Error',

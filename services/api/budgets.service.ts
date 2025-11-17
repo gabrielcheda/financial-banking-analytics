@@ -4,12 +4,12 @@
  * Service for managing budgets
  */
 
-import { apiClient } from './client'
+import { apiClient, unwrapResponse } from './client'
 import type {
   BudgetDTO,
   CreateBudgetDTO,
   UpdateBudgetDTO,
-  PaginatedResponse,
+  ApiResponse,
 } from '@/types/dto'
 
 class BudgetService {
@@ -18,43 +18,66 @@ class BudgetService {
   /**
    * List all budgets
    */
-  async getBudgets(): Promise<BudgetDTO[]> {
-    return apiClient.get<BudgetDTO[]>(this.baseUrl)
+  async getBudgets(params?: {
+    page?: number
+    limit?: number
+    period?: 'monthly' | 'yearly'
+    categoryId?: string
+  }): Promise<BudgetDTO[]> {
+    const queryParams = new URLSearchParams()
+
+    if (params) {
+      Object.entries(params).forEach(([key, value]) => {
+        if (value !== undefined && value !== null) {
+          queryParams.append(key, String(value))
+        }
+      })
+    }
+
+    const query = queryParams.toString()
+    const response = await apiClient.get<ApiResponse<BudgetDTO[]>>(
+      `${this.baseUrl}${query ? `?${query}` : ''}`
+    )
+    return unwrapResponse(response)
   }
 
   /**
    * Get budget by ID
    */
   async getBudgetById(id: string): Promise<BudgetDTO> {
-    return apiClient.get<BudgetDTO>(`${this.baseUrl}/${id}`)
+    const response = await apiClient.get<ApiResponse<BudgetDTO>>(`${this.baseUrl}/${id}`)
+    return unwrapResponse(response)
   }
 
   /**
    * Create a new budget
    */
   async createBudget(data: CreateBudgetDTO): Promise<BudgetDTO> {
-    return apiClient.post<BudgetDTO>(this.baseUrl, data)
+    const response = await apiClient.post<ApiResponse<BudgetDTO>>(this.baseUrl, data)
+    return unwrapResponse(response)
   }
 
   /**
    * Update an existing budget
    */
   async updateBudget(id: string, data: UpdateBudgetDTO): Promise<BudgetDTO> {
-    return apiClient.patch<BudgetDTO>(`${this.baseUrl}/${id}`, data)
+    const response = await apiClient.patch<ApiResponse<BudgetDTO>>(`${this.baseUrl}/${id}`, data)
+    return unwrapResponse(response)
   }
 
   /**
    * Delete a budget
    */
-  async deleteBudget(id: string): Promise<BudgetDTO> {
-    return apiClient.delete<BudgetDTO>(`${this.baseUrl}/${id}`)
+  async deleteBudget(id: string): Promise<void> {
+    await apiClient.delete<void>(`${this.baseUrl}/${id}`)
   }
 
   /**
    * Get budgets for current period
    */
   async getCurrentPeriodBudgets(): Promise<BudgetDTO[]> {
-    return apiClient.get<BudgetDTO[]>(`${this.baseUrl}/current-period`)
+    const response = await apiClient.get<ApiResponse<BudgetDTO[]>>(`${this.baseUrl}/current-period`)
+    return unwrapResponse(response)
   }
 
   /**
@@ -68,7 +91,15 @@ class BudgetService {
     isOverBudget: boolean
     alertLevel: 'warning' | 'danger'
   }[]> {
-    return apiClient.get(`${this.baseUrl}/alerts`)
+    const response = await apiClient.get<ApiResponse<{
+      budget: BudgetDTO
+      spent: number
+      remaining: number
+      percentageUsed: number
+      isOverBudget: boolean
+      alertLevel: 'warning' | 'danger'
+    }[]>>(`${this.baseUrl}/alerts`)
+    return unwrapResponse(response)
   }
 
   /**
@@ -81,7 +112,14 @@ class BudgetService {
     percentageUsed: number
     isOverBudget: boolean
   }> {
-    return apiClient.get(`${this.baseUrl}/${id}/status`)
+    const response = await apiClient.get<ApiResponse<{
+      budget: BudgetDTO
+      spent: number
+      remaining: number
+      percentageUsed: number
+      isOverBudget: boolean
+    }>>(`${this.baseUrl}/${id}/status`)
+    return unwrapResponse(response)
   }
 }
 

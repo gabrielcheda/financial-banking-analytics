@@ -63,9 +63,13 @@ class AuthService {
 
   async logout(): Promise<void> {
     try {
-      await apiClient.post(`${this.baseURL}/logout`)
+      await fetch('/api/auth/logout', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+      })
     } catch (error) {
-      console.warn('Server logout failed:', error)
+      console.warn('Client logout failed:', error)
+      throw error
     } finally {
       this.clearTokens()
     }

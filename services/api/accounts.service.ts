@@ -4,14 +4,14 @@
  * Service for managing financial accounts
  */
 
-import { apiClient } from './client'
+import { apiClient, unwrapResponse } from './client'
 import type {
   AccountDTO,
   AccountDetailsDTO,
   CreateAccountDTO,
   UpdateAccountDTO,
   AccountSummaryDTO,
-  PaginatedResponse,
+  ApiResponse,
 } from '@/types/dto'
 
 class AccountService {
@@ -39,49 +39,59 @@ class AccountService {
     const query = queryParams.toString()
     const url = `${this.baseUrl}${query ? `?${query}` : ''}`
 
-    return apiClient.get<AccountDTO[]>(url)
+    const response = await apiClient.get<ApiResponse<AccountDTO[]>>(url)
+    return unwrapResponse(response)
   }
 
   /**
    * Get account by ID with details
    */
   async getAccountById(id: string): Promise<AccountDetailsDTO> {
-    return apiClient.get<AccountDetailsDTO>(`${this.baseUrl}/${id}`)
+    const response = await apiClient.get<ApiResponse<AccountDetailsDTO>>(`${this.baseUrl}/${id}`)
+    return unwrapResponse(response)
   }
 
   /**
    * Create a new account
    */
   async createAccount(data: CreateAccountDTO): Promise<AccountDTO> {
-    return await apiClient.post<AccountDTO>(this.baseUrl, data);
+    const response = await apiClient.post<ApiResponse<AccountDTO>>(this.baseUrl, data)
+    return unwrapResponse(response)
   }
 
   /**
    * Update an existing account
    */
   async updateAccount(id: string, data: UpdateAccountDTO): Promise<AccountDTO> {
-    return apiClient.patch<AccountDTO>(`${this.baseUrl}/${id}`, data)
+    const response = await apiClient.patch<ApiResponse<AccountDTO>>(`${this.baseUrl}/${id}`, data)
+    return unwrapResponse(response)
   }
 
   /**
    * Delete an account
    */
   async deleteAccount(id: string): Promise<void> {
-    return apiClient.delete<void>(`${this.baseUrl}/${id}`)
+    await apiClient.delete<void>(`${this.baseUrl}/${id}`)
   }
 
   /**
    * Get total balance from all active accounts
    */
   async getTotalBalance(): Promise<{ totalBalance: number }> {
-    return apiClient.get<{ totalBalance: number }>(`${this.baseUrl}/stats/total-balance`)
+    const response = await apiClient.get<ApiResponse<{ totalBalance: number }>>(
+      `${this.baseUrl}/stats/total-balance`
+    )
+    return unwrapResponse(response)
   }
 
   /**
    * Get account summary statistics
    */
   async getAccountSummary(): Promise<AccountSummaryDTO> {
-    return apiClient.get<AccountSummaryDTO>(`${this.baseUrl}/stats/summary`)
+    const response = await apiClient.get<ApiResponse<AccountSummaryDTO>>(
+      `${this.baseUrl}/stats/summary`
+    )
+    return unwrapResponse(response)
   }
 
   /**

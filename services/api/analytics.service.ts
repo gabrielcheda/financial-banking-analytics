@@ -4,12 +4,13 @@
  * Service for analytics and insights
  */
 
-import { apiClient } from './client'
+import { apiClient, unwrapResponse } from './client'
 import type {
   AnalyticsOverviewDTO,
   TrendsAnalysisDTO,
   CashFlowDTO,
   CategorySpendingDTO,
+  ApiResponse,
 } from '@/types/dto'
 
 class AnalyticsService {
@@ -29,13 +30,11 @@ class AnalyticsService {
       ...(params.accountId && { accountId: params.accountId }),
     })
 
-    const response = await apiClient.get<AnalyticsOverviewDTO>(
+    const response = await apiClient.get<ApiResponse<AnalyticsOverviewDTO>>(
       `${this.baseUrl}/overview?${queryParams.toString()}`
     )
 
-    console.log(`response overview`, response);
-
-    return (response as any).data;
+    return unwrapResponse(response)
   }
 
   /**
@@ -53,9 +52,10 @@ class AnalyticsService {
       ...(params.categoryId && { categoryId: params.categoryId }),
     })
 
-    return apiClient.get<TrendsAnalysisDTO>(
+    const response = await apiClient.get<ApiResponse<TrendsAnalysisDTO>>(
       `${this.baseUrl}/trends?${queryParams.toString()}`
     )
+    return unwrapResponse(response)
   }
 
   /**
@@ -71,9 +71,10 @@ class AnalyticsService {
       metric: 'income',
     })
 
-    return apiClient.get<TrendsAnalysisDTO>(
+    const response = await apiClient.get<ApiResponse<TrendsAnalysisDTO>>(
       `${this.baseUrl}/trends?${queryParams.toString()}`
     )
+    return unwrapResponse(response)
   }
 
   /**
@@ -107,9 +108,10 @@ class AnalyticsService {
       ...(params.limit && { limit: String(params.limit) }),
     })
 
-    return apiClient.get<CategorySpendingDTO[]>(
+    const response = await apiClient.get<ApiResponse<CategorySpendingDTO[]>>(
       `${this.baseUrl}/spending-by-category?${queryParams.toString()}`
     )
+    return unwrapResponse(response)
   }
 
   /**
@@ -126,9 +128,10 @@ class AnalyticsService {
       interval: params.interval || 'monthly',
     })
 
-    return apiClient.get<Array<{ date: string; value: number }>>(
+    const response = await apiClient.get<ApiResponse<Array<{ date: string; value: number }>>>(
       `${this.baseUrl}/net-worth?${queryParams.toString()}`
     )
+    return unwrapResponse(response)
   }
 
   /**

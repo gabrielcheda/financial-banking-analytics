@@ -13,6 +13,9 @@ export async function loginAction(prevState: any, formData: FormData) {
     }
 
     const redirectTo = formData.get('redirect') as string | null
+    const rememberMe = loginDto.rememberMe
+    const accessTokenMaxAge = rememberMe ? 60 * 60 * 24 * 30 : 60 * 60
+    const refreshTokenMaxAge = rememberMe ? 60 * 60 * 24 * 60 : 60 * 60 * 24 * 7
 
     try {
         const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/auth/login`, {
@@ -27,27 +30,46 @@ export async function loginAction(prevState: any, formData: FormData) {
             return { error: result.error?.message || 'Invalid credentials' }
         }
 
-        // ✅ Salva cookies com httpOnly para segurança contra XSS
-        cookies().set('accessToken', result.tokens.accessToken, {
-            httpOnly: true,      // ← JavaScript não pode acessar
-            secure: process.env.NODE_ENV === 'production',  // ← HTTPS apenas em produção
-            sameSite: 'strict',  // ← Anti-CSRF
+        cookies().set('rememberMe', rememberMe ? 'true' : 'false', {
+            httpOnly: false,
+            secure: process.env.NODE_ENV === 'production',
+            sameSite: 'strict',
             path: '/',
-            maxAge: 3600, // 1 hora
+            maxAge: 60 * 60 * 24 * 30,
+        })
+
+        // ✅ Salva cookies com httpOnly para segurança contra XSS
+        const accessTokenCookiesOptions = {
+            secure: process.env.NODE_ENV === 'production',
+            sameSite: 'lax' as const,
+            path: '/',
+            maxAge: accessTokenMaxAge,
+        }
+
+        cookies().set('accessToken', result.tokens.accessToken, {
+            ...accessTokenCookiesOptions,
+            httpOnly: true,
+        })
+
+        // Token legível pelo cliente apenas para Authorization header
+        cookies().set('accessTokenPublic', result.tokens.accessToken, {
+            ...accessTokenCookiesOptions,
+            httpOnly: false,
         })
 
         cookies().set('refreshToken', result.tokens.refreshToken, {
             httpOnly: true,
             secure: process.env.NODE_ENV === 'production',  // ← HTTPS apenas em produção
-            sameSite: 'strict',
-            path: '/api/auth/refresh',  // ← Apenas endpoint de refresh
-            maxAge: 604800, // 7 dias
+            sameSite: 'lax',
+            path: '/',
+            maxAge: refreshTokenMaxAge,
         })
-
+        
         // ✅ Retorna sucesso com URL de redirecionamento
         return {
             success: true,
-            redirectTo: redirectTo && redirectTo.startsWith('/') ? redirectTo : '/dashboard'
+            redirectTo: redirectTo && redirectTo.startsWith('/') ? redirectTo : '/dashboard',
+            tokens: result.tokens
         }
 
     } catch (error) {
@@ -61,7 +83,9 @@ export async function loginAction(prevState: any, formData: FormData) {
 export async function logoutAction() {
     // Clear auth cookies
     cookies().delete('accessToken')
+    cookies().delete('accessTokenPublic')
     cookies().delete('refreshToken')
+    cookies().delete('rememberMe')
 
     // Redirect to login
     redirect('/login')
@@ -100,21 +124,34 @@ export async function registerAction(prevState: any, formData: FormData) {
         }
 
         // ✅ Salva cookies com httpOnly (auto-login após registro)
-        cookies().set('accessToken', result.tokens.accessToken, {
-            httpOnly: true,      // ← JavaScript não pode acessar
-            secure: process.env.NODE_ENV === 'production',  // ← HTTPS apenas em produção
-            sameSite: 'strict',  // ← Anti-CSRF
+        const accessTokenCookiesOptions = {
+            secure: process.env.NODE_ENV === 'production',
+            sameSite: 'lax' as const,
             path: '/',
+        }
+
+        cookies().set('accessToken', result.tokens.accessToken, {
+            ...accessTokenCookiesOptions,
+            httpOnly: true,
             maxAge: 3600, // 1 hora
+        })
+
+        cookies().set('accessTokenPublic', result.tokens.accessToken, {
+            ...accessTokenCookiesOptions,
+            httpOnly: false,
+            maxAge: 3600,
         })
 
         cookies().set('refreshToken', result.tokens.refreshToken, {
             httpOnly: true,
             secure: process.env.NODE_ENV === 'production',  // ← HTTPS apenas em produção
-            sameSite: 'strict',
-            path: '/api/auth/refresh',
+            sameSite: 'lax',
+            path: '/',
             maxAge: 604800, // 7 dias
         })
+
+        window.localStorage.setItem('accessToken', result.tokens.accessToken());
+        window.localStorage.setItem('refreshToken', result.tokens.refreshToken);
 
         // ✅ Retorna sucesso com URL de redirecionamento
         return {

@@ -44,7 +44,7 @@ export function useBills(
 ) {
   return useQuery({
     queryKey: billKeys.list(params),
-    queryFn: () => billService.getBills(),
+    queryFn: () => billService.getBills(params),
     staleTime: 1000 * 60 * 5, // 5 minutes
     ...options,
   })

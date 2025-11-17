@@ -13,7 +13,6 @@ import type {
   CreateAccountDTO,
   UpdateAccountDTO,
   AccountSummaryDTO,
-  PaginatedResponse,
 } from '@/types/dto'
 import { showErrorToast } from '@/lib/error-utils'
 
@@ -37,11 +36,12 @@ export function useAccounts(
     type?: string
     isActive?: boolean
   },
-  options?: Omit<UseQueryOptions<PaginatedResponse<AccountDTO>>, 'queryKey' | 'queryFn'>
+  options?: Omit<UseQueryOptions<AccountDTO[]>, 'queryKey' | 'queryFn'>
 ) {
   return useQuery<AccountDTO[]>({
     queryKey: accountKeys.list(params),
     queryFn: () => accountService.getAccounts(params),
+    ...options,
   })
 }
 

@@ -4,14 +4,13 @@
  * Service for managing bills and recurring payments
  */
 
-import { apiClient } from './client'
+import { apiClient, unwrapResponse } from './client'
 import type {
   BillDTO,
   CreateBillDTO,
   UpdateBillDTO,
   PayBillDTO,
-  PayBillResponseDTO,
-  PaginatedResponse,
+  ApiResponse,
 } from '@/types/dto'
 
 class BillService {
@@ -20,43 +19,68 @@ class BillService {
   /**
    * List all bills
    */
-  async getBills(): Promise<BillDTO[]> {
-    return apiClient.get<BillDTO[]>(this.baseUrl)
+  async getBills(params?: {
+    page?: number
+    limit?: number
+    isPaid?: boolean
+    isRecurring?: boolean
+    startDate?: string
+    endDate?: string
+  }): Promise<BillDTO[]> {
+    const queryParams = new URLSearchParams()
+
+    if (params) {
+      Object.entries(params).forEach(([key, value]) => {
+        if (value !== undefined && value !== null) {
+          queryParams.append(key, String(value))
+        }
+      })
+    }
+
+    const query = queryParams.toString()
+    const response = await apiClient.get<ApiResponse<BillDTO[]>>(
+      `${this.baseUrl}${query ? `?${query}` : ''}`
+    )
+    return unwrapResponse(response)
   }
 
   /**
    * Get bill by ID
    */
   async getBillById(id: string): Promise<BillDTO> {
-    return apiClient.get<BillDTO>(`${this.baseUrl}/${id}`)
+    const response = await apiClient.get<ApiResponse<BillDTO>>(`${this.baseUrl}/${id}`)
+    return unwrapResponse(response)
   }
 
   /**
    * Create a new bill
    */
   async createBill(data: CreateBillDTO): Promise<BillDTO> {
-    return apiClient.post<BillDTO>(this.baseUrl, data)
+    const response = await apiClient.post<ApiResponse<BillDTO>>(this.baseUrl, data)
+    return unwrapResponse(response)
   }
 
   /**
    * Update an existing bill
    */
   async updateBill(id: string, data: UpdateBillDTO): Promise<BillDTO> {
-    return apiClient.patch<BillDTO>(`${this.baseUrl}/${id}`, data)
+    const response = await apiClient.patch<ApiResponse<BillDTO>>(`${this.baseUrl}/${id}`, data)
+    return unwrapResponse(response)
   }
 
   /**
    * Delete a bill
    */
   async deleteBill(id: string): Promise<void> {
-    return apiClient.delete<void>(`${this.baseUrl}/${id}`)
+    await apiClient.delete<void>(`${this.baseUrl}/${id}`)
   }
 
   /**
    * Mark bill as paid
    */
   async payBill(id: string, data: PayBillDTO): Promise<BillDTO> {
-    return apiClient.post<BillDTO>(`${this.baseUrl}/${id}/pay`, data)
+    const response = await apiClient.post<ApiResponse<BillDTO>>(`${this.baseUrl}/${id}/pay`, data)
+    return unwrapResponse(response)
   }
 
   /**
@@ -64,14 +88,18 @@ class BillService {
    */
   async getUpcomingBills(days: number = 30): Promise<BillDTO[]> {
     const params = new URLSearchParams({ days: String(days) })
-    return apiClient.get<BillDTO[]>(`${this.baseUrl}/upcoming?${params.toString()}`)
+    const response = await apiClient.get<ApiResponse<BillDTO[]>>(
+      `${this.baseUrl}/upcoming?${params.toString()}`
+    )
+    return unwrapResponse(response)
   }
 
   /**
    * Get overdue bills
    */
   async getOverdueBills(): Promise<BillDTO[]> {
-    return apiClient.get<BillDTO[]>(`${this.baseUrl}/overdue`)
+    const response = await apiClient.get<ApiResponse<BillDTO[]>>(`${this.baseUrl}/overdue`)
+    return unwrapResponse(response)
   }
 }
 

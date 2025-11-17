@@ -73,7 +73,7 @@ export default function AccountsClient() {
   const deleteMutation = useDeleteAccount()
 
   // Extract accounts array
-  const accounts = (accountsResponse as any) || []
+  const accounts = accountsResponse || []
 
   // Handle create account
   const handleCreateAccount = async (data: CreateAccountDTO) => {

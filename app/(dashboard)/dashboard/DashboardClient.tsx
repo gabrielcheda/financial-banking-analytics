@@ -34,6 +34,30 @@ import { useCashFlow } from '@/hooks/useAnalytics'
 import { usePrefetch } from '@/hooks/usePrefetch'
 import { useRouter } from 'next/navigation'
 
+type CategoryValue = string | { id?: string; name?: string } | null | undefined
+
+const getCategoryLabel = (category: CategoryValue): string => {
+  if (!category) {
+    return 'Uncategorized'
+  }
+
+  if (typeof category === 'string') {
+    return category
+  }
+
+  if (typeof category === 'object') {
+    if (category.name && typeof category.name === 'string') {
+      return category.name
+    }
+
+    if (category.id && typeof category.id === 'string') {
+      return category.id
+    }
+  }
+
+  return 'Uncategorized'
+}
+
 export default function DashboardClient() {
   const router = useRouter()
   const { prefetchTransactionsPage, prefetchTransactions } = usePrefetch()
@@ -41,7 +65,7 @@ export default function DashboardClient() {
   // Fetch real data from API
   const { data: accountSummary, isLoading: accountsLoading } = useAccountSummary()
   const { data: accountsResponse } = useAccounts()
-  const accounts = (accountsResponse as any) || []
+  const accounts = accountsResponse || []
   const { data: recentTransactionsData, isLoading: transactionsLoading } = useRecentTransactions()
   const { data: budgetsData, isLoading: budgetsLoading } = useCurrentMonthBudgets()
   const { data: upcomingBillsData, isLoading: billsLoading } = useUpcomingBills(7)
@@ -61,17 +85,17 @@ export default function DashboardClient() {
   })
 
   // Calculate stats from data
-  const totalBalance = accountSummary?.totalBalance || 0
+  const totalBalance = Number(accountSummary?.totalBalance ?? 0)
 
   // Get monthly income and expenses from overview
-  const monthlyIncome = monthlyOverview?.income?.total || 0
-  const monthlyExpenses = monthlyOverview?.expenses?.total || 0
+  const monthlyIncome = Number(monthlyOverview?.income?.total ?? 0)
+  const monthlyExpenses = Number(monthlyOverview?.expenses?.total ?? 0)
   const savingsRate = monthlyIncome > 0 ? ((monthlyIncome - monthlyExpenses) / monthlyIncome) * 100 : 0
 
   // Transform cash flow data for chart
   const dailySpendingData = (cashFlowData || []).map((item) => ({
     date: format(new Date(item.date), 'MMM dd'),
-    amount: Math.abs(item.expenses),
+    amount: Math.abs(Number(item.expenses ?? item.amount ?? 0)),
   }))
 
   const recentTransactions = recentTransactionsData || []
@@ -294,7 +318,7 @@ export default function DashboardClient() {
                           {transaction.description}
                         </p>
                         <p className="text-xs text-gray-500 dark:text-gray-400">
-                          {transaction.categoryId}
+                          {getCategoryLabel(transaction.categoryId as CategoryValue)}
                         </p>
                       </div>
                     </div>
@@ -306,7 +330,7 @@ export default function DashboardClient() {
                           }`}
                       >
                         {transaction.type === 'income' ? '+' : '-'}$
-                        {Math.abs(transaction.amount).toFixed(2)}
+                        {Math.abs(Number(transaction.amount ?? 0)).toFixed(2)}
                       </p>
                       <p className="text-xs text-gray-500 dark:text-gray-400">
                         {format(new Date(transaction.date), 'MMM dd')}
@@ -341,16 +365,18 @@ export default function DashboardClient() {
                 </div>
               ) : budgets.length > 0 ? (
                 <div className="space-y-4">
-                  {(budgets || []).slice(0, 4).map((budget: any) => {
-                    const percentage = (budget.spent / budget.limit) * 100
+                {(budgets || []).slice(0, 4).map((budget: any) => {
+                    const spent = Number(budget.spent ?? 0)
+                    const limit = Number(budget.limit ?? budget.limitAmount ?? 0)
+                    const percentage = limit > 0 ? (spent / limit) * 100 : 0
                     return (
                       <div key={budget.id}>
                         <div className="flex justify-between text-sm mb-1">
                           <span className="text-gray-700 dark:text-gray-300">
-                            {budget.categoryName || budget.category}
+                            {getCategoryLabel((budget.categoryName as CategoryValue) ?? budget.category)}
                           </span>
                           <span className="text-gray-500 dark:text-gray-400">
-                            ${budget.spent.toFixed(2)} / ${budget.limit.toFixed(2)}
+                            ${spent.toFixed(2)} / ${limit.toFixed(2)}
                           </span>
                         </div>
                         <div className="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-2">
@@ -409,7 +435,7 @@ export default function DashboardClient() {
                         </div>
                       </div>
                       <p className="font-semibold text-gray-900 dark:text-white">
-                        ${(bill.amount ?? 0).toFixed(2)}
+                        ${(Number(bill.amount) ?? 0).toFixed(2)}
                       </p>
                     </div>
                   ))}

@@ -4,7 +4,7 @@
  * Service for managing financial goals
  */
 
-import { apiClient } from './client'
+import { apiClient, unwrapResponse } from './client'
 import type {
   GoalDTO,
   CreateGoalDTO,
@@ -13,6 +13,23 @@ import type {
   ContributeToGoalResponseDTO,
   PaginatedResponse,
 } from '@/types/dto'
+
+const createEmptyPaginatedResponse = (): PaginatedResponse<GoalDTO> => ({
+  success: true,
+  data: [],
+  pagination: {
+    page: 1,
+    limit: 0,
+    total: 0,
+    totalPages: 0,
+    hasNext: false,
+    hasPrev: false,
+  },
+  meta: {
+    timestamp: new Date().toISOString(),
+    requestId: 'local-fallback',
+  },
+})
 
 class GoalService {
   private baseUrl = '/goals'
@@ -37,44 +54,64 @@ class GoalService {
     }
 
     const query = queryParams.toString()
-    return apiClient.get<PaginatedResponse<GoalDTO>>(
+    const response = await apiClient.get<PaginatedResponse<GoalDTO> | GoalDTO[]>(
       `${this.baseUrl}${query ? `?${query}` : ''}`
     )
+
+    if (Array.isArray(response)) {
+      const fallback = createEmptyPaginatedResponse()
+      return { ...fallback, data: response, pagination: { ...fallback.pagination, limit: response.length, total: response.length, totalPages: 1 } }
+    }
+
+    if (response && typeof response === 'object' && 'data' in response) {
+      return response as PaginatedResponse<GoalDTO>
+    }
+
+    return createEmptyPaginatedResponse()
   }
 
   /**
    * Get goal by ID
    */
   async getGoalById(id: string): Promise<GoalDTO> {
-    return apiClient.get<GoalDTO>(`${this.baseUrl}/${id}`)
+    const response = await apiClient.get<GoalDTO | { data: GoalDTO }>(`${this.baseUrl}/${id}`)
+    return unwrapResponse(response)
   }
 
   /**
    * Create a new goal
    */
   async createGoal(data: CreateGoalDTO): Promise<GoalDTO> {
-    return apiClient.post<GoalDTO>(this.baseUrl, data)
+    const response = await apiClient.post<GoalDTO | { data: GoalDTO }>(this.baseUrl, data)
+    return unwrapResponse(response)
   }
 
   /**
    * Update an existing goal
    */
   async updateGoal(id: string, data: UpdateGoalDTO): Promise<GoalDTO> {
-    return apiClient.put<GoalDTO>(`${this.baseUrl}/${id}`, data)
+    const response = await apiClient.put<GoalDTO | { data: GoalDTO }>(`${this.baseUrl}/${id}`, data)
+    return unwrapResponse(response)
   }
 
   /**
    * Delete a goal
    */
   async deleteGoal(id: string): Promise<{ message: string }> {
-    return apiClient.delete<{ message: string }>(`${this.baseUrl}/${id}`)
+    const response = await apiClient.delete<{ message: string } | { data: { message: string } }>(
+      `${this.baseUrl}/${id}`
+    )
+    return unwrapResponse(response)
   }
 
   /**
    * Contribute to a goal (creates transaction)
    */
   async contributeToGoal(id: string, data: ContributeToGoalDTO): Promise<ContributeToGoalResponseDTO> {
-    return apiClient.post<ContributeToGoalResponseDTO>(`${this.baseUrl}/${id}/contribute`, data)
+    const response = await apiClient.post<
+      ContributeToGoalResponseDTO | { data: ContributeToGoalResponseDTO }
+    >(`${this.baseUrl}/${id}/contribute`, data)
+    return unwrapResponse(response)
   }
 
   /**
@@ -82,7 +119,7 @@ class GoalService {
    */
   async getActiveGoals(): Promise<GoalDTO[]> {
     const response = await this.getGoals({ status: 'active' })
-    return response.data
+    return response?.data ?? []
   }
 
   /**
@@ -90,7 +127,7 @@ class GoalService {
    */
   async getGoalsByPriority(priority: 'low' | 'medium' | 'high'): Promise<GoalDTO[]> {
     const response = await this.getGoals({ priority })
-    return response.data
+    return response?.data ?? []
   }
 
   /**
