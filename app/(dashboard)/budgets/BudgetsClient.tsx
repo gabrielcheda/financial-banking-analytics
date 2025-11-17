@@ -160,10 +160,14 @@ export default function BudgetsClient() {
       </div>
 
       {/* Stats Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-        {isLoading ? (
-          <>
-            {[1, 2, 3, 4].map((i) => (
+      <section aria-labelledby="budget-summary-heading">
+        <h2 id="budget-summary-heading" className="sr-only">
+          Budget summary
+        </h2>
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+          {isLoading ? (
+            <>
+              {[1, 2, 3, 4].map((i) => (
               <Card key={i}>
                 <CardContent className="pt-6">
                   <Skeleton className="h-20 w-full" />
@@ -216,12 +220,12 @@ export default function BudgetsClient() {
                     <p className="text-sm text-gray-500 dark:text-gray-400">
                       Remaining
                     </p>
-                    <p className="text-2xl font-bold text-green-600 dark:text-green-400 mt-2">
+                    <p className="text-2xl font-bold text-green-700 dark:text-green-300 mt-2">
                       {formatCurrency(stats.totalRemaining)}
                     </p>
                   </div>
                   <div className="bg-green-100 dark:bg-green-900/30 p-3 rounded-full">
-                    <Target className="w-6 h-6 text-green-600 dark:text-green-400" />
+                    <Target className="w-6 h-6 text-green-700 dark:text-green-300" />
                   </div>
                 </div>
               </CardContent>
@@ -246,64 +250,74 @@ export default function BudgetsClient() {
             </Card>
           </>
         )}
-      </div>
+        </div>
+      </section>
 
       {/* Filters */}
-      <Card>
-        <CardContent className="pt-6">
-          <div className="flex items-center gap-3">
-            <Filter className="w-5 h-5 text-gray-400" />
-            <span className="text-sm font-medium text-gray-700 dark:text-gray-300">
-              Filter by period:
-            </span>
-            <div className="flex gap-2">
-              {(['all', 'monthly', 'yearly'] as const).map((period) => (
-                <Button
-                  key={period}
-                  variant={periodFilter === period ? 'primary' : 'outline'}
-                  size="sm"
-                  onClick={() => setPeriodFilter(period)}
-                >
-                  {period.charAt(0).toUpperCase() + period.slice(1)}
-                </Button>
-              ))}
-            </div>
-          </div>
-        </CardContent>
-      </Card>
-
-      {/* Budgets Grid */}
-      {isLoading ? (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {[1, 2, 3, 4, 5, 6].map((i) => (
-            <Card key={i}>
-              <CardContent className="pt-6">
-                <Skeleton className="h-40 w-full" />
-              </CardContent>
-            </Card>
-          ))}
-        </div>
-      ) : filteredBudgets.length === 0 ? (
+      <section aria-labelledby="budget-filter-heading">
+        <h2 id="budget-filter-heading" className="sr-only">
+          Filter budgets
+        </h2>
         <Card>
-          <CardContent className="p-0">
-            <EmptyState
-              icon={Target}
-              title="No Budgets Found"
-              description={
-                periodFilter !== 'all'
-                  ? `No ${periodFilter} budgets found. Try adjusting your filter or create a new budget.`
-                  : "You haven't created any budgets yet. Set up your first budget to start tracking your spending!"
-              }
-              action={{
-                label: 'Create Budget',
-                onClick: () => setShowAddModal(true),
-              }}
-            />
+          <CardContent className="pt-6">
+            <div className="flex items-center gap-3">
+              <Filter className="w-5 h-5 text-gray-400" aria-hidden="true" />
+              <span className="text-sm font-medium text-gray-700 dark:text-gray-300">
+                Filter by period:
+              </span>
+              <div className="flex gap-2">
+                {(['all', 'monthly', 'yearly'] as const).map((period) => (
+                  <Button
+                    key={period}
+                    variant={periodFilter === period ? 'primary' : 'outline'}
+                    size="sm"
+                    onClick={() => setPeriodFilter(period)}
+                  >
+                    {period.charAt(0).toUpperCase() + period.slice(1)}
+                  </Button>
+                ))}
+              </div>
+            </div>
           </CardContent>
         </Card>
-      ) : (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {filteredBudgets.map((budget: any) => {
+      </section>
+
+      {/* Budgets Grid */}
+      <section aria-labelledby="budget-list-heading">
+        <h2 id="budget-list-heading" className="sr-only">
+          Budget list
+        </h2>
+        {isLoading ? (
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            {[1, 2, 3, 4, 5, 6].map((i) => (
+              <Card key={i}>
+                <CardContent className="pt-6">
+                  <Skeleton className="h-40 w-full" />
+                </CardContent>
+              </Card>
+            ))}
+          </div>
+        ) : filteredBudgets.length === 0 ? (
+          <Card>
+            <CardContent className="p-0">
+              <EmptyState
+                icon={Target}
+                title="No Budgets Found"
+                description={
+                  periodFilter !== 'all'
+                    ? `No ${periodFilter} budgets found. Try adjusting your filter or create a new budget.`
+                    : "You haven't created any budgets yet. Set up your first budget to start tracking your spending!"
+                }
+                action={{
+                  label: 'Create Budget',
+                  onClick: () => setShowAddModal(true),
+                }}
+              />
+            </CardContent>
+          </Card>
+        ) : (
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            {filteredBudgets.map((budget: any) => {
             // Calculate budget status from data (backend returns these fields in getCurrentPeriodBudgets)
             const spent = toNumber(budget.spent)
             const limit = toNumber(budget.limit ?? budget.limitAmount)
@@ -312,6 +326,7 @@ export default function BudgetsClient() {
             const alertThreshold = budget.alerts?.threshold ?? 80
             const isNearLimit = percentage >= alertThreshold && percentage <= 100
             const isCritical = percentage >= 90
+            const categoryName = budget.categoryName ?? budget.category?.name ?? budget.categoryId
 
             return (
               <Card key={budget.id} className="hover:shadow-lg transition-shadow">
@@ -327,7 +342,9 @@ export default function BudgetsClient() {
                           : '#16a34a',
                       }}
                     />
-                    <CardTitle className="text-lg">{budget.categoryId}</CardTitle>
+                    <CardTitle as="h3" className="text-lg">
+                      {categoryName}
+                    </CardTitle>
                   </div>
                   <div className="flex gap-1">
                     <Button
@@ -335,16 +352,20 @@ export default function BudgetsClient() {
                       size="sm"
                       onClick={() => setEditingBudget(budget)}
                       disabled={updateBudget.isPending}
+                      aria-label={`Edit budget ${categoryName}`}
                     >
-                      <Pencil className="w-4 h-4" />
+                      <Pencil className="w-4 h-4" aria-hidden="true" />
+                      <span className="sr-only">Edit budget {categoryName}</span>
                     </Button>
                     <Button
                       variant="ghost"
                       size="sm"
                       onClick={() => handleDeleteBudget(budget.id)}
                       disabled={deleteBudget.isPending}
+                      aria-label={`Delete budget ${categoryName}`}
                     >
-                      <Trash2 className="w-4 h-4 text-red-600" />
+                      <Trash2 className="w-4 h-4 text-red-600" aria-hidden="true" />
+                      <span className="sr-only">Delete budget {categoryName}</span>
                     </Button>
                   </div>
                 </CardHeader>
@@ -409,6 +430,7 @@ export default function BudgetsClient() {
           })}
         </div>
       )}
+      </section>
 
       {/* Add Budget Modal */}
       {showAddModal && (
@@ -423,8 +445,10 @@ export default function BudgetsClient() {
                 size="sm"
                 onClick={() => setShowAddModal(false)}
                 disabled={createBudget.isPending}
+                aria-label="Close create budget modal"
               >
-                <X className="w-5 h-5" />
+                <X className="w-5 h-5" aria-hidden="true" />
+                <span className="sr-only">Close create budget modal</span>
               </Button>
             </div>
             <div className="p-6">
@@ -451,8 +475,10 @@ export default function BudgetsClient() {
                 size="sm"
                 onClick={() => setEditingBudget(null)}
                 disabled={updateBudget.isPending}
+                aria-label="Close edit budget modal"
               >
-                <X className="w-5 h-5" />
+                <X className="w-5 h-5" aria-hidden="true" />
+                <span className="sr-only">Close edit budget modal</span>
               </Button>
             </div>
             <div className="p-6">

@@ -31,19 +31,19 @@ export function BudgetProgressBar({
       return {
         color: 'bg-red-600',
         bgColor: 'bg-red-100 dark:bg-red-900/30',
-        textColor: 'text-red-600 dark:text-red-400',
+        textColor: 'text-red-700 dark:text-red-300',
       }
     } else if (percentage >= 70) {
       return {
         color: 'bg-yellow-500',
         bgColor: 'bg-yellow-100 dark:bg-yellow-900/30',
-        textColor: 'text-yellow-600 dark:text-yellow-400',
+        textColor: 'text-yellow-700 dark:text-yellow-300',
       }
     } else {
       return {
         color: 'bg-green-600',
         bgColor: 'bg-green-100 dark:bg-green-900/30',
-        textColor: 'text-green-600 dark:text-green-400',
+        textColor: 'text-green-800 dark:text-green-200',
       }
     }
   }, [percentage])
@@ -115,11 +115,11 @@ export function BudgetProgressBar({
         </div>
         <div className="text-gray-600 dark:text-gray-400">
           {remaining > 0 ? (
-            <span className="text-green-600 dark:text-green-400">
+            <span className="text-green-800 dark:text-green-200">
               {formatCurrency(remaining)} left
             </span>
           ) : (
-            <span className="text-red-600 dark:text-red-400 font-semibold">
+            <span className="text-red-700 dark:text-red-300 font-semibold">
               {formatCurrency(Math.abs(remaining))} over
             </span>
           )}

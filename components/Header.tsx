@@ -30,6 +30,11 @@ export function Header() {
   const markAsRead = useMarkAsRead()
 
   const notifications = notificationsData?.data || []
+  const hasUnread = typeof unreadCount === 'number' && unreadCount > 0
+  const unreadBadgeText = hasUnread ? (unreadCount > 9 ? '9+' : unreadCount.toString()) : null
+  const notificationsLabel = hasUnread
+    ? `Notifications, ${unreadCount > 9 ? '9 or more' : unreadCount} unread`
+    : 'Notifications'
 
   // Close search and notifications on outside click
   useEffect(() => {
@@ -166,12 +171,15 @@ export function Header() {
               <button
                 onClick={() => setIsNotificationsOpen(!isNotificationsOpen)}
                 className="relative p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors min-w-[44px] min-h-[44px] flex items-center justify-center"
-                aria-label="Notifications"
+                aria-label={notificationsLabel}
               >
                 <Bell className="w-5 h-5 text-gray-700 dark:text-gray-300" />
-                {unreadCount && unreadCount > 0 && (
-                  <span className="absolute top-1 right-1 min-w-[18px] h-[18px] bg-red-500 text-white text-xs font-bold rounded-full flex items-center justify-center px-1">
-                    {unreadCount > 9 ? '9+' : unreadCount}
+                {hasUnread && (
+                  <span
+                    className="absolute top-1 right-1 min-w-[18px] h-[18px] bg-red-500 text-white text-xs font-bold rounded-full flex items-center justify-center px-1"
+                    aria-hidden="true"
+                  >
+                    {unreadBadgeText}
                   </span>
                 )}
               </button>
