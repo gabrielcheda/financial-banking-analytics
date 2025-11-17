@@ -1,17 +1,8 @@
 import { NextResponse } from 'next/server'
 import type { NextRequest } from 'next/server'
-import createIntlMiddleware from 'next-intl/middleware'
-import { defaultLocale, locales } from './i18n'
 
 // Public routes that don't require authentication
 const PUBLIC_ROUTES = ['/login', '/register', '/forgot-password', '/reset-password']
-
-const handleI18nRouting = createIntlMiddleware({
-  locales,
-  defaultLocale,
-  localePrefix: 'always',
-  localeDetection: true,
-})
 
 /**
  * ✅ Gera token CSRF usando Web Crypto API (compatível com Edge Runtime)
@@ -19,38 +10,35 @@ const handleI18nRouting = createIntlMiddleware({
 function generateCsrfToken(): string {
   const array = new Uint8Array(32)
   crypto.getRandomValues(array)
-  return Array.from(array, byte => byte.toString(16).padStart(2, '0')).join('')
+  return Array.from(array, (byte) => byte.toString(16).padStart(2, '0')).join('')
 }
 
 export function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl
+  const response = NextResponse.next()
 
+  // Skip middleware for API routes, static files, and Next.js internals
   if (
     pathname.startsWith('/_next') ||
-    pathname.includes('.') || // static files
-    pathname.startsWith('/api')
+    pathname.startsWith('/api') ||
+    pathname.includes('.') // static files
   ) {
     return NextResponse.next()
   }
-
-  const response = handleI18nRouting(request)
-
-  const locale = request.nextUrl.locale || defaultLocale
-  const pathnameWithoutLocale = pathname.replace(/^\/(en|pt)(\/|$)/, '/')
 
   // ✅ CSRF Protection: Gerar token CSRF se não existir
   if (!request.cookies.has('csrf-token')) {
     const csrfToken = generateCsrfToken()
 
     response.cookies.set('csrf-token', csrfToken, {
-      httpOnly: false,  // Cliente precisa ler para enviar no header
+      httpOnly: false, // Cliente precisa ler para enviar no header
       secure: process.env.NODE_ENV === 'production',
       sameSite: 'strict',
       path: '/',
     })
 
     response.cookies.set('csrf-token-secure', csrfToken, {
-      httpOnly: true,  // Servidor valida
+      httpOnly: true, // Servidor valida
       secure: process.env.NODE_ENV === 'production',
       sameSite: 'strict',
       path: '/',
@@ -59,8 +47,9 @@ export function middleware(request: NextRequest) {
 
   // ✅ CSRF Protection: Validar apenas em requisições de API (fetch/axios)
   // Não validar em navegação normal do browser ou Server Actions
-  const isApiRequest = request.headers.get('content-type')?.includes('application/json') ||
-                       request.headers.get('x-requested-with') === 'XMLHttpRequest'
+  const isApiRequest =
+    request.headers.get('content-type')?.includes('application/json') ||
+    request.headers.get('x-requested-with') === 'XMLHttpRequest'
 
   if (isApiRequest && ['POST', 'PUT', 'PATCH', 'DELETE'].includes(request.method)) {
     const clientToken = request.headers.get('x-csrf-token')
@@ -76,17 +65,17 @@ export function middleware(request: NextRequest) {
   const token = request.cookies.get('accessToken')?.value
 
   // Check if route is public
-  const isPublicRoute = PUBLIC_ROUTES.some(route => pathnameWithoutLocale.startsWith(route))
+  const isPublicRoute = PUBLIC_ROUTES.some((route) => pathname.startsWith(route))
 
   // If trying to access public route while authenticated, redirect to dashboard
   if (isPublicRoute && token) {
-    return NextResponse.redirect(new URL(`/${locale}/dashboard`, request.url))
+    return NextResponse.redirect(new URL('/dashboard', request.url))
   }
 
   // If trying to access protected route without token, redirect to login
   if (!isPublicRoute && !token) {
-    const loginUrl = new URL(`/${locale}/login`, request.url)
-    loginUrl.searchParams.set('redirect', pathnameWithoutLocale)
+    const loginUrl = new URL('/login', request.url)
+    loginUrl.searchParams.set('redirect', pathname)
     return NextResponse.redirect(loginUrl)
   }
 

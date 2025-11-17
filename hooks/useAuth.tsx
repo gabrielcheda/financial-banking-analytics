@@ -7,7 +7,6 @@
 import { useMutation, useQueryClient } from '@tanstack/react-query'
 import { toast } from 'sonner'
 import { useRouter } from 'next/navigation'
-import { useLocale, useTranslations } from 'next-intl'
 import authService from '@/services/api/auth.service'
 import type { LoginDTO, RegisterDTO } from '@/types/dto'
 import { showErrorToast, getErrorMessages, isValidationError } from '@/lib/error-utils'
@@ -17,8 +16,6 @@ import { showErrorToast, getErrorMessages, isValidationError } from '@/lib/error
  */
 export function useLogin() {
   const router = useRouter()
-  const locale = useLocale()
-  const t = useTranslations('auth')
   const queryClient = useQueryClient()
 
   return useMutation({
@@ -27,8 +24,8 @@ export function useLogin() {
       // Store user data in query cache
       queryClient.setQueryData(['user'], response.user)
 
-      toast.success(t('signIn'))
-      router.push(`/${locale}/dashboard`)
+      toast.success('Signed in successfully')
+      router.push('/dashboard')
     },
     onError: (error) => {
       showErrorToast(error, 'Login Failed')
@@ -41,8 +38,6 @@ export function useLogin() {
  */
 export function useRegister() {
   const router = useRouter()
-  const locale = useLocale()
-  const t = useTranslations('auth')
   const queryClient = useQueryClient()
 
   return useMutation({
@@ -52,8 +47,8 @@ export function useRegister() {
       // Store user data in query cache
       queryClient.setQueryData(['user'], response.user)
 
-      toast.success(t('signUp'))
-      router.push(`/${locale}/dashboard`)
+      toast.success('Account created successfully')
+      router.push('/dashboard')
     },
     onError: (error) => {
       // Erros de validação mostram todas as mensagens
@@ -72,8 +67,6 @@ export function useRegister() {
  */
 export function useLogout() {
   const router = useRouter()
-  const locale = useLocale()
-  const t = useTranslations('profile')
   const queryClient = useQueryClient()
 
   return useMutation({
@@ -82,13 +75,13 @@ export function useLogout() {
       // Clear all cached data
       queryClient.clear()
 
-      toast.success(t('logout'))
-      router.push(`/${locale}/login`)
+      toast.success('Logged out successfully')
+      router.push('/login')
     },
     onError: (error: any) => {
       // Still logout locally even if server request fails
       queryClient.clear()
-      router.push(`/${locale}/login`)
+      router.push('/login')
     },
   })
 }

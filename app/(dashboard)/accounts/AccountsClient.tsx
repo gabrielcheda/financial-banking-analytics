@@ -1,13 +1,12 @@
 'use client'
 
 import { useState } from 'react'
-import { useLocale, useTranslations } from 'next-intl'
+import dynamic from 'next/dynamic'
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/Card'
 import { Button } from '@/components/ui/Button'
 import { Skeleton } from '@/components/ui/Skeleton'
 import { EmptyState } from '@/components/EmptyState'
 import { Modal, ConfirmDialog } from '@/components/ui/Modal'
-import { AccountForm } from '@/components/forms/AccountForm'
 import {
   useAccounts,
   useAccountSummary,
@@ -44,6 +43,20 @@ const ACCOUNT_TYPE_COLORS: Record<AccountType, string> = {
   investment: 'bg-orange-100 text-orange-600 dark:bg-orange-900/30 dark:text-orange-400',
 }
 
+const DynamicAccountForm = dynamic(
+  () => import('@/components/forms/AccountForm').then((mod) => mod.AccountForm),
+  {
+    ssr: false,
+    loading: () => (
+      <div className="space-y-4">
+        {[...Array(4)].map((_, idx) => (
+          <Skeleton key={idx} className="h-10 w-full" />
+        ))}
+      </div>
+    ),
+  }
+)
+
 interface ModalState {
   isOpen: boolean
   mode: 'create' | 'edit'
@@ -52,9 +65,6 @@ interface ModalState {
 }
 
 export default function AccountsClient() {
-  const locale = useLocale()
-  const tAccounts = useTranslations('accounts')
-  const tActions = useTranslations('common.actions')
   const [modalState, setModalState] = useState<ModalState>({
     isOpen: false,
     mode: 'create',
@@ -145,15 +155,15 @@ export default function AccountsClient() {
       <div className="flex justify-between items-center">
         <div>
           <h1 className="text-3xl font-bold text-gray-900 dark:text-white">
-            {tAccounts('title')}
+            Accounts
           </h1>
           <p className="text-gray-500 dark:text-gray-400 mt-1">
-            {tAccounts('subtitle')}
+            Manage your financial accounts
           </p>
         </div>
         <Button variant="primary" onClick={openCreateModal}>
           <Plus className="w-5 h-5 mr-2" />
-          {tAccounts('actions.add')}
+          Add Account
         </Button>
       </div>
 
@@ -176,7 +186,7 @@ export default function AccountsClient() {
                 <div className="flex items-center justify-between">
                   <div>
                     <p className="text-sm text-gray-500 dark:text-gray-400">
-                      {tAccounts('summary.totalBalance')}
+                      Total Balance
                     </p>
                     <p className="text-2xl font-bold text-gray-900 dark:text-white mt-1">
                       ${summary?.totalBalance?.toLocaleString('en-US', { minimumFractionDigits: 2 }) ?? '0.00'}
@@ -194,7 +204,7 @@ export default function AccountsClient() {
                 <div className="flex items-center justify-between">
                   <div>
                     <p className="text-sm text-gray-500 dark:text-gray-400">
-                      {tAccounts('summary.activeAccounts')}
+                      Accounts
                     </p>
                     <p className="text-2xl font-bold text-gray-900 dark:text-white mt-1">
                       {accounts.length}
@@ -212,7 +222,7 @@ export default function AccountsClient() {
                 <div className="flex items-center justify-between">
                   <div>
                     <p className="text-sm text-gray-500 dark:text-gray-400">
-                      {tAccounts('summary.totalAssets')}
+                      Total Assets
                     </p>
                     <p className="text-2xl font-bold text-gray-900 dark:text-white mt-1">
                       ${summary?.totalAssets?.toLocaleString('en-US', { minimumFractionDigits: 2 }) ?? '0.00'}
@@ -230,7 +240,7 @@ export default function AccountsClient() {
                 <div className="flex items-center justify-between">
                   <div>
                     <p className="text-sm text-gray-500 dark:text-gray-400">
-                      {tAccounts('summary.netWorth')}
+                      Net Worth
                     </p>
                     <p className="text-2xl font-bold text-gray-900 dark:text-white mt-1">
                       ${summary?.netWorth?.toLocaleString('en-US', { minimumFractionDigits: 2 }) ?? '0.00'}
@@ -354,7 +364,7 @@ export default function AccountsClient() {
         title={modalState.mode === 'create' ? tAccounts('modals.createTitle') : tAccounts('modals.editTitle')}
         size="lg"
       >
-        <AccountForm
+        <DynamicAccountForm
           onSubmit={
             modalState.mode === 'create'
               ? handleCreateAccount

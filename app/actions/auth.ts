@@ -4,7 +4,6 @@
 import { cookies } from 'next/headers'
 import { redirect } from 'next/navigation'
 import type { LoginDTO, RegisterDTO } from '@/types/dto'
-import { defaultLocale } from '@/i18n'
 
 export async function loginAction(prevState: any, formData: FormData) {
     const loginDto: LoginDTO = {
@@ -14,7 +13,6 @@ export async function loginAction(prevState: any, formData: FormData) {
     }
 
     const redirectTo = formData.get('redirect') as string | null
-    const locale = (formData.get('locale') as string) || defaultLocale
     const rememberMe = loginDto.rememberMe
     const accessTokenMaxAge = rememberMe ? 60 * 60 * 24 * 30 : 60 * 60
     const refreshTokenMaxAge = rememberMe ? 60 * 60 * 24 * 60 : 60 * 60 * 24 * 7
@@ -72,7 +70,7 @@ export async function loginAction(prevState: any, formData: FormData) {
 
         return {
             success: true,
-            redirectTo: `/${locale}${safeRedirect}`,
+            redirectTo: safeRedirect,
             tokens: result.tokens
         }
 
@@ -84,7 +82,7 @@ export async function loginAction(prevState: any, formData: FormData) {
 /**
  * Logout action - Clear all cookies and redirect to login
  */
-export async function logoutAction(locale: string = defaultLocale) {
+export async function logoutAction() {
     // Clear auth cookies
     cookies().delete('accessToken')
     cookies().delete('accessTokenPublic')
@@ -92,7 +90,7 @@ export async function logoutAction(locale: string = defaultLocale) {
     cookies().delete('rememberMe')
 
     // Redirect to login
-    redirect(`/${locale}/login`)
+    redirect('/login')
 }
 
 export async function registerAction(prevState: any, formData: FormData) {
@@ -112,7 +110,6 @@ export async function registerAction(prevState: any, formData: FormData) {
     }
 
     try {
-        const locale = (formData.get('locale') as string) || defaultLocale
         const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/auth/register`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
@@ -158,7 +155,7 @@ export async function registerAction(prevState: any, formData: FormData) {
         // ✅ Retorna sucesso com URL de redirecionamento
         return {
             success: true,
-            redirectTo: `/${locale}/dashboard`
+            redirectTo: '/dashboard'
         }
     } catch (error) {
         console.log(`error`, error);

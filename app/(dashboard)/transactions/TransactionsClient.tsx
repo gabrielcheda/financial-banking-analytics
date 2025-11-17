@@ -1,6 +1,7 @@
 'use client'
 
 import { useState, useMemo } from 'react'
+import dynamic from 'next/dynamic'
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/Card'
 import { Button } from '@/components/ui/Button'
 import { Skeleton } from '@/components/ui/Skeleton'
@@ -17,7 +18,6 @@ import {
   Receipt,
 } from 'lucide-react'
 import { format } from 'date-fns'
-import { VirtualTransactionList } from '@/components/VirtualTransactionList'
 import { TransactionCard } from '@/components/TransactionCard'
 import { isFeatureEnabled } from '@/lib/featureFlags'
 import { useTransactions, useExportTransactions, useImportTransactions, useCreateTransaction } from '@/hooks/useTransactions'
@@ -25,11 +25,38 @@ import { useCategories } from '@/hooks/useCategories'
 import { useDebounce } from '@/hooks/useDebounce'
 import type { TransactionFiltersDTO, CreateTransactionDTO } from '@/types/dto'
 import type { CreateTransactionInput } from '@/lib/validations/transaction'
-import { TransactionForm } from '@/components/forms/TransactionForm'
 import { Modal } from '@/components/ui/Modal'
 import { usePrefetch } from '@/hooks/usePrefetch'
 
 const ITEMS_PER_PAGE = 20
+
+const DynamicVirtualTransactionList = dynamic(
+  () => import('@/components/VirtualTransactionList').then((mod) => mod.VirtualTransactionList),
+  {
+    ssr: false,
+    loading: () => (
+      <div className="space-y-3">
+        {[...Array(6)].map((_, idx) => (
+          <Skeleton key={idx} className="h-24 w-full" />
+        ))}
+      </div>
+    ),
+  }
+)
+
+const DynamicTransactionForm = dynamic(
+  () => import('@/components/forms/TransactionForm').then((mod) => mod.TransactionForm),
+  {
+    ssr: false,
+    loading: () => (
+      <div className="space-y-4">
+        {[...Array(4)].map((_, idx) => (
+          <Skeleton key={idx} className="h-12 w-full" />
+        ))}
+      </div>
+    ),
+  }
+)
 
 export default function TransactionsClient() {
   const { prefetchTransactionDetail } = usePrefetch()
@@ -338,7 +365,7 @@ export default function TransactionsClient() {
             </div>
           ) : useVirtualScrolling ? (
             // Virtual scrolling for large lists
-            <VirtualTransactionList
+            <DynamicVirtualTransactionList
               transactions={transactions.map(t => {
                 const category = categories.find(c => c.id === t.categoryId)
                 return {
@@ -553,7 +580,7 @@ export default function TransactionsClient() {
         title="Add New Transaction"
         size="lg"
       >
-        <TransactionForm
+        <DynamicTransactionForm
           onSubmit={handleCreateTransaction}
           onCancel={() => setShowAddModal(false)}
           isLoading={createTransaction.isPending}

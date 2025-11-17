@@ -25,7 +25,6 @@ import { useCurrentMonthOverview } from '@/hooks/useAnalytics'
 import { useCashFlow } from '@/hooks/useAnalytics'
 import { usePrefetch } from '@/hooks/usePrefetch'
 import { useRouter } from 'next/navigation'
-import { useLocale, useTranslations } from 'next-intl'
 
 type CategoryValue = string | { id?: string; name?: string } | null | undefined
 
@@ -54,10 +53,6 @@ const getCategoryLabel = (category: CategoryValue): string => {
 export default function DashboardClient() {
   const router = useRouter()
   const { prefetchTransactionsPage, prefetchTransactions } = usePrefetch()
-  const locale = useLocale()
-  const tDashboard = useTranslations('dashboard')
-  const tCommon = useTranslations('common')
-  const tActions = useTranslations('common.actions')
 
   // Fetch real data from API
   const { data: accountSummary, isLoading: accountsLoading } = useAccountSummary()
@@ -104,10 +99,10 @@ export default function DashboardClient() {
       {/* Page Header */}
       <div>
         <h1 className="text-3xl font-bold text-gray-900 dark:text-white">
-          {tDashboard('title')}
+          Dashboard Overview
         </h1>
         <p className="text-gray-500 dark:text-gray-400 mt-1">
-          {tCommon('welcomeMessage')}
+          Welcome back! Here's your financial summary
         </p>
       </div>
 
@@ -126,7 +121,7 @@ export default function DashboardClient() {
         ) : (
           <>
             <StatCard
-              title={tDashboard('stats.totalBalance')}
+              title="Total Balance"
               value={`$${totalBalance.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`}
               change=""
               changeType="increase"
@@ -135,7 +130,7 @@ export default function DashboardClient() {
               iconBg="bg-blue-100 dark:bg-blue-900/30"
             />
             <StatCard
-              title={tDashboard('stats.monthlyIncome')}
+              title="Monthly Income"
               value={`$${monthlyIncome.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`}
               change=""
               changeType="increase"
@@ -144,7 +139,7 @@ export default function DashboardClient() {
               iconBg="bg-green-100 dark:bg-green-900/30"
             />
             <StatCard
-              title={tDashboard('stats.monthlyExpenses')}
+              title="Monthly Expenses"
               value={`$${monthlyExpenses.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`}
               change=""
               changeType="increase"
@@ -153,7 +148,7 @@ export default function DashboardClient() {
               iconBg="bg-red-100 dark:bg-red-900/30"
             />
             <StatCard
-              title={tDashboard('stats.savingsRate')}
+              title="Savings Rate"
               value={`${savingsRate.toFixed(1)}%`}
               change=""
               changeType="increase"
@@ -170,8 +165,8 @@ export default function DashboardClient() {
         {/* Monthly Spending Chart */}
         <div className="lg:col-span-2">
           <ChartContainer
-            title={tDashboard('charts.cashFlow')}
-            description={tDashboard('charts.cashFlowDescription')}
+            title="Daily Spending Overview"
+            description="Track your daily expenses over time"
           >
             {cashFlowLoading ? (
               <div className="flex items-center justify-center h-[300px]">
@@ -228,8 +223,8 @@ export default function DashboardClient() {
             ) : (
               <EmptyState
                 icon={Wallet}
-                title={tDashboard('accounts.empty.title')}
-                description={tDashboard('accounts.empty.description')}
+                title="No Accounts"
+                description="Create your first account to get started"
               />
             )}
           </CardContent>
@@ -241,14 +236,14 @@ export default function DashboardClient() {
         {/* Recent Transactions */}
         <Card>
           <CardHeader className="flex flex-row items-center justify-between">
-            <CardTitle>{tDashboard('transactions.title')}</CardTitle>
+            <CardTitle>Recent Transactions</CardTitle>
             <Button
               variant="ghost"
               size="sm"
               onMouseEnter={() => prefetchTransactionsPage()}
-              onClick={() => router.push(`/${locale}/transactions`)}
+              onClick={() => router.push('/transactions')}
             >
-              {tActions('viewAll')}
+              View All
             </Button>
           </CardHeader>
           <CardContent>
@@ -307,8 +302,8 @@ export default function DashboardClient() {
             ) : (
               <EmptyState
                 icon={TrendingDown}
-                title={tDashboard('transactions.empty.title')}
-                description={tDashboard('transactions.empty.description')}
+                title="No Transactions"
+                description="Your recent transactions will appear here"
               />
             )}
           </CardContent>
@@ -319,7 +314,7 @@ export default function DashboardClient() {
           {/* Budget Progress */}
           <Card>
             <CardHeader>
-              <CardTitle>{tDashboard('budgets.title')}</CardTitle>
+              <CardTitle>Budget Overview</CardTitle>
             </CardHeader>
             <CardContent>
               {budgetsLoading ? (
@@ -362,8 +357,8 @@ export default function DashboardClient() {
               ) : (
                 <EmptyState
                   icon={Calendar}
-                  title={tDashboard('budgets.empty.title')}
-                  description={tDashboard('budgets.empty.description')}
+                  title="No Budgets"
+                  description="Create budgets to track your spending"
                 />
               )}
             </CardContent>
@@ -372,7 +367,7 @@ export default function DashboardClient() {
           {/* Upcoming Bills */}
           <Card>
             <CardHeader>
-              <CardTitle>{tDashboard('bills.title')}</CardTitle>
+              <CardTitle>Upcoming Bills</CardTitle>
             </CardHeader>
             <CardContent>
               {billsLoading ? (
@@ -395,9 +390,7 @@ export default function DashboardClient() {
                             {bill.name}
                           </p>
                           <p className="text-xs text-gray-500 dark:text-gray-400">
-                            {tDashboard('bills.dueLabel', {
-                              date: bill.dueDate ? format(new Date(bill.dueDate), 'MMM dd, yyyy') : 'N/A',
-                            })}
+                            Due {bill.dueDate ? format(new Date(bill.dueDate), 'MMM dd, yyyy') : 'N/A'}
                           </p>
                         </div>
                       </div>
@@ -410,8 +403,8 @@ export default function DashboardClient() {
               ) : (
                 <EmptyState
                   icon={Calendar}
-                  title={tDashboard('bills.empty.title')}
-                  description={tDashboard('bills.empty.description')}
+                  title="No Upcoming Bills"
+                  description="You have no bills due in the next 7 days"
                 />
               )}
             </CardContent>
