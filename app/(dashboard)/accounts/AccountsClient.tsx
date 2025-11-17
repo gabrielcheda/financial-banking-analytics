@@ -43,6 +43,29 @@ const ACCOUNT_TYPE_COLORS: Record<AccountType, string> = {
   investment: 'bg-orange-100 text-orange-600 dark:bg-orange-900/30 dark:text-orange-400',
 }
 
+const ACCOUNT_TEXT = {
+  fields: {
+    currentBalance: 'Current Balance',
+    noInstitution: 'No institution',
+    status: {
+      active: 'Active',
+      inactive: 'Inactive',
+    },
+  },
+  modals: {
+    createTitle: 'Add New Account',
+    editTitle: 'Edit Account',
+    deleteTitle: 'Delete Account',
+    deleteDescription:
+      'Are you sure you want to delete "{name}"? This action cannot be undone and will also delete all associated transactions.',
+    deleteConfirm: 'Delete Account',
+  },
+}
+
+const COMMON_ACTIONS = {
+  cancel: 'Cancel',
+}
+
 const DynamicAccountForm = dynamic(
   () => import('@/components/forms/AccountForm').then((mod) => mod.AccountForm),
   {
@@ -272,10 +295,10 @@ export default function AccountsClient() {
           <CardContent className="p-6">
             <EmptyState
               icon={Wallet}
-              title={tAccounts('empty.title')}
-              description={tAccounts('empty.description')}
+              title="No Accounts"
+              description="Create your first account to get started"
               action={{
-                label: tAccounts('empty.action'),
+                label: "Add Account",
                 onClick: openCreateModal,
               }}
             />
@@ -326,7 +349,7 @@ export default function AccountsClient() {
                   {/* Balance */}
                   <div className="mb-4">
                     <p className="text-sm text-gray-500 dark:text-gray-400">
-                      {tAccounts('fields.currentBalance')}
+                      {ACCOUNT_TEXT.fields.currentBalance}
                     </p>
                     <p className="text-2xl font-bold text-gray-900 dark:text-white">
                       ${(account.balance ?? 0).toLocaleString('en-US', { minimumFractionDigits: 2 })} {account.currency}
@@ -338,7 +361,7 @@ export default function AccountsClient() {
                     <div className="flex items-center gap-2">
                       <Building2 className="w-4 h-4 text-gray-400" />
                       <span className="text-sm text-gray-600 dark:text-gray-400">
-                        {account.institution || tAccounts('fields.noInstitution')}
+                        {account.institution || ACCOUNT_TEXT.fields.noInstitution}
                       </span>
                     </div>
                     <span
@@ -347,7 +370,9 @@ export default function AccountsClient() {
                         : 'bg-gray-100 text-gray-800 dark:bg-gray-800 dark:text-gray-400'
                         }`}
                     >
-                      {account.isActive ? tAccounts('fields.status.active') : tAccounts('fields.status.inactive')}
+                      {account.isActive
+                        ? ACCOUNT_TEXT.fields.status.active
+                        : ACCOUNT_TEXT.fields.status.inactive}
                     </span>
                   </div>
                 </CardContent>
@@ -361,7 +386,11 @@ export default function AccountsClient() {
       <Modal
         isOpen={modalState.isOpen}
         onClose={() => setModalState({ isOpen: false, mode: 'create' })}
-        title={modalState.mode === 'create' ? tAccounts('modals.createTitle') : tAccounts('modals.editTitle')}
+        title={
+          modalState.mode === 'create'
+            ? ACCOUNT_TEXT.modals.createTitle
+            : ACCOUNT_TEXT.modals.editTitle
+        }
         size="lg"
       >
         <DynamicAccountForm
@@ -381,10 +410,13 @@ export default function AccountsClient() {
         isOpen={deleteDialogState.isOpen}
         onClose={() => setDeleteDialogState({ isOpen: false })}
         onConfirm={handleDeleteAccount}
-        title={tAccounts('modals.deleteTitle')}
-        description={tAccounts('modals.deleteDescription', { name: deleteDialogState.accountName ?? '' })}
-        confirmLabel={tAccounts('modals.deleteConfirm')}
-        cancelLabel={tActions('cancel')}
+        title={ACCOUNT_TEXT.modals.deleteTitle}
+        description={ACCOUNT_TEXT.modals.deleteDescription.replace(
+          '{name}',
+          deleteDialogState.accountName ?? ''
+        )}
+        confirmLabel={ACCOUNT_TEXT.modals.deleteConfirm}
+        cancelLabel={COMMON_ACTIONS.cancel}
         variant="danger"
         isLoading={deleteMutation.isPending}
       />
