@@ -32,6 +32,12 @@ export async function proxyRequest(request: NextRequest, options: ProxyOptions) 
       headers.set('cookie', cookieHeader)
     }
 
+    // Forward the encoding accepted by the client
+    const acceptEncoding = request.headers.get('accept-encoding')
+    if (acceptEncoding) {
+      headers.set('accept-encoding', acceptEncoding)
+    }
+
     const hasBody = METHODS_WITH_BODY.has(method.toUpperCase())
     const body = hasBody ? await request.arrayBuffer() : undefined
 
@@ -43,6 +49,10 @@ export async function proxyRequest(request: NextRequest, options: ProxyOptions) 
     })
 
     const responseHeaders = new Headers(backendResponse.headers)
+
+    // Remove encoding header because Next will handle compression
+    responseHeaders.delete('content-encoding')
+
     return new NextResponse(backendResponse.body, {
       status: backendResponse.status,
       headers: responseHeaders,
