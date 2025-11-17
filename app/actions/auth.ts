@@ -4,6 +4,7 @@
 import { cookies } from 'next/headers'
 import { redirect } from 'next/navigation'
 import type { LoginDTO, RegisterDTO } from '@/types/dto'
+import { defaultLocale } from '@/i18n'
 
 export async function loginAction(prevState: any, formData: FormData) {
     const loginDto: LoginDTO = {
@@ -13,6 +14,7 @@ export async function loginAction(prevState: any, formData: FormData) {
     }
 
     const redirectTo = formData.get('redirect') as string | null
+    const locale = (formData.get('locale') as string) || defaultLocale
     const rememberMe = loginDto.rememberMe
     const accessTokenMaxAge = rememberMe ? 60 * 60 * 24 * 30 : 60 * 60
     const refreshTokenMaxAge = rememberMe ? 60 * 60 * 24 * 60 : 60 * 60 * 24 * 7
@@ -66,9 +68,11 @@ export async function loginAction(prevState: any, formData: FormData) {
         })
         
         // ✅ Retorna sucesso com URL de redirecionamento
+        const safeRedirect = redirectTo && redirectTo.startsWith('/') ? redirectTo : '/dashboard'
+
         return {
             success: true,
-            redirectTo: redirectTo && redirectTo.startsWith('/') ? redirectTo : '/dashboard',
+            redirectTo: `/${locale}${safeRedirect}`,
             tokens: result.tokens
         }
 
@@ -80,7 +84,7 @@ export async function loginAction(prevState: any, formData: FormData) {
 /**
  * Logout action - Clear all cookies and redirect to login
  */
-export async function logoutAction() {
+export async function logoutAction(locale: string = defaultLocale) {
     // Clear auth cookies
     cookies().delete('accessToken')
     cookies().delete('accessTokenPublic')
@@ -88,7 +92,7 @@ export async function logoutAction() {
     cookies().delete('rememberMe')
 
     // Redirect to login
-    redirect('/login')
+    redirect(`/${locale}/login`)
 }
 
 export async function registerAction(prevState: any, formData: FormData) {
@@ -108,6 +112,7 @@ export async function registerAction(prevState: any, formData: FormData) {
     }
 
     try {
+        const locale = (formData.get('locale') as string) || defaultLocale
         const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/auth/register`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
@@ -150,13 +155,10 @@ export async function registerAction(prevState: any, formData: FormData) {
             maxAge: 604800, // 7 dias
         })
 
-        window.localStorage.setItem('accessToken', result.tokens.accessToken());
-        window.localStorage.setItem('refreshToken', result.tokens.refreshToken);
-
         // ✅ Retorna sucesso com URL de redirecionamento
         return {
             success: true,
-            redirectTo: '/dashboard'
+            redirectTo: `/${locale}/dashboard`
         }
     } catch (error) {
         console.log(`error`, error);

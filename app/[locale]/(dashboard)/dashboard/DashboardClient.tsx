@@ -1,5 +1,6 @@
 'use client'
 
+import dynamic from 'next/dynamic'
 import { StatCard } from '@/components/StatCard'
 import { ChartContainer } from '@/components/ChartContainer'
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/Card'
@@ -15,15 +16,6 @@ import {
   ArrowDownRight,
   Calendar,
 } from 'lucide-react'
-import {
-  LineChart,
-  Line,
-  XAxis,
-  YAxis,
-  CartesianGrid,
-  Tooltip,
-  ResponsiveContainer,
-} from 'recharts'
 import { format, subDays } from 'date-fns'
 import { useAccountSummary, useAccounts } from '@/hooks/useAccounts'
 import { useRecentTransactions } from '@/hooks/useTransactions'
@@ -33,6 +25,7 @@ import { useCurrentMonthOverview } from '@/hooks/useAnalytics'
 import { useCashFlow } from '@/hooks/useAnalytics'
 import { usePrefetch } from '@/hooks/usePrefetch'
 import { useRouter } from 'next/navigation'
+import { useLocale, useTranslations } from 'next-intl'
 
 type CategoryValue = string | { id?: string; name?: string } | null | undefined
 
@@ -61,6 +54,10 @@ const getCategoryLabel = (category: CategoryValue): string => {
 export default function DashboardClient() {
   const router = useRouter()
   const { prefetchTransactionsPage, prefetchTransactions } = usePrefetch()
+  const locale = useLocale()
+  const tDashboard = useTranslations('dashboard')
+  const tCommon = useTranslations('common')
+  const tActions = useTranslations('common.actions')
 
   // Fetch real data from API
   const { data: accountSummary, isLoading: accountsLoading } = useAccountSummary()
@@ -107,10 +104,10 @@ export default function DashboardClient() {
       {/* Page Header */}
       <div>
         <h1 className="text-3xl font-bold text-gray-900 dark:text-white">
-          Dashboard Overview
+          {tDashboard('title')}
         </h1>
         <p className="text-gray-500 dark:text-gray-400 mt-1">
-          Welcome back! Here's your financial summary
+          {tCommon('welcomeMessage')}
         </p>
       </div>
 
@@ -129,7 +126,7 @@ export default function DashboardClient() {
         ) : (
           <>
             <StatCard
-              title="Total Balance"
+              title={tDashboard('stats.totalBalance')}
               value={`$${totalBalance.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`}
               change=""
               changeType="increase"
@@ -138,7 +135,7 @@ export default function DashboardClient() {
               iconBg="bg-blue-100 dark:bg-blue-900/30"
             />
             <StatCard
-              title="Monthly Income"
+              title={tDashboard('stats.monthlyIncome')}
               value={`$${monthlyIncome.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`}
               change=""
               changeType="increase"
@@ -147,7 +144,7 @@ export default function DashboardClient() {
               iconBg="bg-green-100 dark:bg-green-900/30"
             />
             <StatCard
-              title="Monthly Expenses"
+              title={tDashboard('stats.monthlyExpenses')}
               value={`$${monthlyExpenses.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`}
               change=""
               changeType="increase"
@@ -156,7 +153,7 @@ export default function DashboardClient() {
               iconBg="bg-red-100 dark:bg-red-900/30"
             />
             <StatCard
-              title="Savings Rate"
+              title={tDashboard('stats.savingsRate')}
               value={`${savingsRate.toFixed(1)}%`}
               change=""
               changeType="increase"
@@ -173,8 +170,8 @@ export default function DashboardClient() {
         {/* Monthly Spending Chart */}
         <div className="lg:col-span-2">
           <ChartContainer
-            title="Daily Spending Overview"
-            description="Last 30 days spending trend"
+            title={tDashboard('charts.cashFlow')}
+            description={tDashboard('charts.cashFlowDescription')}
           >
             {cashFlowLoading ? (
               <div className="flex items-center justify-center h-[300px]">
@@ -189,39 +186,7 @@ export default function DashboardClient() {
                 />
               </div>
             ) : (
-              <ResponsiveContainer width="100%" height={300} className="min-h-[200px] sm:min-h-[250px] md:min-h-[300px]">
-                <LineChart data={dailySpendingData}>
-                  <CartesianGrid strokeDasharray="3 3" stroke="#374151" opacity={0.1} />
-                  <XAxis
-                    dataKey="date"
-                    stroke="#9ca3af"
-                    fontSize={12}
-                    tickLine={false}
-                  />
-                  <YAxis
-                    stroke="#9ca3af"
-                    fontSize={12}
-                    tickLine={false}
-                    tickFormatter={(value) => `$${value}`}
-                  />
-                  <Tooltip
-                    contentStyle={{
-                      backgroundColor: '#1f2937',
-                      border: 'none',
-                      borderRadius: '8px',
-                      color: '#fff',
-                    }}
-                    formatter={(value: number) => [`$${value.toFixed(2)}`, 'Spent']}
-                  />
-                  <Line
-                    type="monotone"
-                    dataKey="amount"
-                    stroke="#3b82f6"
-                    strokeWidth={2}
-                    dot={false}
-                  />
-                </LineChart>
-              </ResponsiveContainer>
+              <DynamicDailySpendingChart data={dailySpendingData} />
             )}
           </ChartContainer>
         </div>
@@ -263,8 +228,8 @@ export default function DashboardClient() {
             ) : (
               <EmptyState
                 icon={Wallet}
-                title="No Accounts"
-                description="Create your first account to get started"
+                title={tDashboard('accounts.empty.title')}
+                description={tDashboard('accounts.empty.description')}
               />
             )}
           </CardContent>
@@ -276,14 +241,14 @@ export default function DashboardClient() {
         {/* Recent Transactions */}
         <Card>
           <CardHeader className="flex flex-row items-center justify-between">
-            <CardTitle>Recent Transactions</CardTitle>
+            <CardTitle>{tDashboard('transactions.title')}</CardTitle>
             <Button
               variant="ghost"
               size="sm"
               onMouseEnter={() => prefetchTransactionsPage()}
-              onClick={() => router.push('/transactions')}
+              onClick={() => router.push(`/${locale}/transactions`)}
             >
-              View All
+              {tActions('viewAll')}
             </Button>
           </CardHeader>
           <CardContent>
@@ -342,8 +307,8 @@ export default function DashboardClient() {
             ) : (
               <EmptyState
                 icon={TrendingDown}
-                title="No Transactions"
-                description="Your recent transactions will appear here"
+                title={tDashboard('transactions.empty.title')}
+                description={tDashboard('transactions.empty.description')}
               />
             )}
           </CardContent>
@@ -354,7 +319,7 @@ export default function DashboardClient() {
           {/* Budget Progress */}
           <Card>
             <CardHeader>
-              <CardTitle>Budget Overview</CardTitle>
+              <CardTitle>{tDashboard('budgets.title')}</CardTitle>
             </CardHeader>
             <CardContent>
               {budgetsLoading ? (
@@ -397,8 +362,8 @@ export default function DashboardClient() {
               ) : (
                 <EmptyState
                   icon={Calendar}
-                  title="No Budgets"
-                  description="Create budgets to track your spending"
+                  title={tDashboard('budgets.empty.title')}
+                  description={tDashboard('budgets.empty.description')}
                 />
               )}
             </CardContent>
@@ -407,7 +372,7 @@ export default function DashboardClient() {
           {/* Upcoming Bills */}
           <Card>
             <CardHeader>
-              <CardTitle>Upcoming Bills</CardTitle>
+              <CardTitle>{tDashboard('bills.title')}</CardTitle>
             </CardHeader>
             <CardContent>
               {billsLoading ? (
@@ -430,7 +395,9 @@ export default function DashboardClient() {
                             {bill.name}
                           </p>
                           <p className="text-xs text-gray-500 dark:text-gray-400">
-                            Due {bill.dueDate ? format(new Date(bill.dueDate), 'MMM dd, yyyy') : 'N/A'}
+                            {tDashboard('bills.dueLabel', {
+                              date: bill.dueDate ? format(new Date(bill.dueDate), 'MMM dd, yyyy') : 'N/A',
+                            })}
                           </p>
                         </div>
                       </div>
@@ -443,8 +410,8 @@ export default function DashboardClient() {
               ) : (
                 <EmptyState
                   icon={Calendar}
-                  title="No Upcoming Bills"
-                  description="You have no bills due in the next 7 days"
+                  title={tDashboard('bills.empty.title')}
+                  description={tDashboard('bills.empty.description')}
                 />
               )}
             </CardContent>
@@ -454,3 +421,10 @@ export default function DashboardClient() {
     </div>
   )
 }
+const DynamicDailySpendingChart = dynamic(
+  () => import('@/components/charts/DailySpendingChart').then((mod) => mod.DailySpendingChart),
+  {
+    ssr: false,
+    loading: () => <Skeleton className="h-[260px] w-full" />,
+  }
+)

@@ -1,8 +1,17 @@
 import { NextResponse } from 'next/server'
 import type { NextRequest } from 'next/server'
+import createIntlMiddleware from 'next-intl/middleware'
+import { defaultLocale, locales } from './i18n'
 
 // Public routes that don't require authentication
 const PUBLIC_ROUTES = ['/login', '/register', '/forgot-password', '/reset-password']
+
+const handleI18nRouting = createIntlMiddleware({
+  locales,
+  defaultLocale,
+  localePrefix: 'always',
+  localeDetection: true,
+})
 
 /**
  * ✅ Gera token CSRF usando Web Crypto API (compatível com Edge Runtime)
@@ -15,16 +24,19 @@ function generateCsrfToken(): string {
 
 export function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl
-  const response = NextResponse.next()
 
-  // Skip middleware for API routes, static files, and Next.js internals
   if (
     pathname.startsWith('/_next') ||
-    pathname.startsWith('/api') ||
-    pathname.includes('.') // static files
+    pathname.includes('.') || // static files
+    pathname.startsWith('/api')
   ) {
     return NextResponse.next()
   }
+
+  const response = handleI18nRouting(request)
+
+  const locale = request.nextUrl.locale || defaultLocale
+  const pathnameWithoutLocale = pathname.replace(/^\/(en|pt)(\/|$)/, '/')
 
   // ✅ CSRF Protection: Gerar token CSRF se não existir
   if (!request.cookies.has('csrf-token')) {
@@ -64,17 +76,17 @@ export function middleware(request: NextRequest) {
   const token = request.cookies.get('accessToken')?.value
 
   // Check if route is public
-  const isPublicRoute = PUBLIC_ROUTES.some(route => pathname.startsWith(route))
+  const isPublicRoute = PUBLIC_ROUTES.some(route => pathnameWithoutLocale.startsWith(route))
 
   // If trying to access public route while authenticated, redirect to dashboard
   if (isPublicRoute && token) {
-    return NextResponse.redirect(new URL('/dashboard', request.url))
+    return NextResponse.redirect(new URL(`/${locale}/dashboard`, request.url))
   }
 
   // If trying to access protected route without token, redirect to login
   if (!isPublicRoute && !token) {
-    const loginUrl = new URL('/login', request.url)
-    loginUrl.searchParams.set('redirect', pathname)
+    const loginUrl = new URL(`/${locale}/login`, request.url)
+    loginUrl.searchParams.set('redirect', pathnameWithoutLocale)
     return NextResponse.redirect(loginUrl)
   }
 

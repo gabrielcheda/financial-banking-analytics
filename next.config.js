@@ -32,6 +32,11 @@ const connectSrcValues = [
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   reactStrictMode: true,
+  i18n: {
+    locales: ['en', 'pt'],
+    defaultLocale: 'en',
+    localeDetection: true,
+  },
 
   // Webpack optimizations
   webpack: (config, { isServer }) => {

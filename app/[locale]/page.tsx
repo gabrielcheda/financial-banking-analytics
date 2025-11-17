@@ -2,6 +2,7 @@
 
 import { useEffect } from 'react'
 import { useRouter } from 'next/navigation'
+import { useLocale } from 'next-intl'
 
 /**
  * Home Page - Redirect to Dashboard
@@ -12,11 +13,12 @@ import { useRouter } from 'next/navigation'
  */
 export default function HomePage() {
   const router = useRouter()
+  const locale = useLocale()
 
   useEffect(() => {
     // Client-side redirect is safer with React Query
-    router.replace('/dashboard')
-  }, [router])
+    router.replace(`/${locale}/dashboard`)
+  }, [locale, router])
 
   // Show nothing while redirecting
   return null

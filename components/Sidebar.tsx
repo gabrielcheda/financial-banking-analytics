@@ -2,6 +2,7 @@
 
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
+import { useLocale, useTranslations } from 'next-intl'
 import {
   LayoutDashboard,
   ArrowLeftRight,
@@ -25,23 +26,27 @@ import { useProfile } from '@/hooks/useUser'
 import { useLogout } from '@/hooks/useAuth'
 
 const navigation = [
-  { name: 'Dashboard', href: '/dashboard', icon: LayoutDashboard },
-  { name: 'Accounts', href: '/accounts', icon: Wallet },
-  { name: 'Transactions', href: '/transactions', icon: ArrowLeftRight },
-  { name: 'Categories', href: '/categories', icon: Tag },
-  { name: 'Merchants', href: '/merchants', icon: Store },
-  { name: 'Budgets', href: '/budgets', icon: PiggyBank },
-  { name: 'Bills', href: '/bills', icon: Receipt },
-  { name: 'Goals', href: '/goals', icon: Flag },
-  { name: 'Analytics', href: '/analytics', icon: TrendingUp },
-  { name: 'Reports', href: '/reports', icon: FileText },
-  { name: 'Planning', href: '/planning', icon: Target },
-  { name: 'Notifications', href: '/notifications', icon: Bell },
-  { name: 'Settings', href: '/settings', icon: Settings },
+  { key: 'dashboard', href: '/dashboard', icon: LayoutDashboard },
+  { key: 'accounts', href: '/accounts', icon: Wallet },
+  { key: 'transactions', href: '/transactions', icon: ArrowLeftRight },
+  { key: 'categories', href: '/categories', icon: Tag },
+  { key: 'merchants', href: '/merchants', icon: Store },
+  { key: 'budgets', href: '/budgets', icon: PiggyBank },
+  { key: 'bills', href: '/bills', icon: Receipt },
+  { key: 'goals', href: '/goals', icon: Flag },
+  { key: 'analytics', href: '/analytics', icon: TrendingUp },
+  { key: 'reports', href: '/reports', icon: FileText },
+  { key: 'planning', href: '/planning', icon: Target },
+  { key: 'notifications', href: '/notifications', icon: Bell },
+  { key: 'settings', href: '/settings', icon: Settings },
 ]
 
 export function Sidebar() {
   const pathname = usePathname()
+  const locale = useLocale()
+  const tNav = useTranslations('navigation')
+  const tCommon = useTranslations('common')
+  const tProfile = useTranslations('profile')
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false)
   const [isProfileMenuOpen, setIsProfileMenuOpen] = useState(false)
   const profileMenuRef = useRef<HTMLDivElement>(null)
@@ -187,10 +192,10 @@ export function Sidebar() {
           {/* Logo */}
           <div className="p-6 border-b border-gray-200 dark:border-gray-800">
             <h1 className="text-2xl font-bold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
-              BankDash
+              {tCommon('appName')}
             </h1>
             <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">
-              Financial Analytics
+              {tCommon('tagline')}
             </p>
           </div>
 
@@ -199,6 +204,7 @@ export function Sidebar() {
             {navigation.map((item) => {
               const isActive = pathname === item.href
               const Icon = item.icon
+              const label = tNav(item.key)
 
               return (
                 <Link
@@ -217,10 +223,10 @@ export function Sidebar() {
                     }
                   `}
                   aria-current={isActive ? 'page' : undefined}
-                  aria-label={`Navigate to ${item.name}`}
+                  aria-label={`Navigate to ${label}`}
                 >
                   <Icon className="w-5 h-5" aria-hidden="true" />
-                  <span>{item.name}</span>
+                  <span>{label}</span>
                 </Link>
               )
             })}
@@ -240,10 +246,10 @@ export function Sidebar() {
               </div>
               <div className="flex-1 text-left">
                 <p className="text-sm font-medium text-gray-900 dark:text-white line-clamp-1">
-                  {profile ? `${profile.firstName ?? ''} ${profile.lastName ?? ''}`.trim() || profile.email : 'Loading...'}
+                  {profile ? `${profile.firstName ?? ''} ${profile.lastName ?? ''}`.trim() || profile.email : tCommon('loading')}
                 </p>
                 <p className="text-xs text-gray-500 dark:text-gray-400 line-clamp-1">
-                  {profile?.email || 'Fetching profile'}
+                  {profile?.email || tCommon('loading')}
                 </p>
               </div>
             </button>
@@ -258,8 +264,8 @@ export function Sidebar() {
                   className="w-full text-left px-4 py-2 text-sm text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-800 flex items-center justify-between"
                   disabled={logout.isPending}
                 >
-                  Logout
-                  {logout.isPending && <span className="text-xs text-gray-400">...</span>}
+                  {tProfile('logout')}
+                  {logout.isPending && <span className="text-xs text-gray-400">{tCommon('loading')}</span>}
                 </button>
               </div>
             )}

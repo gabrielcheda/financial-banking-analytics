@@ -5,6 +5,7 @@ import { useState, useEffect, Suspense } from 'react'
 import { useFormState, useFormStatus } from 'react-dom'
 import { useSearchParams, useRouter } from 'next/navigation'
 import Link from 'next/link'
+import { useLocale, useTranslations } from 'next-intl'
 import { Button } from '@/components/ui/Button'
 import { Lock, Mail, Eye, EyeOff, AlertCircle, CheckCircle2 } from 'lucide-react'
 import { loginAction } from '@/app/actions/auth'
@@ -12,6 +13,7 @@ import { loginAction } from '@/app/actions/auth'
 // Componente separado para o botão submit (necessário para useFormStatus)
 function SubmitButton() {
   const { pending } = useFormStatus()
+  const tAuth = useTranslations('auth')
 
   return (
     <Button
@@ -20,7 +22,7 @@ function SubmitButton() {
       className="w-full py-3"
       disabled={pending}
     >
-      {pending ? 'Signing in...' : 'Sign In'}
+      {pending ? tAuth('signingIn') : tAuth('signIn')}
     </Button>
   )
 }
@@ -31,6 +33,7 @@ function SuccessMessages() {
   const registered = searchParams.get('registered')
   const verified = searchParams.get('verified')
   const redirect = searchParams.get('redirect')
+  const tAuth = useTranslations('auth')
 
   return (
     <>
@@ -39,10 +42,10 @@ function SuccessMessages() {
           <AlertCircle className="w-5 h-5 text-yellow-600 dark:text-yellow-400 flex-shrink-0 mt-0.5" />
           <div className="flex-1">
             <p className="text-sm font-medium text-yellow-800 dark:text-yellow-200">
-              Session Expired
+              {tAuth('sessionExpired.title')}
             </p>
             <p className="text-sm text-yellow-700 dark:text-yellow-300 mt-1">
-              Your session has expired. Please sign in again to continue.
+              {tAuth('sessionExpired.description')}
             </p>
           </div>
         </div>
@@ -52,10 +55,10 @@ function SuccessMessages() {
           <CheckCircle2 className="w-5 h-5 text-green-600 dark:text-green-400 flex-shrink-0 mt-0.5" />
           <div className="flex-1">
             <p className="text-sm font-medium text-green-800 dark:text-green-200">
-              Registration successful!
+              {tAuth('messages.registrationSuccessTitle')}
             </p>
             <p className="text-sm text-green-700 dark:text-green-300 mt-1">
-              Please sign in with your credentials.
+              {tAuth('messages.registrationSuccessDescription')}
             </p>
           </div>
         </div>
@@ -65,10 +68,10 @@ function SuccessMessages() {
           <CheckCircle2 className="w-5 h-5 text-green-600 dark:text-green-400 flex-shrink-0 mt-0.5" />
           <div className="flex-1">
             <p className="text-sm font-medium text-green-800 dark:text-green-200">
-              Email verified successfully!
+              {tAuth('messages.verificationSuccessTitle')}
             </p>
             <p className="text-sm text-green-700 dark:text-green-300 mt-1">
-              You can now sign in to your account.
+              {tAuth('messages.verificationSuccessDescription')}
             </p>
           </div>
         </div>
@@ -84,6 +87,9 @@ function LoginForm() {
   const searchParams = useSearchParams()
   const redirect = searchParams.get('redirect')
   const router = useRouter()
+  const locale = useLocale()
+  const tCommon = useTranslations('common')
+  const tAuth = useTranslations('auth')
 
   // Handle successful login redirect
   useEffect(() => {
@@ -107,10 +113,10 @@ function LoginForm() {
           {/* Logo */}
           <div className="text-center mb-8">
             <h1 className="text-4xl font-bold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
-              Bank Dash
+              {tCommon('appName')}
             </h1>
             <p className="text-gray-500 dark:text-gray-400 mt-2">
-              Financial Analytics Platform
+              {tCommon('tagline')}
             </p>
           </div>
 
@@ -131,11 +137,12 @@ function LoginForm() {
           <form action={formAction} className="space-y-6">
             {/* Hidden redirect field */}
             {redirect && <input type="hidden" name="redirect" value={redirect} />}
+            <input type="hidden" name="locale" value={locale} />
 
             {/* Email */}
             <div>
               <label htmlFor="email" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                Email Address
+                {tAuth('form.emailLabel')}
               </label>
               <div className="relative">
                 <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
@@ -145,7 +152,7 @@ function LoginForm() {
                   type="email"
                   autoComplete="email"
                   required
-                  placeholder="john@example.com"
+                  placeholder={tAuth('form.emailPlaceholder')}
                   className="w-full pl-10 pr-4 py-3 rounded-lg border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-900 dark:text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500"
                 />
               </div>
@@ -154,7 +161,7 @@ function LoginForm() {
             {/* Password */}
             <div>
               <label htmlFor="password" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                Password
+                {tAuth('form.passwordLabel')}
               </label>
               <div className="relative">
                 <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
@@ -164,7 +171,7 @@ function LoginForm() {
                   type={showPassword ? 'text' : 'password'}
                   autoComplete="current-password"
                   required
-                  placeholder="Enter your password"
+                  placeholder={tAuth('form.passwordPlaceholder')}
                   className="w-full pl-10 pr-12 py-3 rounded-lg border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-900 dark:text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500"
                 />
                 <button
@@ -188,11 +195,14 @@ function LoginForm() {
                   className="w-4 h-4 text-blue-600 rounded focus:ring-blue-500"
                 />
                 <span className="text-sm text-gray-600 dark:text-gray-400">
-                  Remember me
+                  {tAuth('rememberMe')}
                 </span>
               </label>
-              <Link href="/forgot-password" className="text-sm text-blue-600 hover:text-blue-700 dark:text-blue-400">
-                Forgot password?
+              <Link
+                href={{ pathname: '/forgot-password', locale }}
+                className="text-sm text-blue-600 hover:text-blue-700 dark:text-blue-400"
+              >
+                {tAuth('forgotPassword')}
               </Link>
             </div>
 
@@ -202,9 +212,12 @@ function LoginForm() {
 
           {/* Sign Up Link */}
           <p className="text-center text-sm text-gray-600 dark:text-gray-400 mt-6">
-            Don't have an account?{' '}
-            <Link href="/register" className="text-blue-600 hover:text-blue-700 dark:text-blue-400 font-medium">
-              Sign up
+            {tAuth('noAccount')}{' '}
+            <Link
+              href={{ pathname: '/register', locale }}
+              className="text-blue-600 hover:text-blue-700 dark:text-blue-400 font-medium"
+            >
+              {tAuth('signUp')}
             </Link>
           </p>
         </div>
@@ -213,13 +226,18 @@ function LoginForm() {
   )
 }
 
+function LoadingFallback() {
+  const tCommon = useTranslations('common')
+  return (
+    <div className="min-h-screen bg-gradient-to-br from-blue-500 via-purple-500 to-pink-500 flex items-center justify-center">
+      <div className="text-white">{tCommon('loading')}</div>
+    </div>
+  )
+}
+
 export default function LoginPage() {
   return (
-    <Suspense fallback={
-      <div className="min-h-screen bg-gradient-to-br from-blue-500 via-purple-500 to-pink-500 flex items-center justify-center">
-        <div className="text-white">Loading...</div>
-      </div>
-    }>
+    <Suspense fallback={<LoadingFallback />}>
       <LoginForm />
     </Suspense>
   )

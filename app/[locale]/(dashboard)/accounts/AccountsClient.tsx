@@ -1,6 +1,7 @@
 'use client'
 
 import { useState } from 'react'
+import { useLocale, useTranslations } from 'next-intl'
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/Card'
 import { Button } from '@/components/ui/Button'
 import { Skeleton } from '@/components/ui/Skeleton'
@@ -51,6 +52,9 @@ interface ModalState {
 }
 
 export default function AccountsClient() {
+  const locale = useLocale()
+  const tAccounts = useTranslations('accounts')
+  const tActions = useTranslations('common.actions')
   const [modalState, setModalState] = useState<ModalState>({
     isOpen: false,
     mode: 'create',
@@ -141,15 +145,15 @@ export default function AccountsClient() {
       <div className="flex justify-between items-center">
         <div>
           <h1 className="text-3xl font-bold text-gray-900 dark:text-white">
-            Accounts
+            {tAccounts('title')}
           </h1>
           <p className="text-gray-500 dark:text-gray-400 mt-1">
-            Manage your financial accounts
+            {tAccounts('subtitle')}
           </p>
         </div>
         <Button variant="primary" onClick={openCreateModal}>
           <Plus className="w-5 h-5 mr-2" />
-          Add Account
+          {tAccounts('actions.add')}
         </Button>
       </div>
 
@@ -172,7 +176,7 @@ export default function AccountsClient() {
                 <div className="flex items-center justify-between">
                   <div>
                     <p className="text-sm text-gray-500 dark:text-gray-400">
-                      Total Balance
+                      {tAccounts('summary.totalBalance')}
                     </p>
                     <p className="text-2xl font-bold text-gray-900 dark:text-white mt-1">
                       ${summary?.totalBalance?.toLocaleString('en-US', { minimumFractionDigits: 2 }) ?? '0.00'}
@@ -190,7 +194,7 @@ export default function AccountsClient() {
                 <div className="flex items-center justify-between">
                   <div>
                     <p className="text-sm text-gray-500 dark:text-gray-400">
-                      Accounts
+                      {tAccounts('summary.activeAccounts')}
                     </p>
                     <p className="text-2xl font-bold text-gray-900 dark:text-white mt-1">
                       {accounts.length}
@@ -208,7 +212,7 @@ export default function AccountsClient() {
                 <div className="flex items-center justify-between">
                   <div>
                     <p className="text-sm text-gray-500 dark:text-gray-400">
-                      Total Assets
+                      {tAccounts('summary.totalAssets')}
                     </p>
                     <p className="text-2xl font-bold text-gray-900 dark:text-white mt-1">
                       ${summary?.totalAssets?.toLocaleString('en-US', { minimumFractionDigits: 2 }) ?? '0.00'}
@@ -226,7 +230,7 @@ export default function AccountsClient() {
                 <div className="flex items-center justify-between">
                   <div>
                     <p className="text-sm text-gray-500 dark:text-gray-400">
-                      Net Worth
+                      {tAccounts('summary.netWorth')}
                     </p>
                     <p className="text-2xl font-bold text-gray-900 dark:text-white mt-1">
                       ${summary?.netWorth?.toLocaleString('en-US', { minimumFractionDigits: 2 }) ?? '0.00'}
@@ -258,10 +262,10 @@ export default function AccountsClient() {
           <CardContent className="p-6">
             <EmptyState
               icon={Wallet}
-              title="No Accounts Yet"
-              description="Get started by adding your first financial account to track your finances."
+              title={tAccounts('empty.title')}
+              description={tAccounts('empty.description')}
               action={{
-                label: 'Add Your First Account',
+                label: tAccounts('empty.action'),
                 onClick: openCreateModal,
               }}
             />
@@ -312,7 +316,7 @@ export default function AccountsClient() {
                   {/* Balance */}
                   <div className="mb-4">
                     <p className="text-sm text-gray-500 dark:text-gray-400">
-                      Current Balance
+                      {tAccounts('fields.currentBalance')}
                     </p>
                     <p className="text-2xl font-bold text-gray-900 dark:text-white">
                       ${(account.balance ?? 0).toLocaleString('en-US', { minimumFractionDigits: 2 })} {account.currency}
@@ -324,7 +328,7 @@ export default function AccountsClient() {
                     <div className="flex items-center gap-2">
                       <Building2 className="w-4 h-4 text-gray-400" />
                       <span className="text-sm text-gray-600 dark:text-gray-400">
-                        {account.institution || 'No institution'}
+                        {account.institution || tAccounts('fields.noInstitution')}
                       </span>
                     </div>
                     <span
@@ -333,7 +337,7 @@ export default function AccountsClient() {
                         : 'bg-gray-100 text-gray-800 dark:bg-gray-800 dark:text-gray-400'
                         }`}
                     >
-                      {account.isActive ? 'Active' : 'Inactive'}
+                      {account.isActive ? tAccounts('fields.status.active') : tAccounts('fields.status.inactive')}
                     </span>
                   </div>
                 </CardContent>
@@ -347,7 +351,7 @@ export default function AccountsClient() {
       <Modal
         isOpen={modalState.isOpen}
         onClose={() => setModalState({ isOpen: false, mode: 'create' })}
-        title={modalState.mode === 'create' ? 'Add New Account' : 'Edit Account'}
+        title={modalState.mode === 'create' ? tAccounts('modals.createTitle') : tAccounts('modals.editTitle')}
         size="lg"
       >
         <AccountForm
@@ -367,10 +371,10 @@ export default function AccountsClient() {
         isOpen={deleteDialogState.isOpen}
         onClose={() => setDeleteDialogState({ isOpen: false })}
         onConfirm={handleDeleteAccount}
-        title="Delete Account"
-        description={`Are you sure you want to delete "${deleteDialogState.accountName}"? This action cannot be undone and will also delete all associated transactions.`}
-        confirmLabel="Delete Account"
-        cancelLabel="Cancel"
+        title={tAccounts('modals.deleteTitle')}
+        description={tAccounts('modals.deleteDescription', { name: deleteDialogState.accountName ?? '' })}
+        confirmLabel={tAccounts('modals.deleteConfirm')}
+        cancelLabel={tActions('cancel')}
         variant="danger"
         isLoading={deleteMutation.isPending}
       />
