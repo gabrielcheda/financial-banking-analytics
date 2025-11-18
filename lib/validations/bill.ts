@@ -25,11 +25,11 @@ export const updateBillSchema = z.object({
     .or(z.string().transform((val) => parseFloat(val)))
     .optional(),
   isPaid: z.boolean().optional(),
-  paidDate: z.coerce.date().optional(),
+  paymentDate: z.coerce.date().optional(),
 })
 
 export const payBillSchema = z.object({
-  paidDate: z.coerce.date(),
+  paymentDate: z.coerce.date(),
   amount: z
     .number()
     .positive('Amount must be positive')

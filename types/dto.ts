@@ -496,7 +496,7 @@ export interface UpdateBillDTO {
 }
 
 export interface PayBillDTO {
-  paidDate?: string // ISO date, default: today
+  paymentDate?: string // ISO string, defaults to current date/time
   notes?: string
 }
 

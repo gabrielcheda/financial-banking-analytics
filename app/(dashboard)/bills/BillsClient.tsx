@@ -31,6 +31,7 @@ import {
   usePayBill,
 } from '@/hooks/useBills'
 import type { BillDTO, CreateBillDTO, UpdateBillDTO, PayBillDTO } from '@/types/dto'
+import { parseLocaleNumber } from '@/lib/numberUtils'
 
 type TabType = 'all' | 'upcoming' | 'overdue' | 'paid'
 
@@ -64,6 +65,28 @@ export default function BillsClient() {
   const deleteBill = useDeleteBill()
   const payBill = usePayBill()
 
+  const normalizeAmount = (value: number | string | null | undefined) => {
+    if (typeof value === 'number' && !Number.isNaN(value)) {
+      return Number(value.toFixed(2))
+    }
+
+    if (typeof value === 'string' && value.trim().length > 0) {
+      const parsed = parseLocaleNumber(value)
+      if (typeof parsed === 'number' && !Number.isNaN(parsed)) {
+        return Number(parsed.toFixed(2))
+      }
+    }
+
+    return 0
+  }
+
+  const normalizeDate = (value: string | Date) => {
+    if (value instanceof Date) {
+      return format(value, 'yyyy-MM-dd')
+    }
+    return value.split('T')[0]
+  }
+
   // Get data from API response
   const allBills = allBillsData || []
   const upcomingBills = upcomingBillsData || []
@@ -72,9 +95,14 @@ export default function BillsClient() {
 
   // Calculate statistics
   const stats = useMemo(() => {
-    const totalUpcoming = (upcomingBills || []).reduce((sum: number, b: BillDTO) => sum + b.amount, 0)
-    const totalOverdue = (overdueBills || []).reduce((sum: number, b: BillDTO) => sum + b.amount, 0)
-    const totalPaid = (paidBills || []).reduce((sum: number, b: BillDTO) => sum + b.amount, 0)
+    const totalUpcoming = (upcomingBills || []).reduce((sum: number, b: BillDTO) => sum + Number(b.amount), 0)
+    const totalOverdue = (overdueBills || []).reduce((sum: number, b: BillDTO) => sum + Number(b.amount), 0)
+    const totalPaid = (paidBills || []).reduce((sum: number, b: BillDTO) => {
+      if (b.isPaid)
+        return sum + Number(b.amount);
+
+      return sum;
+    }, 0)
     const overdueCount = (overdueBills || []).length
 
     return {
@@ -104,8 +132,8 @@ export default function BillsClient() {
     // Transform form data to DTO format
     const dto: CreateBillDTO = {
       name: data.name,
-      amount: data.amount,
-      dueDate: data.dueDate,
+      amount: normalizeAmount(data.amount),
+      dueDate: normalizeDate(data.dueDate),
       categoryId: data.categoryId,
       accountId: data.accountId,
       recurrence: data.isRecurring
@@ -122,8 +150,8 @@ export default function BillsClient() {
     // Transform form data to DTO format
     const dto: UpdateBillDTO = {
       name: data.name,
-      amount: data.amount,
-      dueDate: data.dueDate,
+      amount: normalizeAmount(data.amount ?? editingBill.amount),
+      dueDate: data.dueDate ? normalizeDate(data.dueDate) : undefined,
       categoryId: data.categoryId,
       accountId: data.accountId,
       recurrence: data.isRecurring
@@ -285,7 +313,7 @@ export default function BillsClient() {
                       Paid This Month
                     </p>
                     <p className="text-2xl font-bold text-green-600 dark:text-green-400 mt-2">
-                      {formatCurrency(stats.totalPaid)}
+                      {formatCurrency(Number(stats.totalPaid))}
                     </p>
                   </div>
                   <div className="bg-green-100 dark:bg-green-900/30 p-3 rounded-full">
@@ -367,9 +395,9 @@ export default function BillsClient() {
               action={
                 activeTab === 'all'
                   ? {
-                      label: 'Create Bill',
-                      onClick: () => setShowAddModal(true),
-                    }
+                    label: 'Create Bill',
+                    onClick: () => setShowAddModal(true),
+                  }
                   : undefined
               }
             />
@@ -430,7 +458,7 @@ export default function BillsClient() {
                     <div className="flex items-center justify-between">
                       <span className="text-sm text-gray-500 dark:text-gray-400">Amount</span>
                       <span className="text-lg font-bold text-gray-900 dark:text-white">
-                        {formatCurrency(bill.amount)}
+                        {formatCurrency(Number(bill.amount))}
                       </span>
                     </div>
 
@@ -599,7 +627,7 @@ export default function BillsClient() {
                   variant="primary"
                   onClick={() =>
                     handlePayBill({
-                      paidDate: format(new Date(), 'yyyy-MM-dd'),
+                      paymentDate: new Date().toISOString(),
                     })
                   }
                   disabled={payBill.isPending}

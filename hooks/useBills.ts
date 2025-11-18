@@ -132,7 +132,7 @@ export function usePayBill() {
     mutationFn: ({ id, data }: { id: string; data: PayBillDTO }) =>
       billService.payBill(id, data),
     onSuccess: (_, variables) => {
-      queryClient.invalidateQueries({ queryKey: billKeys.lists() })
+      queryClient.invalidateQueries({ queryKey: billKeys.all })
       queryClient.invalidateQueries({ queryKey: billKeys.detail(variables.id) })
       queryClient.invalidateQueries({ queryKey: ['transactions'] })
       queryClient.invalidateQueries({ queryKey: ['accounts'] })

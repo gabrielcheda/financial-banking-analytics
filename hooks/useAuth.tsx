@@ -74,7 +74,8 @@ export function useLogout() {
     onSuccess: () => {
       // Clear all cached data
       queryClient.clear()
-
+      window.localStorage.removeItem('accessToken');
+      window.localStorage.removeItem('refreshToken');
       toast.success('Logged out successfully')
       router.push('/login')
     },
