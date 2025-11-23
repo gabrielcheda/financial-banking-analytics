@@ -10,10 +10,10 @@ interface Transaction {
   date: Date
   description: string
   category: string
-  merchant: string
+  merchant?: string
   amount: number
-  type: 'income' | 'expense'
-  status: 'completed' | 'pending'
+  type: 'income' | 'expense' | 'transfer'
+  status: 'completed' | 'pending' | 'cancelled'
 }
 
 interface VirtualTransactionListProps {
@@ -117,7 +117,7 @@ export function VirtualTransactionList({
 
                 {/* Merchant */}
                 <div className="col-span-2 flex items-center text-sm text-gray-500 dark:text-gray-400 truncate">
-                  {transaction.merchant}
+                  {transaction.merchant && transaction.merchant.trim().length > 0 ? transaction.merchant : '—'}
                 </div>
 
                 {/* Amount */}
@@ -126,11 +126,13 @@ export function VirtualTransactionList({
                     className={
                       transaction.type === 'income'
                         ? 'text-green-600'
-                        : 'text-gray-900 dark:text-white'
+                        : transaction.type === 'transfer'
+                          ? 'text-blue-600 dark:text-blue-400'
+                          : 'text-gray-900 dark:text-white'
                     }
                   >
-                    {transaction.type === 'income' ? '+' : '-'}$
-                    {Math.abs(transaction.amount).toFixed(2)}
+                    {transaction.type === 'income' ? '+' : transaction.type === 'expense' ? '-' : '↔ '}
+                    ${Math.abs(transaction.amount).toFixed(2)}
                   </span>
                 </div>
 
@@ -140,7 +142,9 @@ export function VirtualTransactionList({
                     className={`px-2 py-1 text-xs font-medium rounded-full whitespace-nowrap ${
                       transaction.status === 'completed'
                         ? 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400'
-                        : 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-400'
+                        : transaction.status === 'cancelled'
+                          ? 'bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-300'
+                          : 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-400'
                     }`}
                   >
                     {transaction.status}

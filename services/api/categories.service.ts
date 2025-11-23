@@ -70,10 +70,18 @@ class CategoryService {
    * Delete a category and reassign transactions
    */
   async deleteCategory(id: string, reassignTo: string): Promise<{ message: string; transactionsReassigned: number }> {
-    const params = new URLSearchParams()
-    params.append('reassignTo', reassignTo)
     const response = await apiClient.delete<ApiResponse<{ message: string; transactionsReassigned: number }>>(
-      `${this.baseUrl}/${id}?${params.toString()}`
+      `${this.baseUrl}/${id}`,
+      {
+        params: {
+          reassignTo,
+          reassignToCategoryId: reassignTo,
+        },
+        data: {
+          reassignTo,
+          reassignToCategoryId: reassignTo,
+        },
+      }
     )
     return unwrapResponse(response)
   }

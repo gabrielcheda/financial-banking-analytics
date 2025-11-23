@@ -15,6 +15,7 @@ const METHODS_WITH_BODY = new Set(['POST', 'PUT', 'PATCH', 'DELETE'])
 
 class ApiClient {
   private client: AxiosInstance
+  private isHandlingUnauthorized = false
 
   constructor() {
     this.client = axios.create({
@@ -221,13 +222,30 @@ class ApiClient {
    * Cookies httpOnly são gerenciados pelo servidor
    */
   private handleUnauthorized(): void {
-    if (typeof window === 'undefined') return
+    if (typeof window === 'undefined' || this.isHandlingUnauthorized) return
 
-    // Evitar múltiplos redirects
+    this.isHandlingUnauthorized = true
+
+    // Evitar multiplos redirects
     if (window.location.pathname === '/login') return
 
     // Log para debug
-    console.warn('🔒 Session expired or unauthorized. Redirecting to login...')
+    console.warn('Session expired or unauthorized. Redirecting to login...')
+
+    // Limpa vestigios de sessao no cliente
+    try {
+      window.localStorage.removeItem('accessToken')
+      window.localStorage.removeItem('refreshToken')
+      document.cookie = 'accessTokenPublic=; Max-Age=0; path=/'
+      document.cookie = 'rememberMe=; Max-Age=0; path=/'
+    } catch (cleanupError) {
+      console.warn('[apiClient] Failed to clear client auth state', cleanupError)
+    }
+
+    // Melhor esforco para encerrar sessao no backend
+    fetch('/api/auth/logout', { method: 'POST' }).catch(() => {
+      // Silencia erros - o redirect abaixo garante saida
+    })
 
     // Redirect para login com mensagem
     const currentPath = window.location.pathname

@@ -16,17 +16,54 @@ import {
   ArrowUpDown,
   Plus,
   Receipt,
+  Edit,
 } from 'lucide-react'
 import { format } from 'date-fns'
 import { TransactionCard } from '@/components/TransactionCard'
 import { isFeatureEnabled } from '@/lib/featureFlags'
-import { useTransactions, useExportTransactions, useImportTransactions, useCreateTransaction } from '@/hooks/useTransactions'
+import { useTransactions, useExportTransactions, useImportTransactions, useCreateTransaction, useUpdateTransaction } from '@/hooks/useTransactions'
 import { useCategories } from '@/hooks/useCategories'
 import { useDebounce } from '@/hooks/useDebounce'
-import type { TransactionFiltersDTO, CreateTransactionDTO } from '@/types/dto'
+import type { TransactionFiltersDTO, CreateTransactionDTO, TransactionDTO, UpdateTransactionDTO } from '@/types/dto'
 import type { CreateTransactionInput } from '@/lib/validations/transaction'
 import { Modal } from '@/components/ui/Modal'
 import { usePrefetch } from '@/hooks/usePrefetch'
+
+const CSV_TOOLTIP_TEXT =
+  'Required columns: date, description, amount, type, category name, account name, status'
+
+type TransactionTypeFilter = 'all' | 'income' | 'expense' | 'transfer'
+
+const buildTransactionPayload = (data: CreateTransactionInput): CreateTransactionDTO => {
+  const normalizedDate = data.date instanceof Date ? data.date : new Date(data.date)
+
+  const payload: CreateTransactionDTO = {
+    accountId: data.accountId,
+    categoryId: data.categoryId,
+    date: normalizedDate.toISOString(),
+    description: data.description,
+    amount: Math.abs(typeof data.amount === 'number' ? data.amount : Number(data.amount)),
+    type: data.type,
+  }
+
+  if (data.status) {
+    payload.status = data.status
+  }
+  if (data.merchantId) {
+    payload.merchantId = data.merchantId
+  }
+  if (data.notes) {
+    payload.notes = data.notes
+  }
+  if (data.tags && data.tags.length) {
+    payload.tags = data.tags
+  }
+  if (data.toAccountId) {
+    payload.toAccountId = data.toAccountId
+  }
+
+  return payload
+}
 
 const ITEMS_PER_PAGE = 20
 
@@ -64,13 +101,14 @@ export default function TransactionsClient() {
   const [currentPage, setCurrentPage] = useState(1)
   const [searchQuery, setSearchQuery] = useState('')
   const [selectedCategory, setSelectedCategory] = useState<string>('all')
-  const [selectedType, setSelectedType] = useState<string>('all')
+  const [selectedType, setSelectedType] = useState<TransactionTypeFilter>('all')
   const [sortField, setSortField] = useState<'date' | 'amount'>('date')
   const [sortDirection, setSortDirection] = useState<'asc' | 'desc'>('desc')
 
   // Modal states
   const [showAddModal, setShowAddModal] = useState(false)
   const [showFiltersModal, setShowFiltersModal] = useState(false)
+  const [editingTransaction, setEditingTransaction] = useState<TransactionDTO | null>(null)
 
   // Advanced filter states
   const [dateFrom, setDateFrom] = useState<string>('')
@@ -92,7 +130,7 @@ export default function TransactionsClient() {
     limit: ITEMS_PER_PAGE,
     search: debouncedSearch || undefined,
     categoryId: selectedCategory !== 'all' ? selectedCategory : undefined,
-    type: selectedType !== 'all' ? (selectedType as 'income' | 'expense') : undefined,
+    type: selectedType !== 'all' ? (selectedType as 'income' | 'expense' | 'transfer') : undefined,
     sortBy: sortField,
     sortOrder: sortDirection === 'desc' ? 'DESC' : 'ASC',
     dateFrom: dateFrom || undefined,
@@ -109,11 +147,50 @@ export default function TransactionsClient() {
   const exportMutation = useExportTransactions()
   const importMutation = useImportTransactions()
   const createTransaction = useCreateTransaction()
+  const updateTransaction = useUpdateTransaction()
 
   // Get data from API response
   const transactions = transactionsData?.data || []
   const pagination = transactionsData?.pagination
   const categories = categoriesData || []
+
+  const getMerchantName = (transaction: TransactionDTO) => {
+    if (transaction.merchant && transaction.merchant.trim().length > 0) {
+      return transaction.merchant
+    }
+    return transaction.merchantEntity?.name || ''
+  }
+
+  const formatAmountDisplay = (transaction: TransactionDTO) => {
+    const value = Math.abs(normalizeAmount(transaction.amount)).toFixed(2)
+    if (transaction.type === 'income') return `+$${value}`
+    if (transaction.type === 'expense') return `-$${value}`
+    return `↔ $${value}`
+  }
+
+  const getAmountClassName = (transaction: TransactionDTO) => {
+    if (transaction.type === 'income') return 'text-green-600 dark:text-green-400'
+    if (transaction.type === 'transfer') return 'text-blue-600 dark:text-blue-400'
+    return 'text-gray-900 dark:text-white'
+  }
+
+  const getStatusBadgeClass = (status: TransactionDTO['status']) => {
+    switch (status) {
+      case 'completed':
+        return 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400'
+      case 'cancelled':
+        return 'bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-300'
+      default:
+        return 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-400'
+    }
+  }
+
+  const openEditModalById = (transactionId: string) => {
+    const target = transactions.find((t) => t.id === transactionId)
+    if (target) {
+      setEditingTransaction(target)
+    }
+  }
 
   const normalizeAmount = (amount: number | string | null | undefined) => {
     if (typeof amount === 'number') return amount
@@ -124,6 +201,24 @@ export default function TransactionsClient() {
     return 0
   }
 
+  const virtualTransactions = useMemo(
+    () =>
+      transactions.map((transaction) => {
+        const category = categories.find((c) => c.id === transaction.categoryId)
+        return {
+          id: transaction.id,
+          date: new Date(transaction.date),
+          description: transaction.description,
+          category: category?.name || 'Uncategorized',
+          merchant: getMerchantName(transaction),
+          amount: normalizeAmount(transaction.amount),
+          type: transaction.type as 'income' | 'expense' | 'transfer',
+          status: transaction.status as 'completed' | 'pending' | 'cancelled',
+        }
+      }),
+    [transactions, categories]
+  )
+
   // Calculate stats from current page data
   const totalIncome = transactions
     .filter((t) => t.type === 'income')
@@ -131,7 +226,7 @@ export default function TransactionsClient() {
 
   const totalExpenses = Math.abs(
     transactions
-      .filter((t) => t.type === 'expense')
+      .filter((t) => t.type === 'expense' && t.status === 'completed')
       .reduce((sum, t) => sum + normalizeAmount(t.amount), 0)
   )
 
@@ -151,17 +246,14 @@ export default function TransactionsClient() {
   }
 
   const handleExport = async () => {
-    await exportMutation.mutateAsync({
-      dateFrom: format(new Date(new Date().getFullYear(), 0, 1), 'yyyy-MM-dd'),
-      dateTo: format(new Date(), 'yyyy-MM-dd'),
-      categoryId: selectedCategory !== 'all' ? selectedCategory : undefined,
-    })
+    const { page: _page, limit: _limit, ...exportFilters } = filters
+    await exportMutation.mutateAsync(exportFilters)
   }
 
   const handleImport = () => {
     const input = document.createElement('input')
     input.type = 'file'
-    input.accept = '.csv'
+    input.accept = '.csv,text/csv'
     input.onchange = async (e) => {
       const file = (e.target as HTMLInputElement).files?.[0]
       if (file) {
@@ -172,12 +264,40 @@ export default function TransactionsClient() {
   }
 
   const handleCreateTransaction = async (data: CreateTransactionInput) => {
-    const payload = {
-      ...data,
-      date: data.date instanceof Date ? data.date.toISOString() : data.date,
-    } as CreateTransactionDTO
+    const payload = buildTransactionPayload(data)
     await createTransaction.mutateAsync(payload)
     setShowAddModal(false)
+  }
+
+  const editingDefaults = useMemo<Partial<CreateTransactionInput> | undefined>(() => {
+    if (!editingTransaction) return undefined
+    return {
+      accountId: editingTransaction.accountId,
+      toAccountId: editingTransaction.toAccountId || '',
+      categoryId: editingTransaction.categoryId,
+      description: editingTransaction.description,
+      amount: Math.abs(normalizeAmount(editingTransaction.amount)),
+      date: new Date(editingTransaction.date),
+      type: editingTransaction.type as CreateTransactionInput['type'],
+      status: editingTransaction.status as NonNullable<CreateTransactionInput['status']>,
+      merchantId: editingTransaction.merchantId || '',
+      notes: editingTransaction.notes || '',
+      tags: editingTransaction.tags || [],
+    }
+  }, [editingTransaction])
+  const handleUpdateTransactionSubmit = async (data: CreateTransactionInput) => {
+    if (!editingTransaction) return
+    const payload = buildTransactionPayload(data) as UpdateTransactionDTO
+    try {
+      await updateTransaction.mutateAsync({
+        id: editingTransaction.id,
+        data: payload,
+      })
+      setEditingTransaction(null)
+    } catch (error) {
+      // errors handled via hook toast, keep modal open for corrections
+      console.error('Failed to update transaction', error)
+    }
   }
 
   return (
@@ -292,7 +412,7 @@ export default function TransactionsClient() {
               <select
                 value={selectedType}
                 onChange={(e) => {
-                  setSelectedType(e.target.value)
+                  setSelectedType(e.target.value as TransactionTypeFilter)
                   setCurrentPage(1)
                 }}
                 className="w-full px-4 py-2 rounded-lg border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
@@ -300,6 +420,7 @@ export default function TransactionsClient() {
                 <option value="all">All Types</option>
                 <option value="income">Income</option>
                 <option value="expense">Expense</option>
+                <option value="transfer">Transfer</option>
               </select>
             </div>
           </div>
@@ -319,15 +440,20 @@ export default function TransactionsClient() {
               <Download className="w-4 h-4 mr-2" />
               {exportMutation.isPending ? 'Exporting...' : 'Export CSV'}
             </Button>
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={handleImport}
-              disabled={importMutation.isPending || isLoading}
-            >
-              <Upload className="w-4 h-4 mr-2" />
-              {importMutation.isPending ? 'Importing...' : 'Import CSV'}
-            </Button>
+            <div className="relative group">
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={handleImport}
+                disabled={importMutation.isPending || isLoading}
+              >
+                <Upload className="w-4 h-4 mr-2" />
+                {importMutation.isPending ? 'Importing...' : 'Import CSV'}
+              </Button>
+              <div className="pointer-events-none absolute left-1/2 top-full z-10 mt-2 w-64 -translate-x-1/2 rounded-md bg-gray-900 text-[11px] text-white px-3 py-2 opacity-0 transition-opacity group-hover:opacity-100">
+                {CSV_TOOLTIP_TEXT}
+              </div>
+            </div>
             <Button variant="primary" size="sm" onClick={() => setShowAddModal(true)}>
               <Plus className="w-4 h-4 mr-2" />
               Add Transaction
@@ -366,21 +492,8 @@ export default function TransactionsClient() {
           ) : useVirtualScrolling ? (
             // Virtual scrolling for large lists
             <DynamicVirtualTransactionList
-              transactions={transactions.map(t => {
-                const category = categories.find(c => c.id === t.categoryId)
-                return {
-                  ...t,
-                  date: new Date(t.date),
-                  category: category?.name || 'Uncategorized',
-                  merchant: t.merchant || '',
-                  type: t.type as 'income' | 'expense',
-                  status: t.status as 'completed' | 'pending'
-                }
-              })}
-              onTransactionClick={(transaction) => {
-                // Transaction details can be viewed by clicking the transaction
-                console.log('Transaction clicked:', transaction)
-              }}
+              transactions={virtualTransactions}
+              onTransactionClick={(transaction) => openEditModalById(transaction.id)}
             />
           ) : (
             // Traditional pagination
@@ -397,17 +510,16 @@ export default function TransactionsClient() {
                   >
                     <TransactionCard
                       transaction={{
-                        ...transaction,
+                        id: transaction.id,
                         date: new Date(transaction.date),
                         category: category?.name || 'Uncategorized',
-                        merchant: transaction.merchant || '',
-                        type: transaction.type as 'income' | 'expense',
-                        status: transaction.status as 'completed' | 'pending'
+                        description: transaction.description,
+                        merchant: getMerchantName(transaction),
+                        amount: normalizeAmount(transaction.amount),
+                        type: transaction.type as 'income' | 'expense' | 'transfer',
+                        status: transaction.status as 'completed' | 'pending' | 'cancelled'
                       }}
-                      onClick={() => {
-                        // Transaction details can be viewed by clicking the transaction
-                        console.log('Transaction clicked:', transaction)
-                      }}
+                      onClick={() => openEditModalById(transaction.id)}
                     />
                   </div>
                 )})}
@@ -448,6 +560,9 @@ export default function TransactionsClient() {
                       <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
                         Status
                       </th>
+                      <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                        Actions
+                      </th>
                     </tr>
                   </thead>
                   <tbody className="bg-white dark:bg-gray-900 divide-y divide-gray-200 dark:divide-gray-800">
@@ -460,10 +575,7 @@ export default function TransactionsClient() {
                           key={transaction.id}
                           className="hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors cursor-pointer"
                           onMouseEnter={() => prefetchTransactionDetail(transaction.id)}
-                          onClick={() => {
-                            // Transaction details can be viewed by clicking the transaction
-                            console.log('Transaction clicked:', transaction)
-                          }}
+                          onClick={() => openEditModalById(transaction.id)}
                         >
                           <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900 dark:text-white">
                             {format(new Date(transaction.date), 'MMM dd, yyyy')}
@@ -485,30 +597,30 @@ export default function TransactionsClient() {
                             </span>
                           </td>
                           <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">
-                            {transaction.merchant || '-'}
+                            {getMerchantName(transaction) || '-'}
                           </td>
                           <td className="px-6 py-4 whitespace-nowrap text-sm text-right font-semibold">
-                            <span
-                              className={
-                                transaction.type === 'income'
-                                  ? 'text-green-600'
-                                  : 'text-gray-900 dark:text-white'
-                              }
-                            >
-                              {transaction.type === 'income' ? '+' : '-'}$
-                              {Math.abs(transaction.amount).toFixed(2)}
+                            <span className={getAmountClassName(transaction)}>
+                              {formatAmountDisplay(transaction)}
                             </span>
                           </td>
                           <td className="px-6 py-4 whitespace-nowrap">
-                            <span
-                              className={`px-2 py-1 text-xs font-medium rounded-full capitalize ${
-                                transaction.status === 'completed'
-                                  ? 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400'
-                                  : 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-400'
-                              }`}
-                            >
+                            <span className={`px-2 py-1 text-xs font-medium rounded-full capitalize ${getStatusBadgeClass(transaction.status)}`}>
                               {transaction.status}
                             </span>
+                          </td>
+                          <td className="px-6 py-4 whitespace-nowrap text-right">
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              onClick={(event) => {
+                                event.stopPropagation()
+                                openEditModalById(transaction.id)
+                              }}
+                            >
+                              <Edit className="w-4 h-4 mr-1" />
+                              Edit
+                            </Button>
                           </td>
                         </tr>
                       )
@@ -581,10 +693,30 @@ export default function TransactionsClient() {
         size="lg"
       >
         <DynamicTransactionForm
+          key="create-transaction-form"
           onSubmit={handleCreateTransaction}
           onCancel={() => setShowAddModal(false)}
           isLoading={createTransaction.isPending}
         />
+      </Modal>
+
+      {/* Edit Transaction Modal */}
+      <Modal
+        isOpen={Boolean(editingTransaction)}
+        onClose={() => setEditingTransaction(null)}
+        title="Edit Transaction"
+        size="lg"
+      >
+        {editingDefaults && (
+          <DynamicTransactionForm
+            key={editingTransaction?.id || 'edit-transaction-form'}
+            onSubmit={handleUpdateTransactionSubmit}
+            onCancel={() => setEditingTransaction(null)}
+            defaultValues={editingDefaults}
+            isLoading={updateTransaction.isPending}
+            isEditing
+          />
+        )}
       </Modal>
 
       {/* More Filters Modal */}

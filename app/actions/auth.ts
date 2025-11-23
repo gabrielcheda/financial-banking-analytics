@@ -5,6 +5,99 @@ import { cookies } from 'next/headers'
 import { redirect } from 'next/navigation'
 import type { LoginDTO, RegisterDTO } from '@/types/dto'
 
+export type RegisterActionState = {
+    error?: string | null
+    details?: Record<string, string> | string | null
+    success?: boolean
+    redirectTo?: string
+}
+
+type ApiErrorPayload = {
+    message?: unknown
+    [key: string]: any
+}
+
+interface ApiResult {
+    success?: boolean
+    message?: string | string[]
+    error?: ApiErrorPayload
+    data?: {
+        error?: ApiErrorPayload
+        [key: string]: any
+    } & Record<string, any>
+    [key: string]: any
+}
+
+function normalizeMessage(message?: unknown): string | undefined {
+    if (message == null) return undefined
+
+    if (typeof message === 'string') {
+        return message
+    }
+
+    if (Array.isArray(message)) {
+        const parts = message
+            .map((item) => normalizeMessage(item))
+            .filter((part): part is string => Boolean(part))
+
+        return parts.length ? parts.join(', ') : undefined
+    }
+
+    if (typeof message === 'object') {
+        const value = message as Record<string, unknown>
+
+        if (value.constraints && typeof value.constraints === 'object') {
+            const constraintMessages = Object.values(value.constraints as Record<string, unknown>)
+                .map((constraint) => normalizeMessage(constraint))
+                .filter((part): part is string => Boolean(part))
+
+            if (constraintMessages.length) {
+                return constraintMessages.join(', ')
+            }
+        }
+
+        if ('message' in value) {
+            const nestedMessage = normalizeMessage(value.message)
+            if (nestedMessage) return nestedMessage
+        }
+
+        if ('messages' in value) {
+            const nestedMessages = normalizeMessage(value.messages)
+            if (nestedMessages) return nestedMessages
+        }
+
+        if ('error' in value) {
+            const nestedError = normalizeMessage(value.error)
+            if (nestedError) return nestedError
+        }
+
+        return undefined
+    }
+
+    return String(message)
+}
+
+function extractApiError(result: ApiResult | null, fallback: string) {
+    const details = result?.error ?? result?.data?.error
+    const message =
+        normalizeMessage(details?.message) ??
+        normalizeMessage(result?.message) ??
+        fallback
+
+    return {
+        message,
+        details,
+    }
+}
+
+async function parseResponseJson(response: Response): Promise<ApiResult | null> {
+    try {
+        return (await response.json()) as ApiResult
+    } catch {
+        return null
+    }
+}
+
 export async function loginAction(prevState: any, formData: FormData) {
     const loginDto: LoginDTO = {
         email: formData.get('email') as string,
@@ -24,10 +117,15 @@ export async function loginAction(prevState: any, formData: FormData) {
             body: JSON.stringify(loginDto),
         })
 
-        const result = await response.json();
+        const result = await parseResponseJson(response)
 
-        if (!response.ok) {
-            return { error: result.error?.message || 'Invalid credentials' }
+        if (!response.ok || result?.success === false) {
+            const { message } = extractApiError(result, 'Invalid credentials')
+            return { error: message }
+        }
+
+        if (!result || !result.tokens) {
+            return { error: 'Invalid server response' }
         }
 
         cookies().set('rememberMe', rememberMe ? 'true' : 'false', {
@@ -93,7 +191,12 @@ export async function logoutAction() {
     redirect('/login')
 }
 
-export async function registerAction(prevState: any, formData: FormData) {
+export async function registerAction(
+    prevState: RegisterActionState,
+    formData: FormData
+): Promise<RegisterActionState> {
+    const phoneInput = (formData.get('phone') as string | null) ?? ''
+    const phone = phoneInput.trim()
     const password = formData.get('password') as string
     const confirmPassword = formData.get('confirmPassword') as string
 
@@ -101,12 +204,24 @@ export async function registerAction(prevState: any, formData: FormData) {
         return { error: 'Passwords do not match' }
     }
 
+    if (phone) {
+        const phoneRegex = /^[+]?[\d()\s-]{6,20}$/
+        if (!phoneRegex.test(phone)) {
+            return {
+                error: 'Invalid phone number',
+                details: {
+                    phone: 'Please provide a valid phone number (digits, +, (), - allowed)',
+                },
+            }
+        }
+    }
+
     const registerDto: RegisterDTO = {
         email: formData.get('email') as string,
         password,
         firstName: formData.get('firstName') as string,
         lastName: formData.get('lastName') as string,
-        phone: formData.get('phone') as string || '',
+        phone,
     }
 
     try {
@@ -116,13 +231,18 @@ export async function registerAction(prevState: any, formData: FormData) {
             body: JSON.stringify(registerDto),
         })
 
-        const result = await response.json()
+        const result = await parseResponseJson(response)
 
-        if (!response.ok) {
+        if (!response.ok || result?.success === false) {
+            const { message, details } = extractApiError(result, 'Registration failed')
             return {
-                error: result.message,
-                details: result.error || 'Registration failed'
+                error: message,
+                details: details || 'Registration failed',
             }
+        }
+
+        if (!result || !result.tokens) {
+            return { error: 'Invalid server response', details: 'Missing tokens in response' }
         }
 
         // ✅ Salva cookies com httpOnly (auto-login após registro)

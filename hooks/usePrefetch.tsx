@@ -59,7 +59,7 @@ export function usePrefetch() {
 
   const prefetchRecentTransactions = (accountId?: string) => {
     queryClient.prefetchQuery({
-      queryKey: [...transactionKeys.all, 'recent', accountId],
+      queryKey: transactionKeys.recent(accountId),
       queryFn: () => transactionService.getRecentTransactions(accountId),
       staleTime: 30000,
     })

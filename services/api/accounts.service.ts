@@ -70,8 +70,16 @@ class AccountService {
   /**
    * Delete an account
    */
-  async deleteAccount(id: string): Promise<void> {
-    await apiClient.delete<void>(`${this.baseUrl}/${id}`)
+  async deleteAccount(id: string, transferToAccountId?: string): Promise<void> {
+    await apiClient.delete<void>(`${this.baseUrl}/${id}`, {
+      params: transferToAccountId ? { transferTo: transferToAccountId } : undefined,
+      data: transferToAccountId
+        ? {
+            transferTo: transferToAccountId,
+            transferToAccountId,
+          }
+        : undefined,
+    })
   }
 
   /**

@@ -55,13 +55,13 @@ export default function DashboardClient() {
   const { prefetchTransactionsPage, prefetchTransactions } = usePrefetch()
 
   // Fetch real data from API
-  const { data: accountSummary, isLoading: accountsLoading } = useAccountSummary()
-  const { data: accountsResponse } = useAccounts()
+  const { data: accountSummary, isLoading: accountsLoading, isFetching: accountsFetching } = useAccountSummary()
+  const { data: accountsResponse, isLoading: accountsListLoading, isFetching: accountsListFetching } = useAccounts()
   const accounts = accountsResponse || []
-  const { data: recentTransactionsData, isLoading: transactionsLoading } = useRecentTransactions()
-  const { data: budgetsData, isLoading: budgetsLoading } = useCurrentMonthBudgets()
-  const { data: upcomingBillsData, isLoading: billsLoading } = useUpcomingBills(7)
-  const { data: monthlyOverview, isLoading: overviewLoading } = useCurrentMonthOverview()
+  const { data: recentTransactionsData, isLoading: transactionsLoading, isFetching: transactionsFetching } = useRecentTransactions()
+  const { data: budgetsData, isLoading: budgetsLoading, isFetching: budgetsFetching } = useCurrentMonthBudgets()
+  const { data: upcomingBillsData, isLoading: billsLoading, isFetching: billsFetching } = useUpcomingBills(7)
+  const { data: monthlyOverview, isLoading: overviewLoading, isFetching: overviewFetching } = useCurrentMonthOverview()
 
   // Cash flow for the last 30 days
   // const startDate = format(subDays(new Date(), 30), 'yyyy-MM-dd')
@@ -108,7 +108,7 @@ export default function DashboardClient() {
 
       {/* Stats Cards */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-        {accountsLoading || overviewLoading ? (
+        {accountsLoading || overviewLoading || accountsFetching || overviewFetching ? (
           <>
             {[1, 2, 3, 4].map((i) => (
               <Card key={i}>
@@ -192,7 +192,7 @@ export default function DashboardClient() {
             <CardTitle>Account Balances</CardTitle>
           </CardHeader>
           <CardContent>
-            {accountsLoading ? (
+            {accountsLoading || accountsListLoading || accountsFetching || accountsListFetching ? (
               <div className="space-y-4">
                 {[1, 2, 3].map((i) => (
                   <Skeleton key={i} className="h-12 w-full" />
@@ -205,6 +205,7 @@ export default function DashboardClient() {
                     key={account.id}
                     className="flex items-center justify-between p-2 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors cursor-pointer"
                     onMouseEnter={() => prefetchTransactions({ accountId: account.id, page: 1, limit: 20 })}
+                    onClick={() => router.push('/accounts')}
                   >
                     <div>
                       <p className="font-medium text-gray-900 dark:text-white">
@@ -247,7 +248,7 @@ export default function DashboardClient() {
             </Button>
           </CardHeader>
           <CardContent>
-            {transactionsLoading ? (
+            {transactionsLoading || transactionsFetching ? (
               <div className="space-y-3">
                 {[1, 2, 3, 4].map((i) => (
                   <Skeleton key={i} className="h-16 w-full" />
@@ -258,7 +259,8 @@ export default function DashboardClient() {
                 {(recentTransactions || []).slice(0, 8).map((transaction) => (
                   <div
                     key={transaction.id}
-                    className="flex items-center justify-between p-3 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors"
+                    className="flex items-center justify-between p-3 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors cursor-pointer"
+                    onClick={() => router.push('/transactions')}
                   >
                     <div className="flex items-center gap-3">
                       <div
@@ -317,7 +319,7 @@ export default function DashboardClient() {
               <CardTitle>Budget Overview</CardTitle>
             </CardHeader>
             <CardContent>
-              {budgetsLoading ? (
+              {budgetsLoading || budgetsFetching ? (
                 <div className="space-y-4">
                   {[1, 2, 3, 4].map((i) => (
                     <Skeleton key={i} className="h-12 w-full" />
@@ -370,7 +372,7 @@ export default function DashboardClient() {
               <CardTitle>Upcoming Bills</CardTitle>
             </CardHeader>
             <CardContent>
-              {billsLoading ? (
+              {billsLoading || billsFetching ? (
                 <div className="space-y-3">
                   {[1, 2, 3, 4].map((i) => (
                     <Skeleton key={i} className="h-16 w-full" />

@@ -8,6 +8,9 @@ import { useQuery, useMutation, useQueryClient, UseQueryOptions } from '@tanstac
 import { toast } from 'sonner'
 import { showErrorToast } from '@/lib/error-utils'
 import { billService } from '@/services/api/bills.service'
+import { budgetKeys } from './useBudgets'
+import { accountKeys } from './useAccounts'
+import { transactionKeys } from './useTransactions'
 import type {
   BillDTO,
   CreateBillDTO,
@@ -74,7 +77,10 @@ export function useCreateBill() {
   return useMutation({
     mutationFn: (data: CreateBillDTO) => billService.createBill(data),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: billKeys.lists() })
+      queryClient.invalidateQueries({ queryKey: billKeys.all })
+      queryClient.invalidateQueries({ queryKey: transactionKeys.all })
+      queryClient.invalidateQueries({ queryKey: transactionKeys.recent(undefined) })
+      queryClient.invalidateQueries({ queryKey: accountKeys.summary() })
       toast.success('Bill created successfully!')
     },
     onError: (error) => {
@@ -93,7 +99,7 @@ export function useUpdateBill() {
     mutationFn: ({ id, data }: { id: string; data: UpdateBillDTO }) =>
       billService.updateBill(id, data),
     onSuccess: (_, variables) => {
-      queryClient.invalidateQueries({ queryKey: billKeys.lists() })
+      queryClient.invalidateQueries({ queryKey: billKeys.all })
       queryClient.invalidateQueries({ queryKey: billKeys.detail(variables.id) })
       toast.success('Bill updated successfully!')
     },
@@ -112,7 +118,7 @@ export function useDeleteBill() {
   return useMutation({
     mutationFn: (id: string) => billService.deleteBill(id),
     onSuccess: (_, id) => {
-      queryClient.invalidateQueries({ queryKey: billKeys.lists() })
+      queryClient.invalidateQueries({ queryKey: billKeys.all })
       queryClient.removeQueries({ queryKey: billKeys.detail(id) })
       toast.success('Bill deleted successfully!')
     },
@@ -135,8 +141,14 @@ export function usePayBill() {
       queryClient.invalidateQueries({ queryKey: billKeys.all })
       queryClient.invalidateQueries({ queryKey: billKeys.detail(variables.id) })
       queryClient.invalidateQueries({ queryKey: ['transactions'] })
+      queryClient.invalidateQueries({ queryKey: transactionKeys.all })
       queryClient.invalidateQueries({ queryKey: ['accounts'] })
-      // Invalidar analytics para atualizar gráficos e estatísticas
+      queryClient.invalidateQueries({ queryKey: budgetKeys.all })
+      queryClient.invalidateQueries({ queryKey: accountKeys.summary() })
+      queryClient.invalidateQueries({ queryKey: transactionKeys.recent(undefined) })
+      queryClient.invalidateQueries({ queryKey: billKeys.upcoming() })
+      queryClient.invalidateQueries({ queryKey: billKeys.upcoming(7) })
+      // Invalidar analytics para atualizar graficos e estatisticas
       queryClient.invalidateQueries({ queryKey: ['analytics'] })
       toast.success('Bill paid successfully!')
     },

@@ -8,6 +8,7 @@ import { useQuery, useMutation, useQueryClient, UseQueryOptions } from '@tanstac
 import { toast } from 'sonner'
 import { showErrorToast } from '@/lib/error-utils'
 import { categoryService } from '@/services/api/categories.service'
+import { goalKeys } from './useGoals'
 import type {
   CategoryDTO,
   CreateCategoryDTO,
@@ -68,6 +69,8 @@ export function useCreateCategory() {
     mutationFn: (data: CreateCategoryDTO) => categoryService.createCategory(data),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: categoryKeys.lists() })
+      queryClient.invalidateQueries({ queryKey: goalKeys.lists() })
+      queryClient.invalidateQueries({ queryKey: goalKeys.progress() })
       toast.success('Category created successfully!')
     },
     onError: (error) => {
@@ -88,6 +91,8 @@ export function useUpdateCategory() {
     onSuccess: (_, variables) => {
       queryClient.invalidateQueries({ queryKey: categoryKeys.lists() })
       queryClient.invalidateQueries({ queryKey: categoryKeys.detail(variables.id) })
+      queryClient.invalidateQueries({ queryKey: goalKeys.lists() })
+      queryClient.invalidateQueries({ queryKey: goalKeys.progress() })
       toast.success('Category updated successfully!')
     },
     onError: (error) => {
@@ -109,6 +114,10 @@ export function useDeleteCategory() {
       queryClient.invalidateQueries({ queryKey: categoryKeys.lists() })
       queryClient.removeQueries({ queryKey: categoryKeys.detail(variables.id) })
       queryClient.invalidateQueries({ queryKey: ['transactions'] })
+      queryClient.invalidateQueries({ queryKey: ['analytics'] })
+      queryClient.invalidateQueries({ queryKey: ['budgets'] })
+      queryClient.invalidateQueries({ queryKey: goalKeys.lists() })
+      queryClient.invalidateQueries({ queryKey: goalKeys.progress() })
       toast.success(`Category deleted! ${data.transactionsReassigned} transactions reassigned.`)
     },
     onError: (error) => {

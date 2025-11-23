@@ -7,6 +7,7 @@
 import { useQuery, useMutation, useQueryClient, UseQueryOptions } from '@tanstack/react-query'
 import { toast } from 'sonner'
 import { merchantService } from '@/services/api/merchants.service'
+import { goalKeys } from './useGoals'
 import type {
   MerchantDTO,
   CreateMerchantDTO,
@@ -79,6 +80,8 @@ export function useCreateMerchant() {
     onSuccess: () => {
       // Invalidar todas as queries relacionadas a merchants
       queryClient.invalidateQueries({ queryKey: merchantKeys.all })
+      queryClient.invalidateQueries({ queryKey: goalKeys.lists() })
+      queryClient.invalidateQueries({ queryKey: goalKeys.progress() })
       toast.success('Merchant created successfully!')
     },
     onError: (error) => {
@@ -99,6 +102,8 @@ export function useUpdateMerchant() {
     onSuccess: (_, variables) => {
       // Invalidar todas as queries relacionadas a merchants
       queryClient.invalidateQueries({ queryKey: merchantKeys.all })
+      queryClient.invalidateQueries({ queryKey: goalKeys.lists() })
+      queryClient.invalidateQueries({ queryKey: goalKeys.progress() })
       toast.success('Merchant updated successfully!')
     },
     onError: (error) => {
@@ -120,6 +125,8 @@ export function useDeleteMerchant() {
       queryClient.invalidateQueries({ queryKey: merchantKeys.all })
       // Invalidar transactions pois podem ter merchantId vinculado
       queryClient.invalidateQueries({ queryKey: ['transactions'] })
+      queryClient.invalidateQueries({ queryKey: goalKeys.lists() })
+      queryClient.invalidateQueries({ queryKey: goalKeys.progress() })
       toast.success('Merchant deleted successfully!')
     },
     onError: (error) => {

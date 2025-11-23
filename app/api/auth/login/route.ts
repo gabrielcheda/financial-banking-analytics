@@ -14,11 +14,13 @@ export async function POST(request: Request) {
 
         const result = await response.json()
 
+        console.log("result", result);
+
         if (!response.ok) {
             return NextResponse.json({
-                message: result.message || 'Login failed',
+                message: result.data.error.message || 'Login failed',
                 statusCode: response.status,
-                name: result.error ?? "ERROR"
+                name: result.data.error.code
             } as ApiError, {
                 status: response.status
             })

@@ -6,7 +6,7 @@ import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/Card'
 import { Button } from '@/components/ui/Button'
 import { Skeleton } from '@/components/ui/Skeleton'
 import { EmptyState } from '@/components/EmptyState'
-import { Modal, ConfirmDialog } from '@/components/ui/Modal'
+import { Modal } from '@/components/ui/Modal'
 import {
   useAccounts,
   useAccountSummary,
@@ -99,6 +99,7 @@ export default function AccountsClient() {
   }>({
     isOpen: false,
   })
+  const [transferAccountId, setTransferAccountId] = useState<string>('')
 
   // Fetch data
   const { data: accountsResponse, isLoading: accountsLoading } = useAccounts()
@@ -111,6 +112,9 @@ export default function AccountsClient() {
 
   // Extract accounts array
   const accounts = accountsResponse || []
+  const availableTransferAccounts = accounts.filter(
+    (acct) => acct.id !== deleteDialogState.accountId
+  )
 
   // Handle create account
   const handleCreateAccount = async (data: CreateAccountDTO) => {
@@ -131,8 +135,15 @@ export default function AccountsClient() {
   // Handle delete account
   const handleDeleteAccount = async () => {
     if (!deleteDialogState.accountId) return
-    await deleteMutation.mutateAsync(deleteDialogState.accountId)
+    const requiresTransfer = availableTransferAccounts.length > 0
+    if (requiresTransfer && !transferAccountId) return
+
+    await deleteMutation.mutateAsync({
+      id: deleteDialogState.accountId,
+      transferToAccountId: transferAccountId || undefined,
+    })
     setDeleteDialogState({ isOpen: false })
+    setTransferAccountId('')
   }
 
   // Open create modal
@@ -162,6 +173,8 @@ export default function AccountsClient() {
 
   // Open delete dialog
   const openDeleteDialog = (account: AccountDTO) => {
+    const fallbackTarget = accounts.find((acct) => acct.id !== account.id)?.id ?? ''
+    setTransferAccountId(fallbackTarget)
     setDeleteDialogState({
       isOpen: true,
       accountId: account.id,
@@ -406,20 +419,74 @@ export default function AccountsClient() {
       </Modal>
 
       {/* Delete Confirmation Dialog */}
-      <ConfirmDialog
+      <Modal
         isOpen={deleteDialogState.isOpen}
-        onClose={() => setDeleteDialogState({ isOpen: false })}
-        onConfirm={handleDeleteAccount}
+        onClose={() => {
+          setDeleteDialogState({ isOpen: false })
+          setTransferAccountId('')
+        }}
         title={ACCOUNT_TEXT.modals.deleteTitle}
-        description={ACCOUNT_TEXT.modals.deleteDescription.replace(
-          '{name}',
-          deleteDialogState.accountName ?? ''
-        )}
-        confirmLabel={ACCOUNT_TEXT.modals.deleteConfirm}
-        cancelLabel={COMMON_ACTIONS.cancel}
-        variant="danger"
-        isLoading={deleteMutation.isPending}
-      />
+        size="md"
+      >
+        <div className="space-y-4">
+          <p className="text-gray-700 dark:text-gray-300">
+            {ACCOUNT_TEXT.modals.deleteDescription.replace(
+              '{name}',
+              deleteDialogState.accountName ?? ''
+            )}
+          </p>
+
+          {availableTransferAccounts.length === 0 ? (
+            <div className="p-3 rounded-md border border-yellow-300 bg-yellow-50 text-sm text-yellow-800 dark:border-yellow-900 dark:bg-yellow-900/20 dark:text-yellow-200">
+              You need at least one other active account to transfer existing transactions, bills, and goals before deleting this account.
+            </div>
+          ) : (
+            <div>
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                Transfer data to <span className="text-red-500">*</span>
+              </label>
+              <select
+                value={transferAccountId}
+                onChange={(e) => setTransferAccountId(e.target.value)}
+                className="w-full px-4 py-2 rounded-lg border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
+              >
+                <option value="">Select destination account</option>
+                {availableTransferAccounts.map((account) => (
+                  <option key={account.id} value={account.id}>
+                    {account.name} ({account.type})
+                  </option>
+                ))}
+              </select>
+              <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
+                All transactions, bills, and goals linked to this account will be moved to the selected account.
+              </p>
+            </div>
+          )}
+
+          <div className="flex gap-3 justify-end pt-2">
+            <Button
+              variant="outline"
+              onClick={() => {
+                setDeleteDialogState({ isOpen: false })
+                setTransferAccountId('')
+              }}
+            >
+              {COMMON_ACTIONS.cancel}
+            </Button>
+            <Button
+              variant="danger"
+              onClick={handleDeleteAccount}
+              disabled={
+                deleteMutation.isPending ||
+                availableTransferAccounts.length === 0 ||
+                !transferAccountId
+              }
+            >
+              {deleteMutation.isPending ? 'Deleting...' : ACCOUNT_TEXT.modals.deleteConfirm}
+            </Button>
+          </div>
+        </div>
+      </Modal>
     </div>
   )
 }

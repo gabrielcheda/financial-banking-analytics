@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useRef, type ChangeEvent } from 'react'
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/Card'
 import { Button } from '@/components/ui/Button'
 import { Skeleton } from '@/components/ui/Skeleton'
@@ -15,7 +15,8 @@ import {
   Upload,
   Check,
 } from 'lucide-react'
-import { useProfile, useUpdateProfile, useChangePassword, useUpdatePreferences } from '@/hooks/useUser'
+import { useProfile, useUpdateProfile, useChangePassword, useUpdatePreferences, useUploadAvatar } from '@/hooks/useUser'
+import type { UpdatePreferencesDTO, UserPreferencesDTO } from '@/types/dto'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
@@ -30,6 +31,35 @@ const tabs = [
 ] as const
 
 type TabId = typeof tabs[number]['id']
+
+const emailNotificationOptions = [
+  { key: 'billReminders', label: 'Bill Reminders' },
+  { key: 'budgetAlerts', label: 'Budget Alerts' },
+  { key: 'weeklyReports', label: 'Weekly Reports' },
+  { key: 'monthlyReports', label: 'Monthly Reports' },
+] as const satisfies Array<{
+  key: keyof UserPreferencesDTO['notifications']['email']
+  label: string
+}>
+
+const pushNotificationOptions = [
+  { key: 'billReminders', label: 'Bill Reminders' },
+  { key: 'budgetAlerts', label: 'Budget Alerts' },
+  { key: 'largeTransactions', label: 'Large Transactions' },
+] as const satisfies Array<{
+  key: keyof UserPreferencesDTO['notifications']['push']
+  label: string
+}>
+
+const privacyOptions = [
+  { key: 'showBalance', label: 'Show account balances' },
+  { key: 'analyticsConsent', label: 'Enable analytics & insights' },
+] as const satisfies Array<{
+  key: keyof UserPreferencesDTO['privacy']
+  label: string
+}>
+
+const AVATAR_MAX_SIZE = 2 * 1024 * 1024 // 2MB
 
 const profileSchema = z.object({
   firstName: z.string().min(1, 'First name is required'),
@@ -52,6 +82,9 @@ export default function SettingsClient() {
   const updateProfile = useUpdateProfile()
   const changePassword = useChangePassword()
   const updatePreferences = useUpdatePreferences()
+  const uploadAvatar = useUploadAvatar()
+  const fileInputRef = useRef<HTMLInputElement>(null)
+  const preferences = profile?.preferences
 
   const profileForm = useForm({
     resolver: zodResolver(profileSchema),
@@ -90,13 +123,113 @@ export default function SettingsClient() {
     }
   })
 
-  const handleThemeChange = async (theme: 'dark' | 'light' | 'system') => {
+  const handlePreferenceUpdate = async (data: UpdatePreferencesDTO, successMessage = 'Preferences updated') => {
     try {
-      await updatePreferences.mutateAsync({ theme })
-      toast.success('Theme updated')
+      await updatePreferences.mutateAsync(data)
+      toast.success(successMessage)
     } catch (error: any) {
-      toast.error('Failed to update theme')
+      toast.error(error?.message || 'Failed to update preferences')
     }
+  }
+
+  const handleThemeChange = (theme: 'dark' | 'light' | 'system') => {
+    if (preferences?.theme === theme || updatePreferences.isPending) return
+    void handlePreferenceUpdate({ theme }, 'Theme updated')
+  }
+
+  const handleAvatarChange = (event: ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0]
+    if (!file) return
+
+    const inputElement = event.target
+
+    if (!file.type.startsWith('image/')) {
+      toast.error('Please select an image file')
+      inputElement.value = ''
+      return
+    }
+
+    if (file.size > AVATAR_MAX_SIZE) {
+      toast.error('Image must be smaller than 2MB')
+      inputElement.value = ''
+      return
+    }
+
+    const reader = new FileReader()
+    reader.onloadend = () => {
+      const base64 = reader.result as string
+      ;(async () => {
+        try {
+          await uploadAvatar.mutateAsync(base64)
+          toast.success('Profile photo updated')
+        } catch (error: any) {
+          toast.error(error?.message || 'Failed to upload photo')
+        } finally {
+          inputElement.value = ''
+        }
+      })()
+    }
+    reader.onerror = () => {
+      toast.error('Failed to read image file')
+      inputElement.value = ''
+    }
+
+    reader.readAsDataURL(file)
+  }
+
+  const handleEmailNotificationChange = (
+    key: keyof UserPreferencesDTO['notifications']['email'],
+    value: boolean
+  ) => {
+    const currentEmail = (preferences?.notifications?.email ??
+      {}) as Partial<UserPreferencesDTO['notifications']['email']>
+    const emailUpdate: UserPreferencesDTO['notifications']['email'] = {
+      enabled: currentEmail?.enabled ?? false,
+      billReminders: currentEmail?.billReminders ?? false,
+      budgetAlerts: currentEmail?.budgetAlerts ?? false,
+      weeklyReports: currentEmail?.weeklyReports ?? false,
+      monthlyReports: currentEmail?.monthlyReports ?? false,
+      goalMilestones: currentEmail?.goalMilestones ?? false,
+      securityAlerts: currentEmail?.securityAlerts ?? false,
+      ...(currentEmail?.weeklyReport !== undefined
+        ? { weeklyReport: currentEmail.weeklyReport }
+        : {}),
+    }
+    emailUpdate[key] = value
+    void handlePreferenceUpdate(
+      {
+        notifications: { email: emailUpdate },
+      },
+      'Notification preferences updated'
+    )
+  }
+
+  const handlePushNotificationChange = (
+    key: keyof UserPreferencesDTO['notifications']['push'],
+    value: boolean
+  ) => {
+    const currentPush = (preferences?.notifications?.push ??
+      {}) as Partial<UserPreferencesDTO['notifications']['push']>
+    const pushUpdate: UserPreferencesDTO['notifications']['push'] = {
+      enabled: currentPush.enabled ?? false,
+      billReminders: currentPush.billReminders ?? false,
+      budgetAlerts: currentPush.budgetAlerts ?? false,
+      largeTransactions: currentPush.largeTransactions ?? false,
+    }
+    pushUpdate[key] = value
+    void handlePreferenceUpdate(
+      {
+        notifications: { push: pushUpdate },
+      },
+      'Notification preferences updated'
+    )
+  }
+
+  const handlePrivacyChange = (key: keyof UserPreferencesDTO['privacy'], value: boolean) => {
+    const privacyUpdate: Partial<UserPreferencesDTO['privacy']> = {
+      [key]: value,
+    }
+    void handlePreferenceUpdate({ privacy: privacyUpdate }, 'Privacy preferences updated')
   }
 
   return (
@@ -151,13 +284,35 @@ export default function SettingsClient() {
                     <form onSubmit={onProfileSubmit} className="space-y-6">
                       {/* Avatar */}
                       <div className="flex items-center gap-6">
-                        <div className="w-20 h-20 rounded-full bg-gradient-to-r from-blue-600 to-purple-600 flex items-center justify-center text-white font-bold text-2xl">
-                          {profile?.firstName?.[0]}{profile?.lastName?.[0]}
-                        </div>
+                        {profile?.avatarUrl ? (
+                          <img
+                            src={profile.avatarUrl}
+                            alt={`${profile.firstName} ${profile.lastName}`}
+                            className="w-20 h-20 rounded-full object-cover border border-gray-200 dark:border-gray-700"
+                          />
+                        ) : (
+                          <div className="w-20 h-20 rounded-full bg-gradient-to-r from-blue-600 to-purple-600 flex items-center justify-center text-white font-bold text-2xl">
+                            {profile?.firstName?.[0]}
+                            {profile?.lastName?.[0]}
+                          </div>
+                        )}
                         <div>
-                          <Button type="button" variant="outline" size="sm">
+                          <input
+                            ref={fileInputRef}
+                            type="file"
+                            accept="image/png,image/jpeg,image/gif"
+                            className="hidden"
+                            onChange={handleAvatarChange}
+                          />
+                          <Button
+                            type="button"
+                            variant="outline"
+                            size="sm"
+                            onClick={() => fileInputRef.current?.click()}
+                            disabled={uploadAvatar.isPending}
+                          >
                             <Upload className="w-4 h-4 mr-2" />
-                            Upload Photo
+                            {uploadAvatar.isPending ? 'Uploading...' : 'Upload Photo'}
                           </Button>
                           <p className="text-xs text-gray-500 mt-2">
                             JPG, PNG or GIF. Max size 2MB
@@ -253,8 +408,9 @@ export default function SettingsClient() {
                             key={theme}
                             type="button"
                             onClick={() => handleThemeChange(theme)}
+                            disabled={updatePreferences.isPending}
                             className={`p-4 border-2 rounded-lg transition-all ${
-                              profile?.preferences?.theme === theme
+                              preferences?.theme === theme
                                 ? 'border-blue-600 bg-blue-50 dark:bg-blue-900/30'
                                 : 'border-gray-300 dark:border-gray-700 hover:border-blue-400'
                             }`}
@@ -262,7 +418,7 @@ export default function SettingsClient() {
                             <div className="flex flex-col items-center gap-2">
                               <Palette className="w-6 h-6" />
                               <span className="font-medium capitalize">{theme}</span>
-                              {profile?.preferences?.theme === theme && (
+                              {preferences?.theme === theme && (
                                 <Check className="w-4 h-4 text-blue-600" />
                               )}
                             </div>
@@ -276,10 +432,11 @@ export default function SettingsClient() {
                         Currency
                       </label>
                       <select
-                        value={profile?.preferences?.currency || 'USD'}
+                        value={preferences?.currency || 'USD'}
                         onChange={(e) =>
-                          updatePreferences.mutate({ currency: e.target.value })
+                          handlePreferenceUpdate({ currency: e.target.value }, 'Currency updated')
                         }
+                        disabled={updatePreferences.isPending}
                         className="w-full px-4 py-2 border border-gray-300 dark:border-gray-700 rounded-lg focus:ring-2 focus:ring-blue-500 dark:bg-gray-800"
                       >
                         <option value="USD">USD - US Dollar</option>
@@ -294,7 +451,11 @@ export default function SettingsClient() {
                         Date Format
                       </label>
                       <select
-                        value={profile?.preferences?.dateFormat || 'MM/DD/YYYY'}
+                        value={preferences?.dateFormat || 'MM/DD/YYYY'}
+                        onChange={(e) =>
+                          handlePreferenceUpdate({ dateFormat: e.target.value }, 'Date format updated')
+                        }
+                        disabled={updatePreferences.isPending}
                         className="w-full px-4 py-2 border border-gray-300 dark:border-gray-700 rounded-lg focus:ring-2 focus:ring-blue-500 dark:bg-gray-800"
                       >
                         <option value="MM/DD/YYYY">MM/DD/YYYY</option>
@@ -308,7 +469,11 @@ export default function SettingsClient() {
                         Time Format
                       </label>
                       <select
-                        value={profile?.preferences?.timeFormat || '12h'}
+                        value={preferences?.timeFormat || '12h'}
+                        onChange={(e) =>
+                          handlePreferenceUpdate({ timeFormat: e.target.value as '12h' | '24h' }, 'Time format updated')
+                        }
+                        disabled={updatePreferences.isPending}
                         className="w-full px-4 py-2 border border-gray-300 dark:border-gray-700 rounded-lg focus:ring-2 focus:ring-blue-500 dark:bg-gray-800"
                       >
                         <option value="12h">12-hour</option>
@@ -331,19 +496,19 @@ export default function SettingsClient() {
                         Email Notifications
                       </h3>
                       <div className="space-y-3">
-                        {[
-                          { key: 'billReminders', label: 'Bill Reminders' },
-                          { key: 'budgetAlerts', label: 'Budget Alerts' },
-                          { key: 'weeklyReports', label: 'Weekly Reports' },
-                          { key: 'monthlyReports', label: 'Monthly Reports' },
-                        ].map(({ key, label }) => (
-                          <label key={key} className="flex items-center justify-between p-4 border border-gray-200 dark:border-gray-700 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-800 cursor-pointer">
+                        {emailNotificationOptions.map(({ key, label }) => (
+                          <label
+                            key={key}
+                            className="flex items-center justify-between p-4 border border-gray-200 dark:border-gray-700 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-800 cursor-pointer"
+                          >
                             <span className="text-gray-700 dark:text-gray-300">
                               {label}
                             </span>
                             <input
                               type="checkbox"
-                              defaultChecked={profile?.preferences?.notifications?.email?.[key as keyof typeof profile.preferences.notifications.email]}
+                              checked={Boolean(preferences?.notifications?.email?.[key])}
+                              onChange={(event) => handleEmailNotificationChange(key, event.target.checked)}
+                              disabled={updatePreferences.isPending}
                               className="w-5 h-5 text-blue-600 rounded focus:ring-2 focus:ring-blue-500"
                             />
                           </label>
@@ -356,18 +521,19 @@ export default function SettingsClient() {
                         Push Notifications
                       </h3>
                       <div className="space-y-3">
-                        {[
-                          { key: 'billReminders', label: 'Bill Reminders' },
-                          { key: 'budgetAlerts', label: 'Budget Alerts' },
-                          { key: 'largeTransactions', label: 'Large Transactions' },
-                        ].map(({ key, label }) => (
-                          <label key={key} className="flex items-center justify-between p-4 border border-gray-200 dark:border-gray-700 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-800 cursor-pointer">
+                        {pushNotificationOptions.map(({ key, label }) => (
+                          <label
+                            key={key}
+                            className="flex items-center justify-between p-4 border border-gray-200 dark:border-gray-700 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-800 cursor-pointer"
+                          >
                             <span className="text-gray-700 dark:text-gray-300">
                               {label}
                             </span>
                             <input
                               type="checkbox"
-                              defaultChecked={profile?.preferences?.notifications?.push?.[key as keyof typeof profile.preferences.notifications.push]}
+                              checked={Boolean(preferences?.notifications?.push?.[key])}
+                              onChange={(event) => handlePushNotificationChange(key, event.target.checked)}
+                              disabled={updatePreferences.isPending}
                               className="w-5 h-5 text-blue-600 rounded focus:ring-2 focus:ring-blue-500"
                             />
                           </label>
@@ -454,37 +620,30 @@ export default function SettingsClient() {
                     <CardTitle>Privacy Settings</CardTitle>
                   </CardHeader>
                   <CardContent className="space-y-6">
-                    <label className="flex items-center justify-between p-4 border border-gray-200 dark:border-gray-700 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-800 cursor-pointer">
-                      <div>
-                        <p className="font-medium text-gray-900 dark:text-white">
-                          Show Balance
-                        </p>
-                        <p className="text-sm text-gray-500">
-                          Display your account balance in the dashboard
-                        </p>
-                      </div>
-                      <input
-                        type="checkbox"
-                        defaultChecked={profile?.preferences?.privacy?.showBalance}
-                        className="w-5 h-5 text-blue-600 rounded focus:ring-2 focus:ring-blue-500"
-                      />
-                    </label>
-
-                    <label className="flex items-center justify-between p-4 border border-gray-200 dark:border-gray-700 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-800 cursor-pointer">
-                      <div>
-                        <p className="font-medium text-gray-900 dark:text-white">
-                          Analytics Consent
-                        </p>
-                        <p className="text-sm text-gray-500">
-                          Allow us to collect anonymous usage data
-                        </p>
-                      </div>
-                      <input
-                        type="checkbox"
-                        defaultChecked={profile?.preferences?.privacy?.analyticsConsent}
-                        className="w-5 h-5 text-blue-600 rounded focus:ring-2 focus:ring-blue-500"
-                      />
-                    </label>
+                    {privacyOptions.map(({ key, label }) => (
+                      <label
+                        key={key}
+                        className="flex items-center justify-between p-4 border border-gray-200 dark:border-gray-700 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-800 cursor-pointer"
+                      >
+                        <div>
+                          <p className="font-medium text-gray-900 dark:text-white">
+                            {label}
+                          </p>
+                          <p className="text-sm text-gray-500">
+                            {key === 'showBalance'
+                              ? 'Display your account balance in the dashboard'
+                              : 'Allow collection of anonymized usage data'}
+                          </p>
+                        </div>
+                        <input
+                          type="checkbox"
+                          checked={Boolean(preferences?.privacy?.[key])}
+                          onChange={(event) => handlePrivacyChange(key, event.target.checked)}
+                          disabled={updatePreferences.isPending}
+                          className="w-5 h-5 text-blue-600 rounded focus:ring-2 focus:ring-blue-500"
+                        />
+                      </label>
+                    ))}
 
                     <div className="pt-6 border-t border-gray-200 dark:border-gray-700">
                       <h3 className="text-lg font-semibold text-red-600 mb-2">

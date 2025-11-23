@@ -4,10 +4,11 @@ import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { createBillSchema, updateBillSchema, type CreateBillInput, type UpdateBillInput } from '@/lib/validations/bill'
 import { Button } from '@/components/ui/Button'
+import { useMerchants } from '@/hooks/useMerchants'
 import { useCategories } from '@/hooks/useCategories'
 import { useActiveAccounts } from '@/hooks/useAccounts'
 import { format } from 'date-fns'
-import { useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { parseLocaleInteger, parseLocaleNumber } from '@/lib/numberUtils'
 
 interface BillFormProps {
@@ -32,24 +33,47 @@ export function BillForm({
     handleSubmit,
     formState: { errors, isSubmitting },
     watch,
+    setValue,
   } = useForm<CreateBillInput>({
     resolver: zodResolver(isEditing ? updateBillSchema : createBillSchema),
     defaultValues: {
       isRecurring: false,
       reminders: [{ enabled: false, daysBefore: 3 }],
+      dueDate: format(new Date(), 'yyyy-MM-dd'),
+      merchantId: '',
+      categoryId: '',
+      accountId: '',
       ...defaultValues,
     },
   })
 
+  const { data: merchantsData, isLoading: merchantsLoading } = useMerchants()
   const { data: categoriesData, isLoading: categoriesLoading } = useCategories({
     type: 'expense',
     isActive: true,
   })
   const { data: accountsData, isLoading: accountsLoading } = useActiveAccounts()
 
+  const merchants = merchantsData || []
   const categories = categoriesData || []
   const accounts = accountsData || []
   const isRecurring = watch('isRecurring')
+  const selectedCategoryId = watch('categoryId')
+  const selectedMerchantId = watch('merchantId')
+
+  const filteredMerchants = useMemo(
+    () => merchants.filter((merchant) => merchant.categoryId === selectedCategoryId),
+    [merchants, selectedCategoryId]
+  )
+
+  useEffect(() => {
+    if (
+      selectedMerchantId &&
+      !filteredMerchants.some((merchant) => merchant.id === selectedMerchantId)
+    ) {
+      setValue('merchantId', '')
+    }
+  }, [filteredMerchants, selectedMerchantId, setValue])
 
   const handleFormSubmit = async (data: CreateBillInput) => {
     // Process data before submitting
@@ -114,7 +138,7 @@ export function BillForm({
         )}
       </div>
 
-      {/* Category & Account Selection */}
+      {/* Category, Merchant & Account Selection */}
       {!isEditing && (
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <div>
@@ -140,6 +164,35 @@ export function BillForm({
             {errors.categoryId && (
               <p className="mt-1 text-sm text-red-600 dark:text-red-400">
                 {errors.categoryId.message}
+              </p>
+            )}
+          </div>
+
+          <div>
+            <label
+              htmlFor="merchantId"
+              className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1"
+            >
+              Merchant <span className="text-red-500">*</span>
+            </label>
+            <select
+              id="merchantId"
+              {...register('merchantId')}
+              disabled={merchantsLoading || !selectedCategoryId}
+              className="w-full px-4 py-2 rounded-lg border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:opacity-50"
+            >
+              <option value="">
+                {selectedCategoryId ? 'Select a merchant' : 'Select a category first'}
+              </option>
+              {filteredMerchants.map((merchant) => (
+                <option key={merchant.id} value={merchant.id}>
+                  {merchant.name}
+                </option>
+              ))}
+            </select>
+            {errors.merchantId && (
+              <p className="mt-1 text-sm text-red-600 dark:text-red-400">
+                {errors.merchantId.message}
               </p>
             )}
           </div>
@@ -185,8 +238,7 @@ export function BillForm({
           <input
             type="date"
             id="dueDate"
-            {...register('dueDate', { valueAsDate: true })}
-            defaultValue={format(new Date(), 'yyyy-MM-dd')}
+            {...register('dueDate')}
             className="w-full px-4 py-2 rounded-lg border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
           />
           {errors.dueDate && (
@@ -353,7 +405,7 @@ export function BillForm({
         <Button
           type="submit"
           variant="primary"
-          disabled={isSubmitting || isLoading || categoriesLoading || accountsLoading}
+          disabled={isSubmitting || isLoading || merchantsLoading || categoriesLoading || accountsLoading}
           className="w-full sm:w-auto order-1 sm:order-2"
         >
           {isSubmitting || isLoading ? 'Saving...' : isEditing ? 'Update Bill' : 'Create Bill'}

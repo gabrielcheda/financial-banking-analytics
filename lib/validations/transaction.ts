@@ -29,9 +29,14 @@ export const metadataSchema = z.object({
   userAgent: z.string().optional(),
 })
 
-// Create Transaction Schema - matches backend DTO
-export const createTransactionSchema = z.object({
+// Base Transaction Schema - matches backend DTO
+const baseTransactionSchema = z.object({
   accountId: z.string().uuid({ message: 'Please select a valid account' }),
+  toAccountId: z
+    .string()
+    .uuid({ message: 'Please select a valid destination account' })
+    .optional()
+    .or(z.literal('')),
   categoryId: z.string().uuid({ message: 'Please select a valid category' }),
   date: z.coerce.date({
     required_error: 'Date is required',
@@ -57,8 +62,23 @@ export const createTransactionSchema = z.object({
   metadata: metadataSchema.optional(),
 })
 
+// Create Transaction Schema with custom validations
+export const createTransactionSchema = baseTransactionSchema.refine(
+  (data) => data.type !== 'transfer' || !!data.toAccountId,
+  {
+    message: 'Destination account is required for transfer transactions',
+    path: ['toAccountId'],
+  }
+).refine(
+  (data) => data.type !== 'transfer' || data.accountId !== data.toAccountId,
+  {
+    message: 'Destination account must be different from the source account',
+    path: ['toAccountId'],
+  }
+)
+
 // Update Transaction Schema
-export const updateTransactionSchema = createTransactionSchema.partial()
+export const updateTransactionSchema = baseTransactionSchema.partial()
 
 // Export inferred types
 export type CreateTransactionInput = z.infer<typeof createTransactionSchema>

@@ -28,7 +28,20 @@ export async function POST(request: Request) {
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify(body),
         })
+       
         const responseJson = await response.json();
+
+        console.log('Registration response:', response.status);
+
+        if(responseJson.success === false) { 
+            return NextResponse.json({ 
+                name: responseJson.data.error.code ?? "ERROR",
+                message: responseJson.data.error.message
+            }, {
+                status: response.status
+            })
+        }
+        
         const authResponse: AuthResponseDTO = responseJson.data;
 
         if (!response.ok) {

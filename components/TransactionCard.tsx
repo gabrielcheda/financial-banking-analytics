@@ -8,10 +8,10 @@ interface Transaction {
   date: Date
   description: string
   category: string
-  merchant: string
+  merchant?: string
   amount: number
-  type: 'income' | 'expense'
-  status: 'completed' | 'pending'
+  type: 'income' | 'expense' | 'transfer'
+  status: 'completed' | 'pending' | 'cancelled'
 }
 
 interface TransactionCardProps {
@@ -20,6 +20,25 @@ interface TransactionCardProps {
 }
 
 export function TransactionCard({ transaction, onClick }: TransactionCardProps) {
+  const merchantLabel = transaction.merchant && transaction.merchant.trim().length > 0 ? transaction.merchant : '—'
+
+  const amountPrefix =
+    transaction.type === 'income' ? '+' : transaction.type === 'expense' ? '-' : '↔'
+
+  const amountColor =
+    transaction.type === 'income'
+      ? 'text-green-600 dark:text-green-400'
+      : transaction.type === 'expense'
+        ? 'text-gray-900 dark:text-white'
+        : 'text-blue-600 dark:text-blue-400'
+
+  const statusClasses =
+    transaction.status === 'completed'
+      ? 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400'
+      : transaction.status === 'cancelled'
+        ? 'bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-300'
+        : 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-400'
+
   return (
     <div
       onClick={onClick}
@@ -32,18 +51,13 @@ export function TransactionCard({ transaction, onClick }: TransactionCardProps) 
             {transaction.description}
           </h3>
           <p className="text-sm text-gray-500 dark:text-gray-400 mt-0.5">
-            {transaction.merchant}
+            {merchantLabel}
           </p>
         </div>
         <div className="text-right flex-shrink-0">
-          <p
-            className={`font-semibold text-base ${
-              transaction.type === 'income'
-                ? 'text-green-600 dark:text-green-400'
-                : 'text-gray-900 dark:text-white'
-            }`}
-          >
-            {transaction.type === 'income' ? '+' : '-'}$
+          <p className={`font-semibold text-base ${amountColor}`}>
+            {amountPrefix}
+            {amountPrefix === '↔' ? ' ' : ''}$
             {Math.abs(transaction.amount).toFixed(2)}
           </p>
         </div>
@@ -67,13 +81,7 @@ export function TransactionCard({ transaction, onClick }: TransactionCardProps) 
 
       {/* Status */}
       <div className="flex justify-end">
-        <span
-          className={`inline-flex items-center px-2.5 py-1 text-xs font-medium rounded-full ${
-            transaction.status === 'completed'
-              ? 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400'
-              : 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-400'
-          }`}
-        >
+        <span className={`inline-flex items-center px-2.5 py-1 text-xs font-medium rounded-full ${statusClasses}`}>
           {transaction.status}
         </span>
       </div>

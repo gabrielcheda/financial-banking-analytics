@@ -9,7 +9,7 @@ import type {
 } from '@/types/dto'
 
 class UserService {
-  private readonly baseURL = '/user'
+  private readonly baseURL = '/users'
 
   /**
    * Get current user profile

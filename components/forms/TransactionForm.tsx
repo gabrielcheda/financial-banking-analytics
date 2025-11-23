@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { useForm, Controller } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { createTransactionSchema, type CreateTransactionInput } from '@/lib/validations/transaction'
@@ -37,18 +37,29 @@ export function TransactionForm({
     formState: { errors, isSubmitting },
     watch,
     setValue,
+    reset,
+    trigger,
   } = useForm<CreateTransactionInput>({
     resolver: zodResolver(createTransactionSchema),
+    mode: 'onChange',
     defaultValues: {
       type: 'expense',
       status: 'completed',
       date: new Date(),
+       merchantId: '',
+       toAccountId: '',
       ...defaultValues,
       tags: defaultValues?.tags || [],
     },
   })
 
+  console.log('Form errors:', errors);
+
   const transactionType = watch('type')
+  const selectedAccountId = watch('accountId')
+  const selectedCategoryId = watch('categoryId')
+  const selectedMerchantId = watch('merchantId')
+  const selectedDestinationAccountId = watch('toAccountId')
 
   const { data: categoriesData = [], isLoading: categoriesLoading } = useCategories()
   const { data: accountsData = [], isLoading: accountsLoading } = useActiveAccounts()
@@ -63,6 +74,59 @@ export function TransactionForm({
     }
     return true
   })
+
+  const filteredMerchants = useMemo(() => {
+    if (!selectedCategoryId) {
+      return merchantsData
+    }
+    return merchantsData.filter((merchant) => merchant.categoryId === selectedCategoryId)
+  }, [merchantsData, selectedCategoryId])
+
+  const destinationAccounts = useMemo(
+    () => accountsData.filter((account) => account.id !== selectedAccountId),
+    [accountsData, selectedAccountId]
+  )
+
+  useEffect(() => {
+    if (defaultValues) {
+      reset({
+        type: defaultValues.type || 'expense',
+        status: defaultValues.status || 'completed',
+        date: defaultValues.date || new Date(),
+        accountId: defaultValues.accountId || '',
+        toAccountId: defaultValues.toAccountId || '',
+        categoryId: defaultValues.categoryId || '',
+        description: defaultValues.description || '',
+        amount: defaultValues.amount || 0,
+        merchantId: defaultValues.merchantId || '',
+        notes: defaultValues.notes || '',
+        tags: defaultValues.tags || [],
+      })
+      setTags(defaultValues.tags || [])
+      void trigger()
+    }
+  }, [defaultValues, reset, trigger])
+
+  useEffect(() => {
+    if (
+      selectedMerchantId &&
+      !filteredMerchants.some((merchant) => merchant.id === selectedMerchantId)
+    ) {
+      setValue('merchantId', '')
+    }
+  }, [filteredMerchants, selectedMerchantId, setValue])
+
+  useEffect(() => {
+    if (transactionType !== 'transfer') {
+      setValue('toAccountId', '')
+    } else if (
+      selectedDestinationAccountId &&
+      selectedAccountId &&
+      selectedDestinationAccountId === selectedAccountId
+    ) {
+      setValue('toAccountId', '')
+    }
+  }, [selectedAccountId, selectedDestinationAccountId, transactionType, setValue])
 
   const handleFormSubmit = async (data: CreateTransactionInput) => {
     try {
@@ -305,6 +369,40 @@ export function TransactionForm({
         </div>
       </div>
 
+      {transactionType === 'transfer' && (
+        <div>
+          <label
+            htmlFor="toAccountId"
+            className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1"
+          >
+            Destination Account <span className="text-red-500">*</span>
+          </label>
+          <select
+            id="toAccountId"
+            {...register('toAccountId')}
+            disabled={accountsLoading || destinationAccounts.length === 0}
+            className="w-full px-4 py-2 rounded-lg border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:opacity-50"
+          >
+            <option value="">Select a destination account</option>
+            {destinationAccounts.map((account) => (
+              <option key={account.id} value={account.id}>
+                {account.name} ({account.type})
+              </option>
+            ))}
+          </select>
+          {destinationAccounts.length === 0 && (
+            <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
+              You need at least two active accounts to create a transfer.
+            </p>
+          )}
+          {errors.toAccountId && (
+            <p className="mt-1 text-sm text-red-600 dark:text-red-400">
+              {errors.toAccountId.message}
+            </p>
+          )}
+        </div>
+      )}
+
       {/* Status & Merchant */}
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
         <div>
@@ -338,16 +436,21 @@ export function TransactionForm({
           <select
             id="merchantId"
             {...register('merchantId')}
-            disabled={merchantsLoading}
+            disabled={merchantsLoading || filteredMerchants.length === 0}
             className="w-full px-4 py-2 rounded-lg border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
           >
             <option value="">No merchant selected</option>
-            {merchantsData.map((merchant) => (
+            {filteredMerchants.map((merchant) => (
               <option key={merchant.id} value={merchant.id}>
                 {merchant.icon && `${merchant.icon} `}{merchant.name}
               </option>
             ))}
           </select>
+          {selectedCategoryId && filteredMerchants.length === 0 && (
+            <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
+              No merchants are linked to the selected category.
+            </p>
+          )}
           {errors.merchantId && (
             <p className="mt-1 text-sm text-red-600 dark:text-red-400">{errors.merchantId.message}</p>
           )}

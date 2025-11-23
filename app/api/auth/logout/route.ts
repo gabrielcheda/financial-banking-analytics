@@ -31,7 +31,6 @@ export async function POST() {
   response.cookies.delete('accessToken')
   response.cookies.delete('accessTokenPublic')
   response.cookies.delete('refreshToken')
-  response.cookies.delete('rememberMe')
 
   return response
 }

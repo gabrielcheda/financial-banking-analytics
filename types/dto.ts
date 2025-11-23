@@ -205,6 +205,7 @@ export interface AccountSummaryDTO {
 export interface TransactionDTO {
   id: string
   accountId: string
+  toAccountId?: string | null
   categoryId: string
   date: string
   description: string
@@ -241,6 +242,7 @@ export interface TransactionDetailsDTO extends TransactionDTO {
 
 export interface CreateTransactionDTO {
   accountId: string
+  toAccountId?: string
   categoryId: string
   date: string
   description: string
@@ -261,6 +263,7 @@ export interface CreateTransactionDTO {
 
 export interface UpdateTransactionDTO {
   accountId?: string
+  toAccountId?: string
   categoryId?: string
   date?: string
   description?: string
@@ -449,6 +452,7 @@ export interface BillDTO {
   userId: string
   accountId?: string
   categoryId: string
+  merchantId: string
   name: string
   amount: number
   dueDate: string
@@ -464,6 +468,7 @@ export interface BillDTO {
     name: string
     color: string
   }
+  merchant?: MerchantDTO
   account?: {
     id: string
     name: string
@@ -478,8 +483,9 @@ export interface CreateBillDTO {
   amount: number
   dueDate: string
   recurrence: 'once' | 'weekly' | 'monthly' | 'yearly'
+  merchantId: string
   categoryId: string
-  accountId?: string
+  accountId: string
   isPaid?: boolean
   notes?: string
 }
@@ -489,6 +495,7 @@ export interface UpdateBillDTO {
   amount?: number
   dueDate?: string
   recurrence?: 'once' | 'weekly' | 'monthly' | 'yearly'
+  merchantId?: string
   categoryId?: string
   accountId?: string
   isPaid?: boolean
@@ -498,6 +505,8 @@ export interface UpdateBillDTO {
 export interface PayBillDTO {
   paymentDate?: string // ISO string, defaults to current date/time
   notes?: string
+  accountId: string
+  amount?: number
 }
 
 export interface PayBillResponseDTO {
@@ -725,7 +734,9 @@ export interface UserPreferencesDTO {
       billReminders: boolean
       budgetAlerts: boolean
       goalMilestones: boolean
-      weeklyReport: boolean
+      weeklyReport?: boolean
+      weeklyReports: boolean
+      monthlyReports: boolean
       securityAlerts: boolean
     }
     push: {
@@ -750,8 +761,13 @@ export interface UserPreferencesDTO {
 
 export interface UpdatePreferencesDTO {
   currency?: string
+  language?: string
   theme?: 'dark' | 'light' | 'system'
+  dateFormat?: string
+  timeFormat?: '12h' | '24h'
   notifications?: Partial<UserPreferencesDTO['notifications']>
+  privacy?: Partial<UserPreferencesDTO['privacy']>
+  integrations?: Partial<UserPreferencesDTO['integrations']>
 }
 
 export interface UpdateProfileDTO {

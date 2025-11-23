@@ -83,7 +83,7 @@ function SuccessMessages() {
 function LoginForm() {
   const [showPassword, setShowPassword] = useState(false)
   const [rememberMeChecked, setRememberMeChecked] = useState(false)
-  const [state, formAction] = useFormState(loginAction, { error: null })
+  const [state, formAction] = useFormState(loginAction, { error: '' })
   const searchParams = useSearchParams()
   const redirect = searchParams.get('redirect')
   const router = useRouter()

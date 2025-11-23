@@ -6,7 +6,7 @@ import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { Button } from '@/components/ui/Button'
 import { Lock, Mail, Eye, EyeOff, User, Phone, AlertCircle } from 'lucide-react'
-import { registerAction } from '@/app/actions/auth'
+import { registerAction, type RegisterActionState } from '@/app/actions/auth'
 
 // Botão submit separado para useFormStatus
 function SubmitButton() {
@@ -24,12 +24,24 @@ function SubmitButton() {
   )
 }
 
+const initialState: RegisterActionState = {
+  error: null,
+  details: null,
+}
+
 export default function RegisterPage() {
   const [showPassword, setShowPassword] = useState(false)
   const [showConfirmPassword, setShowConfirmPassword] = useState(false)
   const [password, setPassword] = useState('')
-  const [state, formAction] = useFormState(registerAction, { error: null, details: null })
+  const [state, formAction] = useFormState(registerAction, initialState)
   const router = useRouter()
+
+  const fieldErrors =
+    state?.details &&
+      typeof state.details === 'object' &&
+      !Array.isArray(state.details)
+      ? (state.details as Record<string, string>)
+      : undefined
 
   // Handle successful registration redirect
   useEffect(() => {
@@ -98,12 +110,12 @@ export default function RegisterPage() {
                     type="text"
                     required
                     placeholder="John"
-                    className={`w-full pl-10 pr-4 py-3 rounded-lg border ${state?.details?.firstName ? 'border-red-500' : 'border-gray-300 dark:border-gray-700'
-                      } bg-white dark:bg-gray-800 text-gray-900 dark:text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500`}
+                  className={`w-full pl-10 pr-4 py-3 rounded-lg border ${fieldErrors?.firstName ? 'border-red-500' : 'border-gray-300 dark:border-gray-700'
+                    } bg-white dark:bg-gray-800 text-gray-900 dark:text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500`}
                   />
                 </div>
-                {state?.details?.firstName && (
-                  <p className="mt-1 text-sm text-red-500">{state.details.firstName}</p>
+                {fieldErrors?.firstName && (
+                  <p className="mt-1 text-sm text-red-500">{fieldErrors.firstName}</p>
                 )}
               </div>
 
@@ -120,12 +132,12 @@ export default function RegisterPage() {
                     type="text"
                     required
                     placeholder="Doe"
-                    className={`w-full pl-10 pr-4 py-3 rounded-lg border ${state?.details?.lastName ? 'border-red-500' : 'border-gray-300 dark:border-gray-700'
-                      } bg-white dark:bg-gray-800 text-gray-900 dark:text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500`}
+                  className={`w-full pl-10 pr-4 py-3 rounded-lg border ${fieldErrors?.lastName ? 'border-red-500' : 'border-gray-300 dark:border-gray-700'
+                    } bg-white dark:bg-gray-800 text-gray-900 dark:text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500`}
                   />
                 </div>
-                {state?.details?.lastName && (
-                  <p className="mt-1 text-sm text-red-500">{state.details.lastName}</p>
+                {fieldErrors?.lastName && (
+                  <p className="mt-1 text-sm text-red-500">{fieldErrors.lastName}</p>
                 )}
               </div>
             </div>
@@ -143,12 +155,12 @@ export default function RegisterPage() {
                   type="email"
                   required
                   placeholder="john.doe@example.com"
-                  className={`w-full pl-10 pr-4 py-3 rounded-lg border ${state?.details?.email ? 'border-red-500' : 'border-gray-300 dark:border-gray-700'
+                  className={`w-full pl-10 pr-4 py-3 rounded-lg border ${fieldErrors?.email ? 'border-red-500' : 'border-gray-300 dark:border-gray-700'
                     } bg-white dark:bg-gray-800 text-gray-900 dark:text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500`}
                 />
               </div>
-              {state?.details?.email && (
-                <p className="mt-1 text-sm text-red-500">{state.details.email}</p>
+              {fieldErrors?.email && (
+                <p className="mt-1 text-sm text-red-500">{fieldErrors.email}</p>
               )}
             </div>
 
@@ -163,10 +175,17 @@ export default function RegisterPage() {
                   id="phone"
                   name="phone"
                   type="tel"
+                  inputMode="tel"
+                  pattern="^[+]?[\d()\s-]{6,20}$"
                   placeholder="+55 11 98765-4321"
-                  className="w-full pl-10 pr-4 py-3 rounded-lg border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-900 dark:text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  title="Use apenas números, espaços, parênteses, hífens ou +"
+                  className={`w-full pl-10 pr-4 py-3 rounded-lg border ${fieldErrors?.phone ? 'border-red-500' : 'border-gray-300 dark:border-gray-700'
+                    } bg-white dark:bg-gray-800 text-gray-900 dark:text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500`}
                 />
               </div>
+              {fieldErrors?.phone && (
+                <p className="mt-1 text-sm text-red-500">{fieldErrors.phone}</p>
+              )}
             </div>
 
             {/* Password */}
@@ -184,7 +203,7 @@ export default function RegisterPage() {
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
                   placeholder="Create a strong password"
-                  className={`w-full pl-10 pr-12 py-3 rounded-lg border ${state?.details?.password ? 'border-red-500' : 'border-gray-300 dark:border-gray-700'
+                  className={`w-full pl-10 pr-12 py-3 rounded-lg border ${fieldErrors?.password ? 'border-red-500' : 'border-gray-300 dark:border-gray-700'
                     } bg-white dark:bg-gray-800 text-gray-900 dark:text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500`}
                 />
                 <button
@@ -212,8 +231,8 @@ export default function RegisterPage() {
                 </div>
               )}
 
-              {state?.details?.password && (
-                <p className="mt-1 text-sm text-red-500">{state.details.password}</p>
+              {fieldErrors?.password && (
+                <p className="mt-1 text-sm text-red-500">{fieldErrors.password}</p>
               )}
             </div>
 
@@ -230,7 +249,7 @@ export default function RegisterPage() {
                   type={showConfirmPassword ? 'text' : 'password'}
                   required
                   placeholder="Re-enter your password"
-                  className={`w-full pl-10 pr-12 py-3 rounded-lg border ${state?.details?.confirmPassword ? 'border-red-500' : 'border-gray-300 dark:border-gray-700'
+                  className={`w-full pl-10 pr-12 py-3 rounded-lg border ${fieldErrors?.confirmPassword ? 'border-red-500' : 'border-gray-300 dark:border-gray-700'
                     } bg-white dark:bg-gray-800 text-gray-900 dark:text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500`}
                 />
                 <button
@@ -241,8 +260,8 @@ export default function RegisterPage() {
                   {showConfirmPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
                 </button>
               </div>
-              {state?.details?.confirmPassword && (
-                <p className="mt-1 text-sm text-red-500">{state.details.confirmPassword}</p>
+              {fieldErrors?.confirmPassword && (
+                <p className="mt-1 text-sm text-red-500">{fieldErrors.confirmPassword}</p>
               )}
             </div>
 

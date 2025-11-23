@@ -4,11 +4,15 @@
  * React Query hooks para gerenciar estado de transações
  */
 
-import { useQuery, useMutation, useQueryClient, UseQueryOptions } from '@tanstack/react-query'
+import { useQuery, useMutation, useQueryClient, UseQueryOptions, QueryClient } from '@tanstack/react-query'
 import { toast } from 'sonner'
 import { showErrorToast } from '@/lib/error-utils'
 import { transactionService } from '@/services/api/transactions.service'
 import { accountKeys } from './useAccounts'
+import { merchantKeys } from './useMerchants'
+import { analyticsKeys } from './useAnalytics'
+import { budgetKeys } from './useBudgets'
+import { billKeys } from './useBills'
 import type {
   TransactionDTO,
   TransactionDetailsDTO,
@@ -27,6 +31,27 @@ export const transactionKeys = {
   detail: (id: string) => [...transactionKeys.details(), id] as const,
   stats: (startDate: string, endDate: string, accountId?: string) =>
     [...transactionKeys.all, 'stats', { startDate, endDate, accountId }] as const,
+  recent: (accountId?: string) => [...transactionKeys.all, 'recent', accountId] as const,
+}
+
+const invalidateTransactionDependencies = (
+  queryClient: QueryClient,
+  options?: { transactionId?: string }
+) => {
+  queryClient.invalidateQueries({ queryKey: transactionKeys.lists() })
+  if (options?.transactionId) {
+    queryClient.invalidateQueries({ queryKey: transactionKeys.detail(options.transactionId) })
+  }
+  queryClient.invalidateQueries({ queryKey: [...transactionKeys.all, 'recent'] })
+  queryClient.invalidateQueries({ queryKey: transactionKeys.recent(undefined) })
+  queryClient.invalidateQueries({ queryKey: accountKeys.all })
+  queryClient.invalidateQueries({ queryKey: accountKeys.summary() })
+  queryClient.invalidateQueries({ queryKey: analyticsKeys.all })
+  queryClient.invalidateQueries({ queryKey: budgetKeys.all })
+  queryClient.invalidateQueries({ queryKey: billKeys.all })
+  queryClient.invalidateQueries({ queryKey: billKeys.upcoming() })
+  queryClient.invalidateQueries({ queryKey: ['reports'] })
+  queryClient.invalidateQueries({ queryKey: merchantKeys.all })
 }
 
 /**
@@ -87,15 +112,7 @@ export function useCreateTransaction() {
   return useMutation({
     mutationFn: (data: CreateTransactionDTO) => transactionService.createTransaction(data),
     onSuccess: (response) => {
-      // Invalidar queries relacionadas
-      queryClient.invalidateQueries({ queryKey: transactionKeys.lists() })
-      // Invalidar todas as queries de accounts (lists, summary, active, etc)
-      queryClient.invalidateQueries({ queryKey: accountKeys.all })
-      // Invalidar analytics
-      queryClient.invalidateQueries({ queryKey: ['analytics'] })
-      // Invalidar budgets para atualizar spent amounts
-      queryClient.invalidateQueries({ queryKey: ['budgets'] })
-
+      invalidateTransactionDependencies(queryClient)
       toast.success('Transaction created successfully!')
     },
     onError: (error) => {
@@ -114,16 +131,7 @@ export function useUpdateTransaction() {
     mutationFn: ({ id, data }: { id: string; data: UpdateTransactionDTO }) =>
       transactionService.updateTransaction(id, data),
     onSuccess: (response, variables) => {
-      // Invalidar queries relacionadas
-      queryClient.invalidateQueries({ queryKey: transactionKeys.lists() })
-      queryClient.invalidateQueries({ queryKey: transactionKeys.detail(variables.id) })
-      // Invalidar todas as queries de accounts (lists, summary, active, etc)
-      queryClient.invalidateQueries({ queryKey: accountKeys.all })
-      // Invalidar analytics
-      queryClient.invalidateQueries({ queryKey: ['analytics'] })
-      // Invalidar budgets para atualizar spent amounts
-      queryClient.invalidateQueries({ queryKey: ['budgets'] })
-
+      invalidateTransactionDependencies(queryClient, { transactionId: variables.id })
       toast.success('Transaction updated successfully!')
     },
     onError: (error) => {
@@ -141,15 +149,8 @@ export function useDeleteTransaction() {
   return useMutation({
     mutationFn: (id: string) => transactionService.deleteTransaction(id),
     onSuccess: (_, id) => {
-      // Invalidar queries relacionadas
-      queryClient.invalidateQueries({ queryKey: transactionKeys.lists() })
+      invalidateTransactionDependencies(queryClient, { transactionId: id })
       queryClient.removeQueries({ queryKey: transactionKeys.detail(id) })
-      // Invalidar todas as queries de accounts (lists, summary, active, etc)
-      queryClient.invalidateQueries({ queryKey: accountKeys.all })
-      // Invalidar analytics
-      queryClient.invalidateQueries({ queryKey: ['analytics'] })
-      // Invalidar budgets para atualizar spent amounts
-      queryClient.invalidateQueries({ queryKey: ['budgets'] })
 
       toast.success('Transaction deleted successfully!')
     },
@@ -169,15 +170,7 @@ export function useImportTransactions() {
     mutationFn: (file: File) =>
       transactionService.importTransactions(file),
     onSuccess: (result) => {
-      // Invalidar queries relacionadas
-      queryClient.invalidateQueries({ queryKey: transactionKeys.lists() })
-      // Invalidar todas as queries de accounts (lists, summary, active, etc)
-      queryClient.invalidateQueries({ queryKey: accountKeys.all })
-      // Invalidar analytics
-      queryClient.invalidateQueries({ queryKey: ['analytics'] })
-      // Invalidar budgets para atualizar spent amounts
-      queryClient.invalidateQueries({ queryKey: ['budgets'] })
-
+      invalidateTransactionDependencies(queryClient)
       toast.success(
         `Import completed! ${result.imported} imported, ${result.failed} failed`
       )
@@ -194,7 +187,18 @@ export function useImportTransactions() {
 export function useExportTransactions() {
   return useMutation({
     mutationFn: (filters: TransactionFiltersDTO) => transactionService.exportTransactions(filters),
-    onSuccess: () => {
+    onSuccess: (blob) => {
+      if (typeof window !== 'undefined' && blob instanceof Blob) {
+        const url = window.URL.createObjectURL(blob)
+        const link = document.createElement('a')
+        link.href = url
+        const timestamp = new Date().toISOString().split('T')[0]
+        link.download = `transactions-${timestamp}.csv`
+        document.body.appendChild(link)
+        link.click()
+        document.body.removeChild(link)
+        window.URL.revokeObjectURL(url)
+      }
       toast.success('Export completed successfully!')
     },
     onError: (error) => {
@@ -220,7 +224,7 @@ export function useSearchTransactions(query: string) {
  */
 export function useRecentTransactions(accountId?: string) {
   return useQuery({
-    queryKey: [...transactionKeys.all, 'recent', accountId],
+    queryKey: transactionKeys.recent(accountId),
     queryFn: () => transactionService.getRecentTransactions(accountId),
     staleTime: 1000 * 60 * 1, // 1 minuto
   })

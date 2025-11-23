@@ -6,9 +6,10 @@ export const createBillSchema = z.object({
     .number()
     .positive('Amount must be positive')
     .or(z.string().transform((val) => parseFloat(val))),
+  merchantId: z.string().min(1, 'Merchant is required'),
   categoryId: z.string().min(1, 'Category is required'),
   accountId: z.string().min(1, 'Account is required'),
-  dueDate: z.coerce.date(),
+  dueDate: z.string().min(1, 'Due date is required'),
   isRecurring: z.boolean().default(false),
   frequency: z.enum(['monthly', 'weekly', 'yearly']).optional(),
   reminders: z.array(z.object({
@@ -25,7 +26,9 @@ export const updateBillSchema = z.object({
     .or(z.string().transform((val) => parseFloat(val)))
     .optional(),
   isPaid: z.boolean().optional(),
-  paymentDate: z.coerce.date().optional(),
+  merchantId: z.string().optional(),
+  categoryId: z.string().optional(),
+  paymentDate: z.string().optional(),
 })
 
 export const payBillSchema = z.object({

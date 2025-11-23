@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useMemo } from 'react'
+import { useState, useMemo, useEffect } from 'react'
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/Card'
 import { Button } from '@/components/ui/Button'
 import { Skeleton } from '@/components/ui/Skeleton'
@@ -15,12 +15,11 @@ import {
   Calendar,
   CheckCircle,
   Clock,
-  DollarSign,
   X,
   Repeat,
   CreditCard,
 } from 'lucide-react'
-import { format, differenceInDays, startOfMonth, endOfMonth, addDays } from 'date-fns'
+import { format, differenceInDays, startOfMonth, endOfMonth } from 'date-fns'
 import {
   useBills,
   useUpcomingBills,
@@ -30,7 +29,10 @@ import {
   useDeleteBill,
   usePayBill,
 } from '@/hooks/useBills'
-import type { BillDTO, CreateBillDTO, UpdateBillDTO, PayBillDTO } from '@/types/dto'
+import { useActiveAccounts } from '@/hooks/useAccounts'
+import { transactionService } from '@/services/api/transactions.service'
+import { showErrorToast } from '@/lib/error-utils'
+import type { BillDTO, CreateBillDTO, UpdateBillDTO } from '@/types/dto'
 import { parseLocaleNumber } from '@/lib/numberUtils'
 
 type TabType = 'all' | 'upcoming' | 'overdue' | 'paid'
@@ -40,6 +42,8 @@ export default function BillsClient() {
   const [showAddModal, setShowAddModal] = useState(false)
   const [editingBill, setEditingBill] = useState<BillDTO | null>(null)
   const [payingBill, setPayingBill] = useState<BillDTO | null>(null)
+  const [paymentAccountId, setPaymentAccountId] = useState<string>('')
+  const [isPaying, setIsPaying] = useState(false)
 
   // Get current month date range
   const currentMonth = useMemo(() => {
@@ -59,6 +63,14 @@ export default function BillsClient() {
     startDate: currentMonth.start,
     endDate: currentMonth.end,
   })
+  const { data: activeAccounts = [], isLoading: accountsLoading } = useActiveAccounts()
+
+  useEffect(() => {
+    if (payingBill && !paymentAccountId && activeAccounts.length > 0) {
+      const fallback = payingBill.accountId || activeAccounts[0].id
+      setPaymentAccountId(fallback)
+    }
+  }, [payingBill, paymentAccountId, activeAccounts])
 
   const createBill = useCreateBill()
   const updateBill = useUpdateBill()
@@ -81,10 +93,21 @@ export default function BillsClient() {
   }
 
   const normalizeDate = (value: string | Date) => {
-    if (value instanceof Date) {
-      return format(value, 'yyyy-MM-dd')
-    }
-    return value.split('T')[0]
+    const dateString =
+      value instanceof Date
+        ? format(value, 'yyyy-MM-dd')
+        : (value ?? '').split('T')[0]
+
+    if (!dateString) return ''
+
+    // Use noon UTC to avoid timezone shifts
+    return new Date(`${dateString}T12:00:00Z`).toISOString()
+  }
+
+  const parseBillDate = (value: string) => {
+    if (!value) return new Date()
+    const hasTime = value.includes('T')
+    return new Date(hasTime ? value : `${value}T12:00:00Z`)
   }
 
   // Get data from API response
@@ -134,6 +157,7 @@ export default function BillsClient() {
       name: data.name,
       amount: normalizeAmount(data.amount),
       dueDate: normalizeDate(data.dueDate),
+      merchantId: data.merchantId,
       categoryId: data.categoryId,
       accountId: data.accountId,
       recurrence: data.isRecurring
@@ -152,8 +176,9 @@ export default function BillsClient() {
       name: data.name,
       amount: normalizeAmount(data.amount ?? editingBill.amount),
       dueDate: data.dueDate ? normalizeDate(data.dueDate) : undefined,
-      categoryId: data.categoryId,
-      accountId: data.accountId,
+      merchantId: data.merchantId ?? editingBill.merchantId ?? undefined,
+      categoryId: data.categoryId ?? editingBill.categoryId,
+      accountId: data.accountId ?? editingBill.accountId,
       recurrence: data.isRecurring
         ? (data.frequency as 'weekly' | 'monthly' | 'yearly')
         : 'once',
@@ -169,10 +194,45 @@ export default function BillsClient() {
     }
   }
 
-  const handlePayBill = async (data: PayBillDTO) => {
-    if (!payingBill) return
-    await payBill.mutateAsync({ id: payingBill.id, data })
-    setPayingBill(null)
+  const handlePayBill = async () => {
+    if (!payingBill || !paymentAccountId) return
+    const amount = normalizeAmount(payingBill.amount)
+    const categoryId = payingBill.categoryId ||
+      (payingBill.merchant && (payingBill.merchant as any).category?.id)
+
+    if (!categoryId) {
+      showErrorToast(new Error('Missing category for this bill/merchant'), 'Cannot pay bill')
+      return
+    }
+
+    try {
+      setIsPaying(true)
+
+      await payBill.mutateAsync({
+        id: payingBill.id,
+        data: {
+          paymentDate: new Date().toISOString(),
+          amount,
+          accountId: paymentAccountId,
+        },
+      })
+
+      setPayingBill(null)
+      setPaymentAccountId('')
+    } catch (error) {
+      showErrorToast(error, 'Failed to pay bill')
+    } finally {
+      setIsPaying(false)
+    }
+  }
+
+  const openPayModal = (bill: BillDTO) => {
+    const fallbackAccount =
+      bill.accountId ||
+      activeAccounts.find((account) => account.id !== bill.accountId)?.id ||
+      ''
+    setPayingBill(bill)
+    setPaymentAccountId(fallbackAccount)
   }
 
   const formatCurrency = (amount: number | null | undefined) => {
@@ -184,7 +244,7 @@ export default function BillsClient() {
   }
 
   const getDaysUntilDue = (dueDate: string): number => {
-    return differenceInDays(new Date(dueDate), new Date())
+    return differenceInDays(parseBillDate(dueDate), new Date())
   }
 
   const getBillStatus = (bill: BillDTO) => {
@@ -423,13 +483,13 @@ export default function BillsClient() {
                   </div>
                   <div className="flex gap-1">
                     {!bill.isPaid && (
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        onClick={() => setPayingBill(bill)}
-                        disabled={payBill.isPending}
-                        title="Pay bill"
-                      >
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => openPayModal(bill)}
+                      disabled={payBill.isPending}
+                      title="Pay bill"
+                    >
                         <CreditCard className="w-4 h-4 text-green-600" />
                       </Button>
                     )}
@@ -468,15 +528,17 @@ export default function BillsClient() {
                       <div className="flex items-center gap-2">
                         <Calendar className="w-4 h-4 text-gray-400" />
                         <span className="text-gray-900 dark:text-white">
-                          {format(new Date(bill.dueDate), 'MMM dd, yyyy')}
+                          {format(parseBillDate(bill.dueDate), 'MMM dd, yyyy')}
                         </span>
                       </div>
                     </div>
 
-                    {/* Category */}
+                    {/* Merchant */}
                     <div className="flex items-center justify-between text-sm">
-                      <span className="text-gray-500 dark:text-gray-400">Category ID</span>
-                      <span className="text-gray-900 dark:text-white">{bill.categoryId}</span>
+                      <span className="text-gray-500 dark:text-gray-400">Merchant</span>
+                      <span className="text-gray-900 dark:text-white">
+                        {bill.merchant?.name || bill.merchantId || 'N/A'}
+                      </span>
                     </div>
 
                     {/* Recurring Info */}
@@ -586,7 +648,10 @@ export default function BillsClient() {
               <Button
                 variant="ghost"
                 size="sm"
-                onClick={() => setPayingBill(null)}
+                onClick={() => {
+                  setPayingBill(null)
+                  setPaymentAccountId('')
+                }}
                 disabled={payBill.isPending}
               >
                 <X className="w-5 h-5" />
@@ -609,31 +674,49 @@ export default function BillsClient() {
                 <div>
                   <p className="text-sm text-gray-500 dark:text-gray-400">Due Date</p>
                   <p className="text-gray-900 dark:text-white">
-                    {format(new Date(payingBill.dueDate), 'MMM dd, yyyy')}
+                    {format(parseBillDate(payingBill.dueDate), 'MMM dd, yyyy')}
                   </p>
+                </div>
+
+                <div>
+                  <p className="text-sm text-gray-500 dark:text-gray-400 mb-1">Payment Account</p>
+                  <select
+                    value={paymentAccountId}
+                    onChange={(e) => setPaymentAccountId(e.target.value)}
+                    className="w-full px-4 py-2 rounded-lg border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  >
+                    <option value="">Select an account</option>
+                    {activeAccounts.map((account) => (
+                      <option key={account.id} value={account.id}>
+                        {account.name} ({account.type})
+                      </option>
+                    ))}
+                  </select>
+                  {accountsLoading && (
+                    <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">Loading accounts...</p>
+                  )}
                 </div>
               </div>
 
               <div className="flex gap-3 mt-6">
                 <Button
                   variant="outline"
-                  onClick={() => setPayingBill(null)}
-                  disabled={payBill.isPending}
+                  onClick={() => {
+                    setPayingBill(null)
+                    setPaymentAccountId('')
+                  }}
+                  disabled={payBill.isPending || isPaying}
                   className="flex-1"
                 >
                   Cancel
                 </Button>
                 <Button
                   variant="primary"
-                  onClick={() =>
-                    handlePayBill({
-                      paymentDate: new Date().toISOString(),
-                    })
-                  }
-                  disabled={payBill.isPending}
+                  onClick={handlePayBill}
+                  disabled={payBill.isPending || isPaying || !paymentAccountId}
                   className="flex-1"
                 >
-                  {payBill.isPending ? 'Processing...' : 'Confirm Payment'}
+                  {payBill.isPending || isPaying ? 'Processing...' : 'Confirm Payment'}
                 </Button>
               </div>
             </div>

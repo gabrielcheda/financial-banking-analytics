@@ -100,6 +100,8 @@ export default function CategoriesClient() {
   }
 
   const openDeleteDialog = (category: CategoryDTO) => {
+    const fallbackCategory = categories.find((cat) => cat.id !== category.id)?.id ?? ''
+    setReassignCategoryId(fallbackCategory)
     setDeleteDialogState({
       isOpen: true,
       categoryId: category.id,

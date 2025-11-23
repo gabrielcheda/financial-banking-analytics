@@ -1,5 +1,6 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { userService } from '@/services/api/user.service'
+import authService from '@/services/api/auth.service'
 import type {
   UpdateProfileDTO,
   UpdatePreferencesDTO,
@@ -62,7 +63,11 @@ export function useUpdatePreferences() {
  */
 export function useChangePassword() {
   return useMutation({
-    mutationFn: (data: ChangePasswordDTO) => userService.changePassword(data),
+    mutationFn: (data: ChangePasswordDTO) =>
+      authService.changePassword({
+        currentPassword: data.currentPassword,
+        newPassword: data.newPassword,
+      }),
   })
 }
 

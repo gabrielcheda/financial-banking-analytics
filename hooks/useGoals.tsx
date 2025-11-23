@@ -69,7 +69,10 @@ export function useCreateGoal() {
   const queryClient = useQueryClient()
 
   return useMutation({
-    mutationFn: (data: CreateGoalDTO) => goalService.createGoal(data),
+    mutationFn: async (data: CreateGoalDTO) => {
+      const { userId: _ignored, ...rest } = data as any
+      return goalService.createGoal(rest as CreateGoalDTO)
+    },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: goalKeys.lists() })
       queryClient.invalidateQueries({ queryKey: goalKeys.progress() })

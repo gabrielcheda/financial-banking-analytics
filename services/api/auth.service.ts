@@ -5,9 +5,7 @@ import type {
   RegisterDTO,
   AuthResponseDTO,
   ApiResponse,
-  ApiError,
-  UserDTO
-} from '@/types/dto'
+  ApiError} from '@/types/dto'
 
 class AuthService {
   private readonly baseURL = '/auth'

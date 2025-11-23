@@ -125,13 +125,14 @@ export function useDeleteAccount() {
   const queryClient = useQueryClient()
 
   return useMutation({
-    mutationFn: (id: string) => accountService.deleteAccount(id),
-    onSuccess: (_, id) => {
+    mutationFn: ({ id, transferToAccountId }: { id: string; transferToAccountId?: string }) =>
+      accountService.deleteAccount(id, transferToAccountId),
+    onSuccess: (_, variables) => {
       // Invalidar todas as queries relacionadas a accounts
       queryClient.invalidateQueries({ queryKey: accountKeys.all })
       // Invalidar todas as transactions pois a conta foi deletada
       queryClient.invalidateQueries({ queryKey: ['transactions'] })
-      // Invalidar analytics e budgets também
+      // Invalidar analytics e budgets tambem
       queryClient.invalidateQueries({ queryKey: ['analytics'] })
       queryClient.invalidateQueries({ queryKey: ['budgets'] })
       toast.success('Account deleted successfully!')
@@ -141,6 +142,7 @@ export function useDeleteAccount() {
     },
   })
 }
+
 
 /**
  * Hook to get active accounts
