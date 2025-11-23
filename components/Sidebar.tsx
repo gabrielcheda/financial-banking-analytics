@@ -25,20 +25,27 @@ import { useProfile } from '@/hooks/useUser'
 import { useLogout } from '@/hooks/useAuth'
 
 const navigation = [
-  { name: 'Dashboard', href: '/dashboard', icon: LayoutDashboard },
-  { name: 'Accounts', href: '/accounts', icon: Wallet },
-  { name: 'Transactions', href: '/transactions', icon: ArrowLeftRight },
-  { name: 'Categories', href: '/categories', icon: Tag },
-  { name: 'Merchants', href: '/merchants', icon: Store },
-  { name: 'Budgets', href: '/budgets', icon: PiggyBank },
-  { name: 'Bills', href: '/bills', icon: Receipt },
-  { name: 'Goals', href: '/goals', icon: Flag },
-  { name: 'Analytics', href: '/analytics', icon: TrendingUp },
-  { name: 'Reports', href: '/reports', icon: FileText },
-  { name: 'Planning', href: '/planning', icon: Target },
-  { name: 'Notifications', href: '/notifications', icon: Bell },
-  { name: 'Settings', href: '/settings', icon: Settings },
-]
+  { name: 'Dashboard', href: '/dashboard', icon: LayoutDashboard, priority: 'high' },
+  { name: 'Transactions', href: '/transactions', icon: ArrowLeftRight, priority: 'high' },
+  { name: 'Accounts', href: '/accounts', icon: Wallet, priority: 'high' },
+  { name: 'Budgets', href: '/budgets', icon: PiggyBank, priority: 'medium' },
+  { name: 'Bills', href: '/bills', icon: Receipt, priority: 'medium' },
+  { name: 'Goals', href: '/goals', icon: Flag, priority: 'medium' },
+  { name: 'Categories', href: '/categories', icon: Tag, priority: 'medium' },
+  { name: 'Merchants', href: '/merchants', icon: Store, priority: 'medium' },
+  { name: 'Analytics', href: '/analytics', icon: TrendingUp, priority: 'low' },
+  { name: 'Reports', href: '/reports', icon: FileText, priority: 'low' },
+  { name: 'Planning', href: '/planning', icon: Target, priority: 'low' },
+  { name: 'Notifications', href: '/notifications', icon: Bell, priority: 'low' },
+  { name: 'Settings', href: '/settings', icon: Settings, priority: 'low' },
+] as const
+
+// Prefetch delays based on priority
+const PREFETCH_DELAYS = {
+  high: 100,    // Most frequently used routes
+  medium: 300,  // Moderately used routes
+  low: 500,     // Less frequently used routes
+} as const
 
 export function Sidebar() {
   const pathname = usePathname()
@@ -102,7 +109,7 @@ export function Sidebar() {
     }
   }
 
-  const schedulePrefetch = (href: string) => {
+  const schedulePrefetch = (href: string, priority: 'high' | 'medium' | 'low' = 'medium') => {
     if (prefetchedRoutesRef.current.has(href)) return
 
     if (typeof window === 'undefined') {
@@ -113,11 +120,12 @@ export function Sidebar() {
 
     if (prefetchTimeoutsRef.current[href]) return
 
+    const delay = PREFETCH_DELAYS[priority]
     prefetchTimeoutsRef.current[href] = window.setTimeout(() => {
       executePrefetch(href)
       prefetchedRoutesRef.current.add(href)
       delete prefetchTimeoutsRef.current[href]
-    }, 250)
+    }, delay)
   }
 
   const cancelScheduledPrefetch = (href: string) => {
@@ -205,8 +213,8 @@ export function Sidebar() {
                   key={item.name}
                   href={item.href}
                   onClick={() => setIsMobileMenuOpen(false)}
-                  onMouseEnter={() => schedulePrefetch(item.href)}
-                  onFocus={() => schedulePrefetch(item.href)}
+                  onMouseEnter={() => schedulePrefetch(item.href, item.priority)}
+                  onFocus={() => schedulePrefetch(item.href, item.priority)}
                   onMouseLeave={() => cancelScheduledPrefetch(item.href)}
                   className={`
                     flex items-center gap-3 px-4 py-3 rounded-lg transition-all duration-200

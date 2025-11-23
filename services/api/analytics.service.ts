@@ -115,6 +115,34 @@ class AnalyticsService {
   }
 
   /**
+   * Get income vs expenses comparison
+   */
+  async getIncomeVsExpenses(params: {
+    period?: 'daily' | 'weekly' | 'monthly'
+    months?: number
+  }): Promise<Array<{
+    period: string
+    income: number
+    expenses: number
+    net: number
+    savingsRate: number
+  }>> {
+    const queryParams = new URLSearchParams({
+      period: params.period || 'monthly',
+      months: String(params.months || 12),
+    })
+
+    const response = await apiClient.get<ApiResponse<Array<{
+      period: string
+      income: number
+      expenses: number
+      net: number
+      savingsRate: number
+    }>>>(`${this.baseUrl}/income-vs-expenses?${queryParams.toString()}`)
+    return unwrapResponse(response)
+  }
+
+  /**
    * Get net worth over time
    */
   async getNetWorthHistory(params: {

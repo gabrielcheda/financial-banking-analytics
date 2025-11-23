@@ -6,9 +6,10 @@ import { contributeToGoalSchema, type ContributeToGoalInput } from '@/lib/valida
 import { Button } from '@/components/ui/Button'
 import { useActiveAccounts } from '@/hooks/useAccounts'
 import { format } from 'date-fns'
-import type { GoalDTO } from '@/types/dto'
+import type { GoalDTO, AccountDTO } from '@/types/dto'
 import { TrendingUp, DollarSign } from 'lucide-react'
 import { parseLocaleNumber } from '@/lib/numberUtils'
+import { formatCurrency } from '@/utils/currency'
 
 interface ContributeFormProps {
   goal: GoalDTO
@@ -228,7 +229,7 @@ export function ContributeForm({
           className="w-full px-4 py-2 rounded-lg border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:opacity-50"
         >
           <option value="">Select an account</option>
-          {accounts?.map((account: any) => (
+          {accounts?.map((account: AccountDTO) => (
             <option key={account.id} value={account.id}>
               {account.name} - {formatCurrency(account.balance)}
             </option>

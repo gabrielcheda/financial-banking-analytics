@@ -278,7 +278,9 @@ export async function registerAction(
             redirectTo: '/dashboard'
         }
     } catch (error) {
-        console.log(`error`, error);
+        if (process.env.NODE_ENV === 'development') {
+          console.log(`error`, error);
+        }
         return { error: 'Failed to connect to server' }
     }
 }

@@ -150,13 +150,15 @@ export function usePrefetch() {
     })
   }
 
-  const prefetchMerchantStats = () => {
-    queryClient.prefetchQuery({
-      queryKey: merchantKeys.stats(),
-      queryFn: () => merchantService.getMerchantStats(),
-      staleTime: 30000,
-    })
-  }
+  // Removed: getMerchantStats now requires id parameter
+  // const prefetchMerchantStats = () => {
+  //   queryClient.prefetchQuery({
+  //     queryKey: merchantKeys.stats(),
+  //     queryFn: () => merchantService.getMerchantStats(),
+  //     staleTime: 30000,
+  //   })
+  // }
+
 
   // Analytics prefetches
   const prefetchAnalyticsOverview = (params: { startDate: string; endDate: string; accountId?: string }) => {
@@ -207,7 +209,7 @@ export function usePrefetch() {
 
   const prefetchMerchantsPage = () => {
     prefetchMerchants()
-    prefetchMerchantStats()
+    // prefetchMerchantStats() // Removed: requires id parameter
     prefetchCategories()
   }
 
@@ -266,7 +268,7 @@ export function usePrefetch() {
     prefetchGoalDetail,
     prefetchCategories,
     prefetchMerchants,
-    prefetchMerchantStats,
+    // prefetchMerchantStats, // Removed: requires id parameter
     prefetchAnalyticsOverview,
     prefetchCategorySpending,
     prefetchReports,

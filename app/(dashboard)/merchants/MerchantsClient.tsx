@@ -26,7 +26,8 @@ export default function MerchantsClient() {
 
   // Fetch data
   const { data: merchants = [], isLoading } = useMerchants()
-  const { data: stats } = useMerchantStats()
+  // Note: useMerchantStats requires an ID, removing unused call
+  // const { data: stats } = useMerchantStats()
 
   // Mutations
   const createMutation = useCreateMerchant()
@@ -85,62 +86,8 @@ export default function MerchantsClient() {
         </Button>
       </div>
 
-      {/* Stats Cards */}
-      {stats && (
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-          <Card>
-            <CardContent className="pt-6">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-sm text-gray-500 dark:text-gray-400">Total Merchants</p>
-                  <p className="text-2xl font-bold text-gray-900 dark:text-white mt-1">
-                    {stats.totalMerchants}
-                  </p>
-                </div>
-                <div className="w-12 h-12 bg-blue-100 dark:bg-blue-900/30 rounded-full flex items-center justify-center">
-                  <Store className="w-6 h-6 text-blue-600 dark:text-blue-400" />
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-
-          <Card>
-            <CardContent className="pt-6">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-sm text-gray-500 dark:text-gray-400">Categories</p>
-                  <p className="text-2xl font-bold text-gray-900 dark:text-white mt-1">
-                    {stats.merchantsByCategory.length}
-                  </p>
-                </div>
-                <div className="w-12 h-12 bg-green-100 dark:bg-green-900/30 rounded-full flex items-center justify-center">
-                  <Tag className="w-6 h-6 text-green-600 dark:text-green-400" />
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-
-          <Card>
-            <CardContent className="pt-6">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-sm text-gray-500 dark:text-gray-400">Top Merchant</p>
-                  <p className="text-xl font-bold text-gray-900 dark:text-white mt-1 truncate">
-                    {stats.topMerchants[0]?.name || 'N/A'}
-                  </p>
-                  <p className="text-xs text-gray-500 dark:text-gray-400">
-                    {stats.topMerchants[0]?.transactionCount || 0} transactions
-                  </p>
-                </div>
-                <div className="w-12 h-12 bg-purple-100 dark:bg-purple-900/30 rounded-full flex items-center justify-center">
-                  <Store className="w-6 h-6 text-purple-600 dark:text-purple-400" />
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-        </div>
-      )}
-
+      {/* Stats Cards - Removed: requires general stats endpoint */}
+      
       {/* Search */}
       <Card>
         <CardContent className="pt-6">

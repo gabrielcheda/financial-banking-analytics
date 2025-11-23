@@ -21,6 +21,7 @@ export const analyticsKeys = {
   cashFlow: (params: any) => [...analyticsKeys.all, 'cash-flow', params] as const,
   spending: (params: any) => [...analyticsKeys.all, 'spending', params] as const,
   netWorth: (params: any) => [...analyticsKeys.all, 'net-worth', params] as const,
+  incomeVsExpenses: (params: any) => [...analyticsKeys.all, 'income-vs-expenses', params] as const,
 }
 
 /**
@@ -129,6 +130,24 @@ export function useSpendingByCategory(
     queryKey: analyticsKeys.spending(params),
     queryFn: () => analyticsService.getSpendingByCategory(params),
     enabled: !!params.startDate && !!params.endDate,
+    staleTime: 1000 * 60 * 5, // 5 minutes
+    ...options,
+  })
+}
+
+/**
+ * Hook to get income vs expenses comparison
+ */
+export function useIncomeVsExpenses(
+  params?: {
+    period?: 'daily' | 'weekly' | 'monthly'
+    months?: number
+  },
+  options?: Omit<UseQueryOptions<any[]>, 'queryKey' | 'queryFn'>
+) {
+  return useQuery({
+    queryKey: analyticsKeys.incomeVsExpenses(params || {}),
+    queryFn: () => analyticsService.getIncomeVsExpenses(params || {}),
     staleTime: 1000 * 60 * 5, // 5 minutes
     ...options,
   })

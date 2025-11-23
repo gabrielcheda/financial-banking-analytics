@@ -1,6 +1,7 @@
 'use client'
 
 import { useEffect, useRef } from 'react'
+import FocusTrap from 'focus-trap-react'
 import { X } from 'lucide-react'
 import { Button } from './Button'
 
@@ -69,34 +70,43 @@ export function Modal({
       aria-modal="true"
       aria-labelledby="modal-title"
     >
-      <div
-        ref={modalRef}
-        className={`relative w-full ${sizeClasses[size]} bg-white dark:bg-gray-900 rounded-lg shadow-xl transform transition-all`}
+      <FocusTrap
+        active={isOpen}
+        focusTrapOptions={{
+          initialFocus: false,
+          allowOutsideClick: true,
+          escapeDeactivates: false,
+        }}
       >
-        {/* Header */}
-        <div className="flex items-center justify-between px-6 py-4 border-b border-gray-200 dark:border-gray-700">
-          <h2
-            id="modal-title"
-            className="text-xl font-semibold text-gray-900 dark:text-white"
-          >
-            {title}
-          </h2>
-          {showCloseButton && (
-            <button
-              onClick={onClose}
-              className="p-1 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
-              aria-label="Close modal"
+        <div
+          ref={modalRef}
+          className={`relative w-full ${sizeClasses[size]} bg-white dark:bg-gray-900 rounded-lg shadow-xl transform transition-all`}
+        >
+          {/* Header */}
+          <div className="flex items-center justify-between px-6 py-4 border-b border-gray-200 dark:border-gray-700">
+            <h2
+              id="modal-title"
+              className="text-xl font-semibold text-gray-900 dark:text-white"
             >
-              <X className="w-5 h-5 text-gray-500 dark:text-gray-400" />
-            </button>
-          )}
-        </div>
+              {title}
+            </h2>
+            {showCloseButton && (
+              <button
+                onClick={onClose}
+                className="p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors min-w-[44px] min-h-[44px] flex items-center justify-center"
+                aria-label="Close modal"
+              >
+                <X className="w-5 h-5 text-gray-500 dark:text-gray-400" />
+              </button>
+            )}
+          </div>
 
-        {/* Content */}
-        <div className="px-6 py-4 max-h-[calc(100vh-200px)] overflow-y-auto">
-          {children}
+          {/* Content */}
+          <div className="px-6 py-4 max-h-[calc(100vh-200px)] overflow-y-auto">
+            {children}
+          </div>
         </div>
-      </div>
+      </FocusTrap>
     </div>
   )
 }

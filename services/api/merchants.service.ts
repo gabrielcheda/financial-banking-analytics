@@ -10,6 +10,7 @@ import type {
   CreateMerchantDTO,
   UpdateMerchantDTO,
   MerchantStatsDTO,
+  MerchantDetailStatsDTO,
 } from '@/types/dto'
 
 class MerchantService {
@@ -57,8 +58,8 @@ class MerchantService {
   /**
    * Get merchant statistics
    */
-  async getMerchantStats(): Promise<MerchantStatsDTO> {
-    const response = await apiClient.get<{ success: boolean; data: MerchantStatsDTO }>(`${this.baseUrl}/stats`)
+  async getMerchantStats(id: string): Promise<MerchantDetailStatsDTO> {
+    const response = await apiClient.get<{ success: boolean; data: MerchantDetailStatsDTO }>(`${this.baseUrl}/${id}/stats`)
     return response.data
   }
 }

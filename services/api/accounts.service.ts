@@ -103,6 +103,26 @@ class AccountService {
   }
 
   /**
+   * Get account balance with pending transactions
+   */
+  async getAccountBalance(id: string): Promise<{
+    accountId: string
+    balance: number
+    availableBalance: number
+    pendingBalance: number
+    lastUpdated: string
+  }> {
+    const response = await apiClient.get<ApiResponse<{
+      accountId: string
+      balance: number
+      availableBalance: number
+      pendingBalance: number
+      lastUpdated: string
+    }>>(`${this.baseUrl}/${id}/balance`)
+    return unwrapResponse(response)
+  }
+
+  /**
    * Get all active accounts
    */
   async getActiveAccounts(): Promise<AccountDTO[]> {

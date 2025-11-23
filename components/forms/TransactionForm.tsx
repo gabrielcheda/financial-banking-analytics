@@ -53,7 +53,9 @@ export function TransactionForm({
     },
   })
 
-  console.log('Form errors:', errors);
+  if (process.env.NODE_ENV === 'development') {
+    console.log('Form errors:', errors)
+  }
 
   const transactionType = watch('type')
   const selectedAccountId = watch('accountId')
@@ -66,14 +68,14 @@ export function TransactionForm({
   const { data: merchantsData = [], isLoading: merchantsLoading } = useMerchants()
 
   // Filter categories based on transaction type
-  const filteredCategories = categoriesData.filter((cat) => {
+  const filteredCategories = useMemo(() => {
     if (transactionType === 'income') {
-      return cat.type === 'income'
+      return categoriesData.filter((cat) => cat.type === 'income')
     } else if (transactionType === 'expense') {
-      return cat.type === 'expense'
+      return categoriesData.filter((cat) => cat.type === 'expense')
     }
-    return true
-  })
+    return categoriesData
+  }, [categoriesData, transactionType])
 
   const filteredMerchants = useMemo(() => {
     if (!selectedCategoryId) {

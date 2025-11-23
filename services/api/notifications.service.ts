@@ -58,7 +58,7 @@ class NotificationService {
    * Mark a notification as read
    */
   async markAsRead(id: string): Promise<ApiResponse<{ message: string }>> {
-    return await apiClient.put<ApiResponse<{ message: string }>>(
+    return await apiClient.patch<ApiResponse<{ message: string }>>(
       `${this.baseURL}/${id}/read`
     )
   }
@@ -67,7 +67,7 @@ class NotificationService {
    * Mark all notifications as read
    */
   async markAllAsRead(): Promise<ApiResponse<{ message: string; count: number }>> {
-    return await apiClient.put<ApiResponse<{ message: string; count: number }>>(
+    return await apiClient.patch<ApiResponse<{ message: string; count: number }>>(
       `${this.baseURL}/read-all`
     )
   }

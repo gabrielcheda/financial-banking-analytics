@@ -13,6 +13,7 @@ import type {
   CreateMerchantDTO,
   UpdateMerchantDTO,
   MerchantStatsDTO,
+  MerchantDetailStatsDTO,
 } from '@/types/dto'
 import { showErrorToast } from '@/lib/error-utils'
 
@@ -23,7 +24,7 @@ export const merchantKeys = {
   list: (params?: any) => [...merchantKeys.lists(), params] as const,
   details: () => [...merchantKeys.all, 'detail'] as const,
   detail: (id: string) => [...merchantKeys.details(), id] as const,
-  stats: () => [...merchantKeys.all, 'stats'] as const,
+  stats: (id: string) => [...merchantKeys.all, 'stats', id] as const,
 }
 
 /**
@@ -59,11 +60,13 @@ export function useMerchant(
  * Hook to get merchant statistics
  */
 export function useMerchantStats(
-  options?: Omit<UseQueryOptions<MerchantStatsDTO>, 'queryKey' | 'queryFn'>
+  id: string,
+  options?: Omit<UseQueryOptions<MerchantDetailStatsDTO, Error>, 'queryKey' | 'queryFn'>
 ) {
   return useQuery({
-    queryKey: merchantKeys.stats(),
-    queryFn: () => merchantService.getMerchantStats(),
+    queryKey: merchantKeys.stats(id),
+    queryFn: () => merchantService.getMerchantStats(id),
+    enabled: !!id,
     staleTime: 1000 * 60 * 5, // 5 minutes
     ...options,
   })

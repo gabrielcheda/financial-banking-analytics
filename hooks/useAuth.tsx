@@ -43,7 +43,9 @@ export function useRegister() {
   return useMutation({
     mutationFn: async (data: RegisterDTO) => await authService.register(data),
     onSuccess: (response) => {
-      console.log("Register Response", response);
+      if (process.env.NODE_ENV === 'development') {
+        console.log("Register Response", response);
+      }
       // Store user data in query cache
       queryClient.setQueryData(['user'], response.user)
 

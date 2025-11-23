@@ -24,6 +24,7 @@ export const accountKeys = {
   details: () => [...accountKeys.all, 'detail'] as const,
   detail: (id: string) => [...accountKeys.details(), id] as const,
   summary: () => [...accountKeys.all, 'summary'] as const,
+  balance: (id: string) => [...accountKeys.all, 'balance', id] as const,
 }
 
 /**
@@ -75,6 +76,22 @@ export function useAccountSummary(
 }
 
 /**
+ * Hook to get account balance with pending transactions
+ */
+export function useAccountBalance(
+  id: string,
+  options?: Omit<UseQueryOptions<any>, 'queryKey' | 'queryFn'>
+) {
+  return useQuery({
+    queryKey: accountKeys.balance(id),
+    queryFn: () => accountService.getAccountBalance(id),
+    enabled: !!id,
+    staleTime: 1000 * 60, // 1 minute
+    ...options,
+  })
+}
+
+/**
  * Hook to create account
  */
 export function useCreateAccount() {
@@ -90,7 +107,9 @@ export function useCreateAccount() {
       toast.success('Account created successfully!')
     },
     onError: (error, _, result) => {
-      console.log('error', (result as any))
+      if (process.env.NODE_ENV === 'development') {
+        console.log('error', (result as any))
+      }
       showErrorToast(error, (error as any)?.data?.error?.message || 'Failed to Create Account')
     },
   })

@@ -14,7 +14,9 @@ export async function POST(request: Request) {
 
         const result = await response.json()
 
-        console.log("result", result);
+        if (process.env.NODE_ENV === 'development') {
+          console.log("result", result);
+        }
 
         if (!response.ok) {
             return NextResponse.json({

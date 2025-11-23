@@ -1,6 +1,7 @@
 'use client'
 
 import { useState, useRef, type ChangeEvent } from 'react'
+import Image from 'next/image'
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/Card'
 import { Button } from '@/components/ui/Button'
 import { Skeleton } from '@/components/ui/Skeleton'
@@ -285,10 +286,13 @@ export default function SettingsClient() {
                       {/* Avatar */}
                       <div className="flex items-center gap-6">
                         {profile?.avatarUrl ? (
-                          <img
+                          <Image
                             src={profile.avatarUrl}
-                            alt={`${profile.firstName} ${profile.lastName}`}
+                            alt={`${profile.firstName} ${profile.lastName} avatar`}
+                            width={80}
+                            height={80}
                             className="w-20 h-20 rounded-full object-cover border border-gray-200 dark:border-gray-700"
+                            priority
                           />
                         ) : (
                           <div className="w-20 h-20 rounded-full bg-gradient-to-r from-blue-600 to-purple-600 flex items-center justify-center text-white font-bold text-2xl">

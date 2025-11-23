@@ -60,6 +60,18 @@ const nextConfig = {
               name: 'framer-motion',
               priority: 15,
             },
+            // Lucide Icons bundle
+            lucideIcons: {
+              test: /[\\/]node_modules[\\/](lucide-react)[\\/]/,
+              name: 'lucide-icons',
+              priority: 15,
+            },
+            // Date-fns bundle
+            dateFns: {
+              test: /[\\/]node_modules[\\/](date-fns)[\\/]/,
+              name: 'date-fns',
+              priority: 15,
+            },
             // Vendor bundle for other dependencies
             vendor: {
               test: /[\\/]node_modules[\\/]/,

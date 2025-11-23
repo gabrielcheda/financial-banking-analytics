@@ -161,27 +161,6 @@ export function useDeleteTransaction() {
 }
 
 /**
- * Hook para importar transações
- */
-export function useImportTransactions() {
-  const queryClient = useQueryClient()
-
-  return useMutation({
-    mutationFn: (file: File) =>
-      transactionService.importTransactions(file),
-    onSuccess: (result) => {
-      invalidateTransactionDependencies(queryClient)
-      toast.success(
-        `Import completed! ${result.imported} imported, ${result.failed} failed`
-      )
-    },
-    onError: (error) => {
-      showErrorToast(error, 'Failed to Import Transactions')
-    },
-  })
-}
-
-/**
  * Hook para exportar transações
  */
 export function useExportTransactions() {
@@ -203,6 +182,34 @@ export function useExportTransactions() {
     },
     onError: (error) => {
       showErrorToast(error, 'Failed to Export Transactions')
+    },
+  })
+}
+
+/**
+ * Hook para importar transações de CSV
+ */
+export function useImportTransactions() {
+  const queryClient = useQueryClient()
+
+  return useMutation({
+    mutationFn: (file: File) => transactionService.importCsv(file),
+    onSuccess: (result) => {
+      invalidateTransactionDependencies(queryClient)
+      
+      if (result.errors.length > 0) {
+        toast.warning(
+          `Imported ${result.imported} transactions. ${result.errors.length} failed.`,
+          {
+            description: result.errors?.slice(0, 3).join('\n'),
+          }
+        )
+      } else {
+        toast.success(`Successfully imported ${result.imported} transactions!`)
+      }
+    },
+    onError: (error) => {
+      showErrorToast(error, 'Failed to Import Transactions')
     },
   })
 }

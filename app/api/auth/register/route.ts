@@ -31,7 +31,9 @@ export async function POST(request: Request) {
        
         const responseJson = await response.json();
 
-        console.log('Registration response:', response.status);
+        if (process.env.NODE_ENV === 'development') {
+          console.log('Registration response:', response.status);
+        }
 
         if(responseJson.success === false) { 
             return NextResponse.json({ 

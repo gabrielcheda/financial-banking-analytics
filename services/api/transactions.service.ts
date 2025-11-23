@@ -181,6 +181,25 @@ class TransactionService {
   }
 
   /**
+   * Importa transações de um arquivo CSV
+   */
+  async importCsv(file: File): Promise<ImportResultDTO> {
+    const formData = new FormData()
+    formData.append('file', file)
+
+    const response = await apiClient.post<ApiResponse<ImportResultDTO>>(
+      `${this.baseUrl}/import/csv`,
+      formData,
+      {
+        headers: {
+          'Content-Type': 'multipart/form-data',
+        },
+      }
+    )
+    return unwrapResponse(response)
+  }
+
+  /**
    * Obtém transações recentes (últimas 10)
    */
   async getRecentTransactions(accountId?: string): Promise<TransactionDTO[]> {

@@ -341,7 +341,7 @@ export interface ImportTransactionsDTO {
 export interface ImportResultDTO {
   imported: number
   skipped: number
-  errors: number
+  errors: string[]
   duplicates: number
   transactions: TransactionDTO[]
 }
@@ -706,6 +706,19 @@ export interface GenerateReportResponseDTO {
 // Notification DTOs
 // ============================================================================
 
+export interface NotificationMetadata {
+  transactionId?: string
+  budgetId?: string
+  billId?: string
+  goalId?: string
+  accountId?: string
+  categoryId?: string
+  amount?: number
+  percentage?: number
+  dueDate?: string
+  [key: string]: string | number | undefined
+}
+
 export interface NotificationDTO {
   id: string
   type: 'bill' | 'budget' | 'goal' | 'transaction' | 'system'
@@ -714,7 +727,7 @@ export interface NotificationDTO {
   isRead: boolean
   priority: 'high' | 'medium' | 'low'
   actionUrl?: string
-  metadata?: Record<string, any>
+  metadata?: NotificationMetadata
   createdAt: string
 }
 
@@ -841,7 +854,7 @@ export interface WebhookSubscribeDTO {
 export interface WebhookPayloadDTO {
   event: string
   timestamp: string
-  data: any
+  data: Record<string, unknown>
   signature: string
 }
 
@@ -908,4 +921,21 @@ export interface MerchantStatsDTO {
     name: string
     transactionCount: number
   }>
+}
+
+// Stats for a specific merchant
+export interface MerchantDetailStatsDTO {
+  merchantId: string
+  totalSpent: number
+  transactionCount: number
+  averageTransaction: number
+  firstTransaction: string
+  lastTransaction: string
+  topCategory: {
+    id: string
+    name: string
+    count: number
+  }
+  monthlyAverage: number
+  frequency: 'daily' | 'weekly' | 'monthly' | 'rarely'
 }

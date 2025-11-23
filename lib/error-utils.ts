@@ -209,6 +209,35 @@ export function getUserFriendlyErrorMessage(error: unknown): string {
   // Mensagens customizadas baseadas em códigos comuns
   const code = error.code.toLowerCase()
 
+  // Mapeamento de códigos para mensagens user-friendly
+  const ERROR_MESSAGES: Record<string, string> = {
+    NETWORK_ERROR: 'Unable to connect to the server. Please check your internet connection and try again.',
+    TIMEOUT: 'The request took too long to complete. Please try again.',
+    DUPLICATE_TRANSACTION: 'This transaction already exists in your records.',
+    DUPLICATE_ACCOUNT: 'An account with this name already exists.',
+    DUPLICATE_CATEGORY: 'This category name is already in use.',
+    DUPLICATE_MERCHANT: 'This merchant already exists.',
+    INSUFFICIENT_BALANCE: 'Your account balance is insufficient for this transaction.',
+    INVALID_AMOUNT: 'Please enter a valid amount greater than zero.',
+    INVALID_DATE: 'The date you entered is invalid.',
+    ACCOUNT_NOT_FOUND: 'The selected account could not be found.',
+    CATEGORY_NOT_FOUND: 'The selected category could not be found.',
+    TRANSACTION_NOT_FOUND: 'The transaction you are looking for does not exist.',
+    BUDGET_EXCEEDED: 'This transaction would exceed your budget limit.',
+    BILL_ALREADY_PAID: 'This bill has already been marked as paid.',
+    GOAL_COMPLETED: 'This goal has already been completed.',
+    SESSION_EXPIRED: 'Your session has expired. Please log in again.',
+    INVALID_CREDENTIALS: 'The email or password you entered is incorrect.',
+    EMAIL_ALREADY_EXISTS: 'An account with this email address already exists.',
+    WEAK_PASSWORD: 'Please choose a stronger password with at least 8 characters.',
+  }
+
+  // Busca por código exato
+  if (ERROR_MESSAGES[error.code]) {
+    return ERROR_MESSAGES[error.code]
+  }
+
+  // Busca por padrões no código
   if (code.includes('duplicate') || code.includes('already exists')) {
     return 'This item already exists. Please use a different value.'
   }
@@ -227,6 +256,10 @@ export function getUserFriendlyErrorMessage(error: unknown): string {
 
   if (code.includes('timeout')) {
     return 'The request took too long. Please try again.'
+  }
+
+  if (code.includes('balance') || code.includes('insufficient')) {
+    return 'Insufficient funds to complete this transaction.'
   }
 
   // Retorna mensagem original
