@@ -204,16 +204,16 @@ export async function registerAction(
     const confirmPassword = formData.get('confirmPassword') as string
 
     if (password !== confirmPassword) {
-        return { error: 'Passwords do not match' }
+        return { error: 'errors.validation.passwordsDoNotMatch' }
     }
 
     if (phone) {
         const phoneRegex = /^[+]?[\d()\s-]{6,20}$/
         if (!phoneRegex.test(phone)) {
             return {
-                error: 'Invalid phone number',
+                error: 'errors.validation.invalidPhoneNumber',
                 details: {
-                    phone: 'Please provide a valid phone number (digits, +, (), - allowed)',
+                    phone: 'errors.validation.phoneNumberFormat',
                 },
             }
         }
@@ -241,7 +241,7 @@ export async function registerAction(
             const translatedKey = translateError(message) || message
             return {
                 error: translatedKey,
-                details: details || 'Registration failed',
+                details: details || 'errors.validation.registrationFailed',
             }
         }
 
