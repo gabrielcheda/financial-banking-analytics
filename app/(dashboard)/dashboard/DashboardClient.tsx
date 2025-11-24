@@ -295,7 +295,7 @@ export default function DashboardClient() {
                           : 'text-gray-900 dark:text-white'
                           }`}
                       >
-                        {transaction.type === 'income' ? '+' : '-'}$
+                        {transaction.type === 'income' ? '+' : '-'}
                         <BalanceDisplay amount={Math.abs(Number(transaction.amount ?? 0))} showSign={false} />
                       </p>
                       <p className="text-xs text-gray-500 dark:text-gray-400">
@@ -342,7 +342,7 @@ export default function DashboardClient() {
                             {getCategoryLabel((budget.categoryName as CategoryValue) ?? budget.category, t('categories.uncategorized'))}
                           </span>
                           <span className="text-gray-500 dark:text-gray-400">
-                            $<BalanceDisplay amount={spent} showSign={false} /> / $<BalanceDisplay amount={limit} showSign={false} />
+                            <BalanceDisplay amount={spent} showSign={false} /> / <BalanceDisplay amount={limit} showSign={false} />
                           </span>
                         </div>
                         <div className="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-2">
@@ -401,7 +401,7 @@ export default function DashboardClient() {
                         </div>
                       </div>
                       <p className="font-semibold text-gray-900 dark:text-white">
-                        $<BalanceDisplay amount={Number(bill.amount) ?? 0} showSign={false} />
+                        <BalanceDisplay amount={Number(bill.amount) ?? 0} showSign={false} />
                       </p>
                     </div>
                   ))}

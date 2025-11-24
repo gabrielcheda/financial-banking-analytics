@@ -77,7 +77,7 @@ export function Header() {
   return (
     <header className="sticky top-0 z-20 bg-white dark:bg-gray-900 border-b border-gray-200 dark:border-gray-800">
       <div className="px-4 sm:px-6 py-4">
-        <div className="flex items-center justify-between gap-2 sm:gap-4">
+        <div className="flex items-center justify-end md:justify-between gap-4">
           {/* Desktop Search bar */}
           <div className="hidden md:flex flex-1 max-w-2xl" ref={searchRef}>
             <div className="relative">
@@ -129,11 +129,10 @@ export function Header() {
                                 {translateSmartDate(transaction.date)}
                               </p>
                             </div>
-                            <p className={`text-sm font-semibold ${
-                              transaction.type === 'income'
-                                ? 'text-green-600 dark:text-green-400'
-                                : 'text-gray-900 dark:text-white'
-                            }`}>
+                            <p className={`text-sm font-semibold ${transaction.type === 'income'
+                              ? 'text-green-600 dark:text-green-400'
+                              : 'text-gray-900 dark:text-white'
+                              }`}>
                               {transaction.type === 'income' ? '+' : '-'}
                               <BalanceDisplay amount={Math.abs(transaction.amount)} showSign={false} />
                             </p>
@@ -169,148 +168,150 @@ export function Header() {
           </div>
 
           {/* Actions */}
-          <div className="flex items-center gap-2 sm:gap-3">
+          <div className="flex items-center gap-3 justify-around sm:gap-3">
             {/* Mobile Search Toggle */}
-            <button
-              onClick={() => setIsMobileSearchOpen(!isMobileSearchOpen)}
-              className="md:hidden p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors min-w-[44px] min-h-[44px] flex items-center justify-center"
-              aria-label={t('common.search')}
-            >
-              {isMobileSearchOpen ? (
-                <X className="w-5 h-5 text-gray-700 dark:text-gray-300" />
-              ) : (
-                <Search className="w-5 h-5 text-gray-700 dark:text-gray-300" />
-              )}
-            </button>
-
-            {/* Language Switcher */}
-            <div className="sm:hidden">
-              <LanguageSwitcher compact />
-            </div>
-            <div className="hidden sm:block">
-              <LanguageSwitcher />
-            </div>
-
-            {/* Notifications */}
-            <div className="relative" ref={notificationsRef}>
+            <div>
               <button
-                onClick={() => setIsNotificationsOpen(!isNotificationsOpen)}
-                className="relative p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors min-w-[44px] min-h-[44px] flex items-center justify-center"
-                aria-label={notificationsLabel}
+                onClick={() => setIsMobileSearchOpen(!isMobileSearchOpen)}
+                className="md:hidden p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors min-w-[44px] min-h-[44px] flex items-center justify-center"
+                aria-label={t('common.search')}
               >
-                <Bell className="w-5 h-5 text-gray-700 dark:text-gray-300" />
-                {hasUnread && (
-                  <span
-                    className="absolute top-1 right-1 min-w-[18px] h-[18px] bg-red-500 text-white text-xs font-bold rounded-full flex items-center justify-center px-1"
-                    aria-hidden="true"
-                  >
-                    {unreadBadgeText}
-                  </span>
+                {isMobileSearchOpen ? (
+                  <X className="w-5 h-5 text-gray-700 dark:text-gray-300" />
+                ) : (
+                  <Search className="w-5 h-5 text-gray-700 dark:text-gray-300" />
+                )}
+              </button>
+            </div>
+            {/* Language Switcher */}
+            <div className="flex items-center">
+              <div className="sm:hidden">
+                <LanguageSwitcher compact />
+              </div>
+              <div className="hidden sm:block">
+                <LanguageSwitcher compact />
+              </div>
+
+              {/* Notifications */}
+              <div className="relative" ref={notificationsRef}>
+                <button
+                  onClick={() => setIsNotificationsOpen(!isNotificationsOpen)}
+                  className="relative p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors min-w-[44px] min-h-[44px] flex items-center justify-center"
+                  aria-label={notificationsLabel}
+                >
+                  <Bell className="w-5 h-5 text-gray-700 dark:text-gray-300" />
+                  {hasUnread && (
+                    <span
+                      className="absolute top-1 right-1 min-w-[18px] h-[18px] bg-red-500 text-white text-xs font-bold rounded-full flex items-center justify-center px-1"
+                      aria-hidden="true"
+                    >
+                      {unreadBadgeText}
+                    </span>
+                  )}
+                </button>
+
+                {/* Notifications Dropdown */}
+                {isNotificationsOpen && (
+                  <div className="fixed sm:absolute right-2 sm:right-0 mt-2 w-[calc(100vw-1rem)] max-w-[380px] sm:w-96 bg-white dark:bg-gray-800 rounded-lg shadow-xl border border-gray-200 dark:border-gray-700 overflow-hidden z-50">
+                    <div className="px-4 py-3 border-b border-gray-200 dark:border-gray-700 flex items-center justify-between">
+                      <h3 className="font-semibold text-gray-900 dark:text-white">
+                        {t('notifications.title')}
+                      </h3>
+                      {unreadCount && unreadCount > 0 && (
+                        <span className="text-xs bg-blue-100 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400 px-2 py-1 rounded-full">
+                          {unreadCount} {t('notifications.new') || 'new'}
+                        </span>
+                      )}
+                    </div>
+
+                    <div className="max-h-96 overflow-y-auto">
+                      {notifications.length === 0 ? (
+                        <div className="p-8 text-center">
+                          <Bell className="w-12 h-12 text-gray-400 mx-auto mb-3" />
+                          <p className="text-gray-500 dark:text-gray-400">
+                            {t('notifications.noNotifications')}
+                          </p>
+                        </div>
+                      ) : (
+                        <div className="divide-y divide-gray-200 dark:divide-gray-700">
+                          {notifications.map((notification) => (
+                            <div
+                              key={notification.id}
+                              className={`p-4 hover:bg-gray-50 dark:hover:bg-gray-700 cursor-pointer transition-colors ${!notification.isRead ? 'bg-blue-50/50 dark:bg-blue-900/10' : ''
+                                }`}
+                              onClick={() => {
+                                if (!notification.isRead) {
+                                  markAsRead.mutate(notification.id)
+                                }
+                                if (notification.actionUrl) {
+                                  router.push(notification.actionUrl)
+                                }
+                                setIsNotificationsOpen(false)
+                              }}
+                            >
+                              <div className="flex items-start gap-3">
+                                {!notification.isRead && (
+                                  <span className="w-2 h-2 bg-blue-600 rounded-full mt-2 flex-shrink-0" />
+                                )}
+                                <div className="flex-1 min-w-0">
+                                  <p className="text-sm font-medium text-gray-900 dark:text-white">
+                                    {notification.title}
+                                  </p>
+                                  <p className="text-xs text-gray-600 dark:text-gray-400 mt-1">
+                                    {notification.message}
+                                  </p>
+                                  <p className="text-xs text-gray-500 dark:text-gray-500 mt-1">
+                                    {format(new Date(notification.createdAt), 'MMM dd, HH:mm')}
+                                  </p>
+                                </div>
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+                      )}
+                    </div>
+
+                    <div className="px-4 py-3 border-t border-gray-200 dark:border-gray-700">
+                      <Link
+                        href="/notifications"
+                        onClick={() => setIsNotificationsOpen(false)}
+                        className="text-sm text-blue-600 dark:text-blue-400 hover:underline font-medium"
+                      >
+                        {t('notifications.viewAll') || 'View all notifications'} →
+                      </Link>
+                    </div>
+                  </div>
+                )}
+              </div>
+
+              {/* Balance Visibility Toggle */}
+              <button
+                onClick={toggleBalanceVisibility}
+                disabled={isToggling}
+                className="p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors min-w-[44px] min-h-[44px] flex items-center justify-center disabled:opacity-50 disabled:cursor-not-allowed"
+                aria-label={shouldShowBalance ? t('settings.hideBalance') || 'Hide balances' : t('settings.showBalance') || 'Show balances'}
+                title={shouldShowBalance ? t('settings.hideBalance') || 'Hide balances' : t('settings.showBalance') || 'Show balances'}
+              >
+                {shouldShowBalance ? (
+                  <Eye className="w-5 h-5 text-gray-700 dark:text-gray-300" />
+                ) : (
+                  <EyeOff className="w-5 h-5 text-gray-700 dark:text-gray-300" />
                 )}
               </button>
 
-              {/* Notifications Dropdown */}
-              {isNotificationsOpen && (
-                <div className="fixed sm:absolute right-2 sm:right-0 mt-2 w-[calc(100vw-1rem)] max-w-[380px] sm:w-96 bg-white dark:bg-gray-800 rounded-lg shadow-xl border border-gray-200 dark:border-gray-700 overflow-hidden z-50">
-                  <div className="px-4 py-3 border-b border-gray-200 dark:border-gray-700 flex items-center justify-between">
-                    <h3 className="font-semibold text-gray-900 dark:text-white">
-                      {t('notifications.title')}
-                    </h3>
-                    {unreadCount && unreadCount > 0 && (
-                      <span className="text-xs bg-blue-100 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400 px-2 py-1 rounded-full">
-                        {unreadCount} {t('notifications.new') || 'new'}
-                      </span>
-                    )}
-                  </div>
-
-                  <div className="max-h-96 overflow-y-auto">
-                    {notifications.length === 0 ? (
-                      <div className="p-8 text-center">
-                        <Bell className="w-12 h-12 text-gray-400 mx-auto mb-3" />
-                        <p className="text-gray-500 dark:text-gray-400">
-                          {t('notifications.noNotifications')}
-                        </p>
-                      </div>
-                    ) : (
-                      <div className="divide-y divide-gray-200 dark:divide-gray-700">
-                        {notifications.map((notification) => (
-                          <div
-                            key={notification.id}
-                            className={`p-4 hover:bg-gray-50 dark:hover:bg-gray-700 cursor-pointer transition-colors ${
-                              !notification.isRead ? 'bg-blue-50/50 dark:bg-blue-900/10' : ''
-                            }`}
-                            onClick={() => {
-                              if (!notification.isRead) {
-                                markAsRead.mutate(notification.id)
-                              }
-                              if (notification.actionUrl) {
-                                router.push(notification.actionUrl)
-                              }
-                              setIsNotificationsOpen(false)
-                            }}
-                          >
-                            <div className="flex items-start gap-3">
-                              {!notification.isRead && (
-                                <span className="w-2 h-2 bg-blue-600 rounded-full mt-2 flex-shrink-0" />
-                              )}
-                              <div className="flex-1 min-w-0">
-                                <p className="text-sm font-medium text-gray-900 dark:text-white">
-                                  {notification.title}
-                                </p>
-                                <p className="text-xs text-gray-600 dark:text-gray-400 mt-1">
-                                  {notification.message}
-                                </p>
-                                <p className="text-xs text-gray-500 dark:text-gray-500 mt-1">
-                                  {format(new Date(notification.createdAt), 'MMM dd, HH:mm')}
-                                </p>
-                              </div>
-                            </div>
-                          </div>
-                        ))}
-                      </div>
-                    )}
-                  </div>
-
-                  <div className="px-4 py-3 border-t border-gray-200 dark:border-gray-700">
-                    <Link
-                      href="/notifications"
-                      onClick={() => setIsNotificationsOpen(false)}
-                      className="text-sm text-blue-600 dark:text-blue-400 hover:underline font-medium"
-                    >
-                      {t('notifications.viewAll') || 'View all notifications'} →
-                    </Link>
-                  </div>
-                </div>
-              )}
+              {/* Dark mode toggle */}
+              <button
+                onClick={() => setTheme(theme === 'dark' ? 'light' : 'dark')}
+                className="p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors min-w-[44px] min-h-[44px] flex items-center justify-center"
+                aria-label={t('settings.toggleTheme') || 'Toggle theme'}
+              >
+                {theme === 'dark' ? (
+                  <Sun className="w-5 h-5 text-gray-300" />
+                ) : (
+                  <Moon className="w-5 h-5 text-gray-700" />
+                )}
+              </button>
             </div>
-
-            {/* Balance Visibility Toggle */}
-            <button
-              onClick={toggleBalanceVisibility}
-              disabled={isToggling}
-              className="p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors min-w-[44px] min-h-[44px] flex items-center justify-center disabled:opacity-50 disabled:cursor-not-allowed"
-              aria-label={shouldShowBalance ? t('settings.hideBalance') || 'Hide balances' : t('settings.showBalance') || 'Show balances'}
-              title={shouldShowBalance ? t('settings.hideBalance') || 'Hide balances' : t('settings.showBalance') || 'Show balances'}
-            >
-              {shouldShowBalance ? (
-                <Eye className="w-5 h-5 text-gray-700 dark:text-gray-300" />
-              ) : (
-                <EyeOff className="w-5 h-5 text-gray-700 dark:text-gray-300" />
-              )}
-            </button>
-
-            {/* Dark mode toggle */}
-            <button
-              onClick={() => setTheme(theme === 'dark' ? 'light' : 'dark')}
-              className="p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors min-w-[44px] min-h-[44px] flex items-center justify-center"
-              aria-label={t('settings.toggleTheme') || 'Toggle theme'}
-            >
-              {theme === 'dark' ? (
-                <Sun className="w-5 h-5 text-gray-300" />
-              ) : (
-                <Moon className="w-5 h-5 text-gray-700" />
-              )}
-            </button>
           </div>
         </div>
 
@@ -368,9 +369,8 @@ export function Header() {
                               </p>
                             </div>
                             <div className="text-right flex-shrink-0">
-                              <p className={`font-semibold text-sm ${
-                                result.type === 'income' ? 'text-green-600' : 'text-gray-900 dark:text-white'
-                              }`}>
+                              <p className={`font-semibold text-sm ${result.type === 'income' ? 'text-green-600' : 'text-gray-900 dark:text-white'
+                                }`}>
                                 <BalanceDisplay amount={result.amount} showSign={true} />
                               </p>
                             </div>

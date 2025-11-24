@@ -214,7 +214,7 @@ export function Sidebar() {
           </div>
 
           {/* Navigation */}
-          <nav className="flex-1 p-4 space-y-2" aria-label={t('nav.mainNavigation')}>
+          <nav className="flex-1 p-4 space-y-2 overflow-y-auto" aria-label={t('nav.mainNavigation')}>
             {navigation.map((item) => {
               const isActive = pathname === item.href
               const Icon = item.icon

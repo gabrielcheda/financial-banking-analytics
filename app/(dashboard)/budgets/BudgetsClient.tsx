@@ -183,7 +183,7 @@ export default function BudgetsClient() {
                       {t('budgets.totalBudgeted')}
                     </p>
                     <p className="text-2xl font-bold text-gray-900 dark:text-white mt-2">
-                      $<BalanceDisplay amount={stats.totalBudgeted ?? 0} showSign={false} />
+                      <BalanceDisplay amount={stats.totalBudgeted ?? 0} showSign={false} />
                     </p>
                   </div>
                   <div className="bg-blue-100 dark:bg-blue-900/30 p-3 rounded-full">
@@ -201,7 +201,7 @@ export default function BudgetsClient() {
                       {t('budgets.totalSpent')}
                     </p>
                     <p className="text-2xl font-bold text-gray-900 dark:text-white mt-2">
-                      $<BalanceDisplay amount={stats.totalSpent ?? 0} showSign={false} />
+                      <BalanceDisplay amount={stats.totalSpent ?? 0} showSign={false} />
                     </p>
                   </div>
                   <div className="bg-purple-100 dark:bg-purple-900/30 p-3 rounded-full">
@@ -219,7 +219,7 @@ export default function BudgetsClient() {
                       {t('budgets.remaining')}
                     </p>
                     <p className="text-2xl font-bold text-green-700 dark:text-green-300 mt-2">
-                      $<BalanceDisplay amount={stats.totalRemaining ?? 0} showSign={false} />
+                      <BalanceDisplay amount={stats.totalRemaining ?? 0} showSign={false} />
                     </p>
                   </div>
                   <div className="bg-green-100 dark:bg-green-900/30 p-3 rounded-full">

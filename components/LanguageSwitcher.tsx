@@ -47,7 +47,7 @@ export function LanguageSwitcher({ compact = false }: LanguageSwitcherProps) {
         </button>
 
         {isOpen && (
-          <div className="fixed sm:absolute right-2 sm:right-0 mt-2 w-36 sm:w-40 rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 shadow-lg z-50">
+          <div className="absolute left-0 sm:right-0 sm:left-auto mt-2 w-40 rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 shadow-lg z-50">
             <div className="py-1" role="menu">
               {Object.entries(localeNames).map(([code, name]) => {
                 const localeCode = code as Locale
@@ -95,7 +95,7 @@ export function LanguageSwitcher({ compact = false }: LanguageSwitcherProps) {
       </button>
 
       {isOpen && (
-        <div className="absolute right-0 mt-2 w-48 rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 shadow-lg z-50">
+        <div className="absolute left-0 sm:right-0 sm:left-auto mt-2 w-48 rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 shadow-lg z-50">
           <div className="py-1" role="menu">
             {Object.entries(localeNames).map(([code, name]) => {
               const localeCode = code as Locale

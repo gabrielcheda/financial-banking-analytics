@@ -241,7 +241,7 @@ export default function AccountsClient() {
                       {t('accounts.totalAssets')}
                     </p>
                     <p className="text-2xl font-bold text-gray-900 dark:text-white mt-1">
-                      $<BalanceDisplay amount={summary?.totalAssets ?? 0} showSign={false} />
+                      <BalanceDisplay amount={summary?.totalAssets ?? 0} showSign={false} />
                     </p>
                   </div>
                   <div className="p-3 bg-purple-100 dark:bg-purple-900/30 rounded-lg">
@@ -259,7 +259,7 @@ export default function AccountsClient() {
                       {t('accounts.netWorth')}
                     </p>
                     <p className="text-2xl font-bold text-gray-900 dark:text-white mt-1">
-                      $<BalanceDisplay amount={summary?.netWorth ?? 0} showSign={false} />
+                      <BalanceDisplay amount={summary?.netWorth ?? 0} showSign={false} />
                     </p>
                   </div>
                   <div className="p-3 bg-orange-100 dark:bg-orange-900/30 rounded-lg">

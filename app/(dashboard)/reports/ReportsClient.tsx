@@ -749,7 +749,7 @@ export default function ReportsClient() {
                         {t('reports.totalIncome')}
                       </p>
                       <p className="text-2xl font-bold text-green-600">
-                        $<BalanceDisplay amount={Number(preview.totalIncome)} showSign={false} />
+                        <BalanceDisplay amount={Number(preview.totalIncome)} showSign={false} />
                       </p>
                     </div>
                     <div className="text-center">
@@ -757,7 +757,7 @@ export default function ReportsClient() {
                         {t('reports.totalExpenses')}
                       </p>
                       <p className="text-2xl font-bold text-red-600">
-                        $<BalanceDisplay amount={preview.totalExpenses} showSign={false} />
+                        <BalanceDisplay amount={preview.totalExpenses} showSign={false} />
                       </p>
                     </div>
                   </div>
@@ -812,7 +812,7 @@ export default function ReportsClient() {
                                       : 'text-gray-900 dark:text-white'
                                   }`}
                                 >
-                                  {transaction.type === 'income' ? '+' : '-'}$
+                                  {transaction.type === 'income' ? '+' : '-'}
                                   <BalanceDisplay amount={Math.abs(transaction.amount)} showSign={false} />
                                 </td>
                               </tr>

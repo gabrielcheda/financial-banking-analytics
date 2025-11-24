@@ -435,7 +435,7 @@ export default function AnalyticsClient() {
                       </div>
                     </div>
                     <p className="font-semibold text-gray-900 dark:text-white">
-                      $<BalanceDisplay amount={merchant.amount ?? 0} showSign={false} />
+                      <BalanceDisplay amount={merchant.amount ?? 0} showSign={false} />
                     </p>
                   </div>
                 ))}
@@ -466,7 +466,7 @@ export default function AnalyticsClient() {
                         {cat.category}
                       </p>
                       <p className="text-sm text-gray-500 dark:text-gray-400">
-                        $<BalanceDisplay amount={cat.thisMonth ?? 0} showSign={false} /> {t('analytics.thisMonthValue')}
+                        <BalanceDisplay amount={cat.thisMonth ?? 0} showSign={false} /> {t('analytics.thisMonthValue')}
                       </p>
                     </div>
                     <div className="flex items-center gap-2">

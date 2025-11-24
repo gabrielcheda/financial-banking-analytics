@@ -86,19 +86,19 @@ export function ContributeForm({
           <div className="flex justify-between items-center text-sm">
             <span className="text-gray-600 dark:text-gray-400">{t('forms.contribute.currentAmount')}</span>
             <span className="font-semibold text-gray-900 dark:text-white">
-              $<BalanceDisplay amount={goal.currentAmount} showSign={false} />
+              <BalanceDisplay amount={goal.currentAmount} showSign={false} />
             </span>
           </div>
           <div className="flex justify-between items-center text-sm">
             <span className="text-gray-600 dark:text-gray-400">{t('forms.contribute.targetAmount')}</span>
             <span className="font-semibold text-gray-900 dark:text-white">
-              $<BalanceDisplay amount={goal.targetAmount} showSign={false} />
+              <BalanceDisplay amount={goal.targetAmount} showSign={false} />
             </span>
           </div>
           <div className="flex justify-between items-center text-sm">
             <span className="text-gray-600 dark:text-gray-400">{t('forms.contribute.remaining')}</span>
             <span className="font-semibold text-red-600 dark:text-red-400">
-              $<BalanceDisplay amount={currentRemainingAmount} showSign={false} />
+              <BalanceDisplay amount={currentRemainingAmount} showSign={false} />
             </span>
           </div>
           <div className="pt-2 border-t border-gray-200 dark:border-gray-700">
@@ -159,13 +159,13 @@ export function ContributeForm({
             <div className="flex justify-between items-center text-sm">
               <span className="text-green-600 dark:text-green-400">{t('forms.contribute.newAmount')}</span>
               <span className="font-semibold text-green-700 dark:text-green-300">
-                $<BalanceDisplay amount={newAmount} showSign={false} />
+                <BalanceDisplay amount={newAmount} showSign={false} />
               </span>
             </div>
             <div className="flex justify-between items-center text-sm">
               <span className="text-green-600 dark:text-green-400">{t('forms.contribute.newRemaining')}</span>
               <span className="font-semibold text-green-700 dark:text-green-300">
-                $<BalanceDisplay amount={newRemaining} showSign={false} />
+                <BalanceDisplay amount={newRemaining} showSign={false} />
               </span>
             </div>
             <div className="pt-2 border-t border-green-200 dark:border-green-800">

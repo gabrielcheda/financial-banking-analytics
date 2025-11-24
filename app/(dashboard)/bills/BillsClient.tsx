@@ -329,7 +329,7 @@ export default function BillsClient() {
                       {t('bills.upcoming7Days')}
                     </p>
                     <p className="text-2xl font-bold text-gray-900 dark:text-white mt-2">
-                      $<BalanceDisplay amount={stats.totalUpcoming ?? 0} showSign={false} />
+                      <BalanceDisplay amount={stats.totalUpcoming ?? 0} showSign={false} />
                     </p>
                   </div>
                   <div className="bg-blue-100 dark:bg-blue-900/30 p-3 rounded-full">
@@ -347,7 +347,7 @@ export default function BillsClient() {
                       {t('bills.overdue')}
                     </p>
                     <p className="text-2xl font-bold text-red-600 dark:text-red-400 mt-2">
-                      $<BalanceDisplay amount={stats.totalOverdue ?? 0} showSign={false} />
+                      <BalanceDisplay amount={stats.totalOverdue ?? 0} showSign={false} />
                     </p>
                     <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
                       {stats.overdueCount} {stats.overdueCount === 1 ? t('bills.bill') : t('bills.bills')}
@@ -368,7 +368,7 @@ export default function BillsClient() {
                       {t('bills.paidThisMonth')}
                     </p>
                     <p className="text-2xl font-bold text-green-600 dark:text-green-400 mt-2">
-                      $<BalanceDisplay amount={Number(stats.totalPaid)} showSign={false} />
+                      <BalanceDisplay amount={Number(stats.totalPaid)} showSign={false} />
                     </p>
                   </div>
                   <div className="bg-green-100 dark:bg-green-900/30 p-3 rounded-full">
@@ -513,7 +513,7 @@ export default function BillsClient() {
                     <div className="flex items-center justify-between">
                       <span className="text-sm text-gray-500 dark:text-gray-400">{t('bills.amount')}</span>
                       <span className="text-lg font-bold text-gray-900 dark:text-white">
-                        $<BalanceDisplay amount={Number(bill.amount)} showSign={false} />
+                        <BalanceDisplay amount={Number(bill.amount)} showSign={false} />
                       </span>
                     </div>
 
@@ -663,7 +663,7 @@ export default function BillsClient() {
                 <div>
                   <p className="text-sm text-gray-500 dark:text-gray-400">{t('bills.amountDue')}</p>
                   <p className="text-2xl font-bold text-gray-900 dark:text-white">
-                    $<BalanceDisplay amount={payingBill.amount} showSign={false} />
+                    <BalanceDisplay amount={payingBill.amount} showSign={false} />
                   </p>
                 </div>
                 <div>

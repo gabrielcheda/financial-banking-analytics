@@ -348,7 +348,7 @@ export default function TransactionsClient() {
                     {t('transactions.totalIncome')}
                   </p>
                   <p className="text-3xl font-bold text-green-600 mt-2">
-                    $<BalanceDisplay amount={totalIncome} showSign={false} />
+                    <BalanceDisplay amount={totalIncome} showSign={false} />
                   </p>
                 </div>
               </CardContent>
@@ -360,7 +360,7 @@ export default function TransactionsClient() {
                     {t('transactions.totalExpenses')}
                   </p>
                   <p className="text-3xl font-bold text-red-600 mt-2">
-                    $<BalanceDisplay amount={totalExpenses} showSign={false} />
+                    <BalanceDisplay amount={totalExpenses} showSign={false} />
                   </p>
                 </div>
               </CardContent>

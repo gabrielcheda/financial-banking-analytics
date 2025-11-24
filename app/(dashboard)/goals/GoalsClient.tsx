@@ -291,7 +291,7 @@ export default function GoalsClient() {
               <div>
                 <p className="text-sm text-gray-600 dark:text-gray-400">{t('goals.totalSaved')}</p>
                 <p className="text-2xl font-bold text-gray-900 dark:text-white mt-1">
-                  $<BalanceDisplay amount={stats.totalSaved ?? 0} showSign={false} />
+                  <BalanceDisplay amount={stats.totalSaved ?? 0} showSign={false} />
                 </p>
               </div>
               <div className="p-3 bg-purple-100 dark:bg-purple-900/30 rounded-lg">
@@ -504,19 +504,19 @@ export default function GoalsClient() {
                     <div>
                       <p className="text-xs text-gray-600 dark:text-gray-400 mb-1">{t('goals.current')}</p>
                       <p className="text-sm font-semibold text-gray-900 dark:text-white">
-                        $<BalanceDisplay amount={goal.currentAmount ?? 0} showSign={false} />
+                        <BalanceDisplay amount={goal.currentAmount ?? 0} showSign={false} />
                       </p>
                     </div>
                     <div>
                       <p className="text-xs text-gray-600 dark:text-gray-400 mb-1">{t('goals.target')}</p>
                       <p className="text-sm font-semibold text-gray-900 dark:text-white">
-                        $<BalanceDisplay amount={goal.targetAmount ?? 0} showSign={false} />
+                        <BalanceDisplay amount={goal.targetAmount ?? 0} showSign={false} />
                       </p>
                     </div>
                     <div>
                       <p className="text-xs text-gray-600 dark:text-gray-400 mb-1">{t('goals.remaining')}</p>
                       <p className="text-sm font-semibold text-red-600 dark:text-red-400">
-                        $<BalanceDisplay amount={remainingAmount} showSign={false} />
+                        <BalanceDisplay amount={remainingAmount} showSign={false} />
                       </p>
                     </div>
                   </div>
@@ -552,7 +552,7 @@ export default function GoalsClient() {
                           {t('goals.monthly')}
                         </span>
                         <span className="font-medium text-gray-900 dark:text-white">
-                          $<BalanceDisplay amount={goal.monthlyContribution ?? 0} showSign={false} />
+                          <BalanceDisplay amount={goal.monthlyContribution ?? 0} showSign={false} />
                         </span>
                       </div>
                     )}

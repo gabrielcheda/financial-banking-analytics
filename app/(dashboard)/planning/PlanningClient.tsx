@@ -194,13 +194,13 @@ export default function PlanningClient() {
                           <div>
                             <p className="text-xs text-gray-500 dark:text-gray-400">{t('planning.current')}</p>
                             <p className="font-semibold text-gray-900 dark:text-white">
-                              $<BalanceDisplay amount={goal.currentAmount ?? 0} showSign={false} />
+                              <BalanceDisplay amount={goal.currentAmount ?? 0} showSign={false} />
                             </p>
                           </div>
                           <div>
                             <p className="text-xs text-gray-500 dark:text-gray-400">{t('planning.target')}</p>
                             <p className="font-semibold text-gray-900 dark:text-white">
-                              $<BalanceDisplay amount={goal.targetAmount ?? 0} showSign={false} />
+                              <BalanceDisplay amount={goal.targetAmount ?? 0} showSign={false} />
                             </p>
                           </div>
                         </div>
@@ -388,7 +388,7 @@ export default function PlanningClient() {
                       </h4>
                       <div className="flex justify-between text-sm mb-2">
                         <span className="text-gray-600 dark:text-gray-400">
-                          $<BalanceDisplay amount={budget.spent ?? 0} showSign={false} /> / $<BalanceDisplay amount={Number(budget.limit) ?? 0} showSign={false} />
+                          <BalanceDisplay amount={budget.spent ?? 0} showSign={false} /> / <BalanceDisplay amount={Number(budget.limit) ?? 0} showSign={false} />
                         </span>
                         <span
                           className={`font-semibold ${(budget.percentage ?? 0) > 100
