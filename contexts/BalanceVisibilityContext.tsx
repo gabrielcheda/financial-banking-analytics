@@ -2,6 +2,7 @@
 
 import { createContext, useContext, type ReactNode } from 'react'
 import { useProfile, useUpdatePreferences } from '@/hooks/useUser'
+import { useErrorTranslation } from '@/hooks/useErrorTranslation'
 import { toast } from 'sonner'
 
 interface BalanceVisibilityContextValue {
@@ -16,6 +17,7 @@ const BalanceVisibilityContext = createContext<BalanceVisibilityContextValue | u
 export function BalanceVisibilityProvider({ children }: { children: ReactNode }) {
   const { data: profile, isLoading } = useProfile()
   const updatePreferences = useUpdatePreferences()
+  const { translateError } = useErrorTranslation()
   
   const shouldShowBalance = profile?.preferences?.privacy?.showBalance ?? true
 
@@ -27,7 +29,7 @@ export function BalanceVisibilityProvider({ children }: { children: ReactNode })
         },
       })
     } catch (error: any) {
-      toast.error(error?.message || 'Failed to update balance visibility')
+      toast.error(translateError(error?.message))
     }
   }
 

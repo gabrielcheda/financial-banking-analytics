@@ -438,7 +438,7 @@ export default function TransactionsClient() {
               variant="outline"
               size="sm"
               onClick={handleExport}
-              disabled={exportMutation.isPending || isLoading}
+              disabled={exportMutation.isPending || isLoading || !transactions || transactions.length === 0}
             >
               <Download className="w-4 h-4 mr-2" />
               {exportMutation.isPending ? t('common.exporting') : t('common.exportCSV')}

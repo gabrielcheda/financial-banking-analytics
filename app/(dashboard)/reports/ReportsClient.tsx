@@ -19,6 +19,7 @@ import {
 import { useTransactions } from '@/hooks/useTransactions'
 import { useCategories } from '@/hooks/useCategories'
 import { useReports, useGenerateReport, useDownloadReport, useDeleteReport } from '@/hooks/useReports'
+import { useErrorTranslation } from '@/hooks/useErrorTranslation'
 import { toast } from 'sonner'
 import { format, subMonths } from 'date-fns'
 import { useBalanceFormatter } from '@/hooks/useBalanceFormatter'
@@ -29,6 +30,7 @@ type ExportFormat = 'pdf' | 'csv' | 'excel'
 
 export default function ReportsClient() {
   const { t } = useI18n()
+  const { translateError } = useErrorTranslation()
   const { formatBalance } = useBalanceFormatter()
   
   const [selectedType, setSelectedType] = useState<ReportType>('monthly')
@@ -508,7 +510,7 @@ export default function ReportsClient() {
           })
         }
       } catch (error: any) {
-        toast.error(error.message || t('reports.failedToGenerate'))
+        toast.error(translateError(error.message))
       }
     } else {
       // Client-side generation (existing functionality)

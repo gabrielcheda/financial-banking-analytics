@@ -8,6 +8,7 @@ import { Button } from '@/components/ui/Button'
 import { parseLocaleNumber } from '@/lib/numberUtils'
 import { toast } from 'sonner'
 import { useI18n } from '@/i18n'
+import { usePreferences } from '@/hooks/useUser'
 
 interface AccountFormProps {
   onSubmit: (data: CreateAccountInput) => Promise<void> | void
@@ -34,6 +35,7 @@ export function AccountForm({
   isLoading = false,
 }: AccountFormProps) {
   const { t } = useI18n()
+  const { data: preferences } = usePreferences()
   
   const ACCOUNT_TYPES = [
     { value: 'checking', label: t('forms.account.checkingAccount') },
@@ -51,7 +53,7 @@ export function AccountForm({
     resolver: zodResolver(createAccountSchema),
     defaultValues: {
       type: 'checking',
-      currency: 'USD',
+      currency: preferences?.currency || 'USD',
       balance: 0,
       ...defaultValues,
     },

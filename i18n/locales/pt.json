@@ -95,6 +95,7 @@
         "enterPassword": "Digite sua senha",
         "confirmYourPassword": "Confirme sua senha",
         "signingIn": "Entrando...",
+        "redirecting": "Redirecionando...",
         "creatingAccount": "Criando conta...",
         "sendingResetLink": "Enviando link de redefinição...",
         "sendResetInstructions": "Enviar instruções de redefinição",
@@ -142,7 +143,11 @@
         "checkEmail": "Verifique seu e-mail",
         "checkEmailMessage": "Enviamos instruções de redefinição para {email}. Siga as etapas para escolher uma nova senha.",
         "emailAddressPlaceholder": "voce@example.com",
-        "loading": "Carregando..."
+        "loading": "Carregando...",
+        "termsAndConditions": "Termos e Condições",
+        "acceptTerms": "Aceito os termos e condições",
+        "mustAcceptTerms": "Você deve aceitar os termos e condições",
+        "termsLink": "termos e condições"
     },
     "nav": {
         "dashboard": "Painel",
@@ -1066,6 +1071,9 @@
             "loadingAccounts": "Carregando contas...",
             "noMerchants": "Nenhum estabelecimento disponível",
             "loadingMerchants": "Carregando estabelecimentos...",
+            "noMerchant": "Nenhum estabelecimento",
+            "needTwoAccounts": "Você precisa de pelo menos duas contas ativas para fazer transferências",
+            "noMerchantsLinked": "Nenhum estabelecimento vinculado a esta categoria",
             "cancel": "Cancelar",
             "create": "Criar Transação",
             "update": "Atualizar Transação",
@@ -1150,18 +1158,23 @@
             "billNamePlaceholder": "ex: Conta de Luz",
             "amount": "Valor",
             "amountRequired": "O valor é obrigatório",
+            "amountPlaceHolder": "0,00",
             "dueDate": "Data de Vencimento",
             "dueDateRequired": "A data de vencimento é obrigatória",
             "merchant": "Estabelecimento",
             "merchantRequired": "O estabelecimento é obrigatório",
             "selectMerchant": "Selecione um estabelecimento",
+            "selectCategoryFirst": "Selecione uma categoria primeiro",
             "category": "Categoria",
             "categoryRequired": "A categoria é obrigatória",
             "selectCategory": "Selecione uma categoria",
             "account": "Conta de Pagamento",
             "accountRequired": "A conta de pagamento é obrigatória",
             "selectAccount": "Selecione uma conta",
+            "paymentAccount": "Conta de Pagamento",
             "isRecurring": "Conta Recorrente",
+            "recurringBill": "Conta Recorrente",
+            "isRecurringDescription": "Esta conta se repete automaticamente",
             "frequency": "Frequência",
             "monthly": "Mensal",
             "weekly": "Semanal",
@@ -1169,8 +1182,12 @@
             "yearly": "Anual",
             "notes": "Observações",
             "notesPlaceholder": "Adicione observações...",
+            "notesOptional": "Observações (opcional)",
             "enableReminder": "Ativar lembrete de pagamento",
             "reminderDays": "Lembrar {days} dias antes do vencimento",
+            "reminders": "Lembretes",
+            "enableReminders": "Ativar lembretes",
+            "enableRemindersDescription": "Receba notificações antes do vencimento",
             "daysBefore": "Dias antes",
             "noMerchants": "Nenhum estabelecimento disponível",
             "loadingMerchants": "Carregando estabelecimentos...",
@@ -1327,6 +1344,94 @@
             "cad": "CAD - Canadian Dollar",
             "aud": "AUD - Australian Dollar",
             "chf": "CHF - Swiss Franc"
+        }
+    },
+    "errors": {
+        "auth": {
+            "invalidCredentials": "Credenciais inválidas",
+            "userExists": "Usuário com este e-mail já existe",
+            "invalidRefreshToken": "Token de atualização inválido",
+            "expiredRefreshToken": "Token de atualização inválido ou expirado",
+            "userNotFound": "Usuário não encontrado",
+            "invalidResetToken": "Token de redefinição inválido",
+            "expiredResetToken": "Token de redefinição inválido ou expirado"
+        },
+        "users": {
+            "userNotFound": "Usuário não encontrado",
+            "currentPasswordIncorrect": "A senha atual está incorreta",
+            "passwordIncorrect": "A senha está incorreta",
+            "invalidAvatarFormat": "Formato de avatar inválido",
+            "avatarTooLarge": "O avatar excede o limite de 2MB"
+        },
+        "accounts": {
+            "accountNotFound": "Conta não encontrada",
+            "noAccess": "Você não tem acesso a esta conta",
+            "hasTransactions": "Não é possível excluir conta com transações. Transfira os dados ou exclua as transações primeiro.",
+            "cannotTransferToSame": "Não é possível transferir dados para a mesma conta"
+        },
+        "transactions": {
+            "accountNotBelongToUser": "A conta não pertence ao usuário",
+            "toAccountRequired": "A conta de destino é obrigatória para transações de transferência",
+            "destinationNotBelongToUser": "A conta de destino não pertence ao usuário",
+            "cannotTransferToSame": "Não é possível transferir para a mesma conta",
+            "transactionNotFound": "Transação não encontrada",
+            "invalidMonth": "O mês deve estar entre 1 e 12",
+            "invalidYear": "Ano inválido",
+            "searchQueryEmpty": "A consulta de pesquisa não pode estar vazia",
+            "csvEmpty": "O arquivo CSV está vazio ou inválido",
+            "csvInsufficientColumns": "Colunas insuficientes (mínimo: data, descrição, valor, tipo)",
+            "csvInvalidDate": "Formato de data inválido",
+            "csvInvalidAmount": "Valor inválido",
+            "csvInvalidType": "Tipo inválido (deve ser: receita, despesa ou transferência)",
+            "csvAccountNotFound": "Conta não encontrada",
+            "csvCategoryNotFound": "Categoria não encontrada"
+        },
+        "categories": {
+            "categoryNotFound": "Categoria não encontrada",
+            "cannotDeleteDefault": "Não é possível excluir categorias padrão do sistema",
+            "cannotEditDefault": "Não é possível editar categorias padrão do sistema",
+            "hasTransactions": "Esta categoria possui transações vinculadas. Reatribua-as antes de excluir.",
+            "hasBudgets": "Esta categoria possui orçamentos vinculados. Remova-os antes de excluir.",
+            "cannotReassignToSame": "Não é possível reatribuir para a mesma categoria",
+            "reassignCategoryNotFound": "Categoria de destino não encontrada",
+            "reassignCategoryNotBelongToUser": "A categoria de destino não pertence ao usuário"
+        },
+        "budgets": {
+            "budgetNotFound": "Orçamento não encontrado",
+            "noAccess": "Você não tem acesso a este orçamento",
+            "endDateBeforeStart": "A data final deve ser posterior à data inicial"
+        },
+        "bills": {
+            "billNotFound": "Conta não encontrada",
+            "alreadyPaid": "A conta já está marcada como paga",
+            "accountNotFound": "Conta não encontrada para esta transação",
+            "merchantNotFound": "Estabelecimento para esta conta não foi encontrado",
+            "categoryNotFound": "Categoria para esta conta não foi encontrada"
+        },
+        "goals": {
+            "goalNotFound": "Meta não encontrada",
+            "cannotContributeInactive": "Não é possível contribuir para meta inativa"
+        },
+        "merchants": {
+            "merchantNotFound": "Estabelecimento não encontrado"
+        },
+        "notifications": {
+            "notificationNotFound": "Notificação não encontrada"
+        },
+        "reports": {
+            "reportNotFound": "Relatório não encontrado",
+            "noAccess": "Você não tem acesso a este relatório",
+            "startDateAfterEnd": "A data inicial deve ser anterior à data final",
+            "unsupportedFormat": "Formato de relatório não suportado",
+            "fileNotFound": "Arquivo de relatório não encontrado no servidor",
+            "expired": "O relatório expirou",
+            "failedToRead": "Falha ao ler o arquivo de relatório"
+        },
+        "network": {
+            "noResponse": "Sem resposta do servidor. Por favor, verifique sua conexão com a internet.",
+            "requestError": "Ocorreu um erro inesperado",
+            "unknownError": "Ocorreu um erro",
+            "invalidResponse": "Resposta inválida do servidor"
         }
     }
 }

@@ -19,6 +19,7 @@ import {
   Check,
 } from 'lucide-react'
 import { useProfile, useUpdateProfile, useChangePassword, useUpdatePreferences, useUploadAvatar } from '@/hooks/useUser'
+import { useErrorTranslation } from '@/hooks/useErrorTranslation'
 import type { UpdatePreferencesDTO, UserPreferencesDTO } from '@/types/dto'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
@@ -84,6 +85,7 @@ const passwordSchema = z.object({
 
 export default function SettingsClient() {
   const { t } = useI18n()
+  const { translateError } = useErrorTranslation()
   const { setTheme } = useTheme()
   
   const [activeTab, setActiveTab] = useState<TabId>('profile')
@@ -118,7 +120,7 @@ export default function SettingsClient() {
       await updateProfile.mutateAsync(data)
       toast.success(t('settings.profileUpdated'))
     } catch (error: any) {
-      toast.error(error.message || t('settings.failedToUpdate'))
+      toast.error(translateError(error.message))
     }
   })
 
@@ -128,7 +130,7 @@ export default function SettingsClient() {
       toast.success(t('settings.passwordChanged'))
       passwordForm.reset()
     } catch (error: any) {
-      toast.error(error.message || t('settings.failedToChange'))
+      toast.error(translateError(error.message))
     }
   })
 
@@ -137,7 +139,7 @@ export default function SettingsClient() {
       await updatePreferences.mutateAsync(data)
       toast.success(successMessage || t('settings.preferencesUpdated'))
     } catch (error: any) {
-      toast.error(error?.message || t('settings.failedToUpdate'))
+      toast.error(translateError(error?.message))
     }
   }
 
@@ -174,7 +176,7 @@ export default function SettingsClient() {
           await uploadAvatar.mutateAsync(base64)
           toast.success(t('settings.photoUpdated'))
         } catch (error: any) {
-          toast.error(error?.message || t('settings.failedToUpload'))
+          toast.error(translateError(error?.message))
         } finally {
           inputElement.value = ''
         }

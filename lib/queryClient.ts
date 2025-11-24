@@ -3,6 +3,7 @@
  *
  * Configuração centralizada do QueryClient com defaults otimizados
  * Suporta SSR com Next.js App Router
+ * Inclui tradução automática de erros do backend
  */
 
 import { QueryClient, DefaultOptions } from '@tanstack/react-query'

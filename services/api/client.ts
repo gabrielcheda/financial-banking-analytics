@@ -10,6 +10,7 @@
 
 import axios, { AxiosInstance, AxiosError, InternalAxiosRequestConfig } from 'axios'
 import { ApiError, NormalizedError } from '@/types/dto'
+import { translateError, translateErrors } from '@/lib/error-translator'
 
 const METHODS_WITH_BODY = new Set(['POST', 'PUT', 'PATCH', 'DELETE'])
 
@@ -161,13 +162,16 @@ class ApiClient {
       const data = (error.response.data as any).data
 
       // Normaliza mensagens - pode ser string ou array
-      const messages = Array.isArray(data.error.message)
+      const rawMessages = Array.isArray(data.error.message)
         ? data.error.message
         : [data.error.message]
 
+      // Traduz as mensagens de erro do backend para chaves i18n
+      const translatedMessages = translateErrors(rawMessages)
+
       return {
-        message: messages[0] || 'An error occurred', // Primeira mensagem como principal
-        messages, // Todas as mensagens
+        message: translatedMessages[0] || 'errors.network.unknownError', // Primeira mensagem como principal (já como chave i18n)
+        messages: translatedMessages, // Todas as mensagens traduzidas
         code: data.error.code || 'UNKNOWN_ERROR',
         status: error.response.status,
         timestamp: new Date().toISOString(),
@@ -177,16 +181,16 @@ class ApiClient {
     } else if (error.request) {
       // Request foi feito mas sem resposta
       return {
-        message: 'No response from server. Please check your internet connection.',
-        messages: ['No response from server. Please check your internet connection.'],
+        message: 'errors.network.noResponse',
+        messages: ['errors.network.noResponse'],
         code: 'NETWORK_ERROR',
         status: 0,
       }
     } else {
       // Erro ao configurar request
       return {
-        message: error.message || 'An unexpected error occurred',
-        messages: [error.message || 'An unexpected error occurred'],
+        message: translateError(error.message) || 'errors.network.requestError',
+        messages: [translateError(error.message) || 'errors.network.requestError'],
         code: 'REQUEST_ERROR',
         status: 0,
       }

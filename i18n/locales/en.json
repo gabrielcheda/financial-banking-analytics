@@ -95,6 +95,7 @@
         "enterPassword": "Enter your password",
         "confirmYourPassword": "Confirm your password",
         "signingIn": "Signing in...",
+        "redirecting": "Redirecting...",
         "creatingAccount": "Creating account...",
         "sendingResetLink": "Sending reset link...",
         "sendResetInstructions": "Send reset instructions",
@@ -142,7 +143,11 @@
         "checkEmail": "Check your email",
         "checkEmailMessage": "We sent reset instructions to {email}. Follow the steps to choose a new password.",
         "emailAddressPlaceholder": "you@example.com",
-        "loading": "Loading..."
+        "loading": "Loading...",
+        "termsAndConditions": "Terms and Conditions",
+        "acceptTerms": "I accept the terms and conditions",
+        "mustAcceptTerms": "You must accept the terms and conditions",
+        "termsLink": "terms and conditions"
     },
     "nav": {
         "dashboard": "Dashboard",
@@ -1279,6 +1284,94 @@
             "cad": "CAD - Canadian Dollar",
             "aud": "AUD - Australian Dollar",
             "chf": "CHF - Swiss Franc"
+        }
+    },
+    "errors": {
+        "auth": {
+            "invalidCredentials": "Invalid credentials",
+            "userExists": "User with this email already exists",
+            "invalidRefreshToken": "Invalid refresh token",
+            "expiredRefreshToken": "Invalid or expired refresh token",
+            "userNotFound": "User not found",
+            "invalidResetToken": "Invalid reset token",
+            "expiredResetToken": "Invalid or expired reset token"
+        },
+        "users": {
+            "userNotFound": "User not found",
+            "currentPasswordIncorrect": "Current password is incorrect",
+            "passwordIncorrect": "Password is incorrect",
+            "invalidAvatarFormat": "Invalid avatar format",
+            "avatarTooLarge": "Avatar exceeds the 2MB limit"
+        },
+        "accounts": {
+            "accountNotFound": "Account not found",
+            "noAccess": "You do not have access to this account",
+            "hasTransactions": "Cannot delete account with transactions. Transfer data or delete transactions first.",
+            "cannotTransferToSame": "Cannot transfer data to the same account"
+        },
+        "transactions": {
+            "accountNotBelongToUser": "Account does not belong to the user",
+            "toAccountRequired": "toAccountId is required for transfer transactions",
+            "destinationNotBelongToUser": "Destination account does not belong to the user",
+            "cannotTransferToSame": "Cannot transfer to the same account",
+            "transactionNotFound": "Transaction not found",
+            "invalidMonth": "Month must be between 1 and 12",
+            "invalidYear": "Invalid year",
+            "searchQueryEmpty": "Search query cannot be empty",
+            "csvEmpty": "CSV file is empty or invalid",
+            "csvInsufficientColumns": "Insufficient columns (minimum: date, description, amount, type)",
+            "csvInvalidDate": "Invalid date format",
+            "csvInvalidAmount": "Invalid amount",
+            "csvInvalidType": "Invalid type (must be: income, expense, or transfer)",
+            "csvAccountNotFound": "Account not found",
+            "csvCategoryNotFound": "Category not found"
+        },
+        "categories": {
+            "categoryNotFound": "Category not found",
+            "cannotDeleteDefault": "Cannot delete default system categories",
+            "cannotEditDefault": "Cannot edit default system categories",
+            "hasTransactions": "This category has linked transactions. Reassign them before deleting.",
+            "hasBudgets": "This category has linked budgets. Remove them before deleting.",
+            "cannotReassignToSame": "Cannot reassign to the same category",
+            "reassignCategoryNotFound": "Target category not found",
+            "reassignCategoryNotBelongToUser": "Target category does not belong to the user"
+        },
+        "budgets": {
+            "budgetNotFound": "Budget not found",
+            "noAccess": "You do not have access to this budget",
+            "endDateBeforeStart": "End date must be after start date"
+        },
+        "bills": {
+            "billNotFound": "Bill not found",
+            "alreadyPaid": "Bill is already marked as paid",
+            "accountNotFound": "Account not found for transaction",
+            "merchantNotFound": "Merchant for this bill was not found",
+            "categoryNotFound": "Category for this bill was not found"
+        },
+        "goals": {
+            "goalNotFound": "Goal not found",
+            "cannotContributeInactive": "Cannot contribute to inactive goal"
+        },
+        "merchants": {
+            "merchantNotFound": "Merchant not found"
+        },
+        "notifications": {
+            "notificationNotFound": "Notification not found"
+        },
+        "reports": {
+            "reportNotFound": "Report not found",
+            "noAccess": "You do not have access to this report",
+            "startDateAfterEnd": "Start date must be before end date",
+            "unsupportedFormat": "Unsupported report format",
+            "fileNotFound": "Report file not found on server",
+            "expired": "Report has expired",
+            "failedToRead": "Failed to read report file"
+        },
+        "network": {
+            "noResponse": "No response from server. Please check your internet connection.",
+            "requestError": "An unexpected error occurred",
+            "unknownError": "An error occurred",
+            "invalidResponse": "Invalid server response"
         }
     }
 }

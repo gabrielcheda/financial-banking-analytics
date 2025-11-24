@@ -4,6 +4,7 @@
 import { cookies } from 'next/headers'
 import { redirect } from 'next/navigation'
 import type { LoginDTO, RegisterDTO } from '@/types/dto'
+import { translateError } from '@/lib/error-translator'
 
 export type RegisterActionState = {
     error?: string | null
@@ -121,11 +122,13 @@ export async function loginAction(prevState: any, formData: FormData) {
 
         if (!response.ok || result?.success === false) {
             const { message } = extractApiError(result, 'Invalid credentials')
-            return { error: message }
+            // Traduz a mensagem de erro do backend para chave i18n
+            const translatedKey = translateError(message) || message
+            return { error: translatedKey }
         }
 
         if (!result || !result.tokens) {
-            return { error: 'Invalid server response' }
+            return { error: translateError('Invalid server response') || 'errors.network.invalidResponse' }
         }
 
         cookies().set('rememberMe', rememberMe ? 'true' : 'false', {
@@ -173,7 +176,7 @@ export async function loginAction(prevState: any, formData: FormData) {
         }
 
     } catch (error) {
-        return { error: 'Failed to connect to server' }
+        return { error: translateError('Failed to connect to server') || 'errors.network.noResponse' }
     }
 }
 
@@ -235,14 +238,18 @@ export async function registerAction(
 
         if (!response.ok || result?.success === false) {
             const { message, details } = extractApiError(result, 'Registration failed')
+            const translatedKey = translateError(message) || message
             return {
-                error: message,
+                error: translatedKey,
                 details: details || 'Registration failed',
             }
         }
 
         if (!result || !result.tokens) {
-            return { error: 'Invalid server response', details: 'Missing tokens in response' }
+            return { 
+                error: translateError('Invalid server response') || 'errors.network.invalidResponse', 
+                details: 'Missing tokens in response' 
+            }
         }
 
         // ✅ Salva cookies com httpOnly (auto-login após registro)
@@ -278,6 +285,6 @@ export async function registerAction(
             redirectTo: '/dashboard'
         }
     } catch (error) {
-        return { error: 'Failed to connect to server' }
+        return { error: translateError('Failed to connect to server') || 'errors.network.noResponse' }
     }
 }

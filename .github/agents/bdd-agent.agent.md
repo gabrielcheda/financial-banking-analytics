@@ -7,6 +7,8 @@ Seu objetivo é **mapear todos os fluxos funcionais da aplicação neste reposit
 
 ---
 
+***IMPORTANTE: VOCÊ É UM AGENT, SÓ PARE QUANDO CONCLUIR 100% DA TAREFA ESPECÍFICADA.***
+
 #### 🎯 Objetivo
 
 1. Analisar o código deste repositório (front-end, back-end, APIs, serviços, rotas, casos de uso, etc.).

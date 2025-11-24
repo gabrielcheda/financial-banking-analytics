@@ -87,14 +87,21 @@ function LoginForm() {
   const { t } = useI18n()
   const [showPassword, setShowPassword] = useState(false)
   const [rememberMeChecked, setRememberMeChecked] = useState(false)
+  const [isRedirecting, setIsRedirecting] = useState(false)
   const [state, formAction] = useFormState(loginAction, { error: '' })
   const searchParams = useSearchParams()
   const redirect = searchParams.get('redirect')
   const router = useRouter()
 
+  // Traduz a mensagem de erro se for uma chave i18n (começa com 'errors.')
+  const errorMessage = state?.error && state.error.startsWith('errors.')
+    ? t(state.error)
+    : state?.error
+
   // Handle successful login redirect
   useEffect(() => {
     if (state?.success && state?.redirectTo) {
+      setIsRedirecting(true)
       window.localStorage.setItem("accessToken", state?.tokens?.accessToken);
       window.localStorage.setItem("refreshToken", state?.tokens?.refreshToken);
       router.push(state.redirectTo)
@@ -114,6 +121,18 @@ function LoginForm() {
         <LanguageSwitcher />
       </div>
 
+      {/* Loading Overlay */}
+      {isRedirecting && (
+        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50">
+          <div className="bg-white dark:bg-gray-900 rounded-2xl shadow-2xl p-8 flex flex-col items-center gap-4">
+            <div className="w-16 h-16 border-4 border-blue-600 border-t-transparent rounded-full animate-spin"></div>
+            <p className="text-lg font-medium text-gray-900 dark:text-white">
+              {t('auth.redirecting')}
+            </p>
+          </div>
+        </div>
+      )}
+
       <div className="w-full max-w-md">
         <div className="bg-white dark:bg-gray-900 rounded-2xl shadow-2xl p-8">
           {/* Logo */}
@@ -132,10 +151,10 @@ function LoginForm() {
           </Suspense>
 
           {/* Error Message */}
-          {state?.error && (
+          {errorMessage && (
             <div className="mb-4 p-3 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg flex items-center gap-2">
               <AlertCircle className="w-5 h-5 text-red-600 dark:text-red-400" />
-              <p className="text-sm text-red-800 dark:text-red-200">{state.error}</p>
+              <p className="text-sm text-red-800 dark:text-red-200">{errorMessage}</p>
             </div>
           )}
 

@@ -1,6 +1,6 @@
 import { z } from 'zod'
 
-// Password validation regex
+// Password validation regex - aceita @ e outros caracteres especiais
 const passwordRegex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]/
 
 export const registerSchema = z

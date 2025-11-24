@@ -207,7 +207,6 @@ export default function DashboardClient() {
                   <div
                     key={account.id}
                     className="flex items-center justify-between p-2 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors cursor-pointer"
-                    onMouseEnter={() => prefetchTransactions({ accountId: account.id, page: 1, limit: 20 })}
                     onClick={() => router.push('/accounts')}
                   >
                     <div>

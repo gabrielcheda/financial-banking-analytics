@@ -8,6 +8,7 @@ import Link from 'next/link'
 import { Button } from '@/components/ui/Button'
 import { Lock, Mail, Eye, EyeOff, User, Phone, AlertCircle } from 'lucide-react'
 import { registerAction, type RegisterActionState } from '@/app/actions/auth'
+import { LanguageSwitcher } from '@/components/LanguageSwitcher'
 
 // Botão submit separado para useFormStatus
 function SubmitButton() {
@@ -38,6 +39,11 @@ export default function RegisterPage() {
   const [password, setPassword] = useState('')
   const [state, formAction] = useFormState(registerAction, initialState)
   const router = useRouter()
+
+  // Traduz a mensagem de erro se for uma chave i18n (começa com 'errors.')
+  const errorMessage = state?.error && state.error.startsWith('errors.')
+    ? t(state.error)
+    : state?.error
 
   const fieldErrors =
     state?.details &&
@@ -77,6 +83,11 @@ export default function RegisterPage() {
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-500 via-purple-500 to-pink-500 flex items-center justify-center p-4">
       <div className="w-full max-w-2xl">
+        {/* Language Switcher */}
+        <div className="flex justify-end mb-4">
+          <LanguageSwitcher compact />
+        </div>
+        
         <div className="bg-white dark:bg-gray-900 rounded-2xl shadow-2xl p-8">
           {/* Logo */}
           <div className="text-center mb-8">
@@ -89,10 +100,10 @@ export default function RegisterPage() {
           </div>
 
           {/* Error Message */}
-          {state?.error && (
+          {errorMessage && (
             <div className="mb-4 p-3 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg flex items-center gap-2">
               <AlertCircle className="w-5 h-5 text-red-600 dark:text-red-400" />
-              <p className="text-sm text-red-800 dark:text-red-200">{state.error}</p>
+              <p className="text-sm text-red-800 dark:text-red-200">{errorMessage}</p>
             </div>
           )}
 
@@ -265,6 +276,25 @@ export default function RegisterPage() {
               </div>
               {fieldErrors?.confirmPassword && (
                 <p className="mt-1 text-sm text-red-500">{fieldErrors.confirmPassword}</p>
+              )}
+            </div>
+
+            {/* Terms and Conditions Checkbox */}
+            <div className="flex items-start">
+              <div className="flex items-center h-5">
+                <input
+                  id="termsAccepted"
+                  name="termsAccepted"
+                  type="checkbox"
+                  required
+                  className="w-4 h-4 border border-gray-300 rounded bg-gray-50 focus:ring-3 focus:ring-blue-300 dark:bg-gray-700 dark:border-gray-600 dark:focus:ring-blue-600 dark:ring-offset-gray-800"
+                />
+              </div>
+              <label htmlFor="termsAccepted" className="ml-2 text-sm font-medium text-gray-700 dark:text-gray-300">
+                {t('auth.acceptTerms')} <span className="text-red-500">*</span>
+              </label>
+              {fieldErrors?.termsAccepted && (
+                <p className="mt-1 text-sm text-red-500">{fieldErrors.termsAccepted}</p>
               )}
             </div>
 
