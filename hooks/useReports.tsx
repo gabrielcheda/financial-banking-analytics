@@ -36,7 +36,7 @@ export function useGenerateReport() {
   return useMutation({
     mutationFn: (data: GenerateReportDTO) => reportService.generateReport(data),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: reportKeys.all })
+      queryClient.invalidateQueries({ queryKey: ['reports'] })
     },
     onError: (error) => {
       showErrorToast(error, 'Failed to generate report')
@@ -68,7 +68,7 @@ export function useDeleteReport() {
   return useMutation({
     mutationFn: (id: string) => reportService.deleteReport(id),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: reportKeys.all })
+      queryClient.invalidateQueries({ queryKey: ['reports'] })
     },
     onError: (error) => {
       showErrorToast(error, 'Failed to delete report')

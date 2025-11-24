@@ -77,7 +77,7 @@ export function useMarkAllAsRead() {
   return useMutation({
     mutationFn: () => notificationService.markAllAsRead(),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: notificationKeys.all })
+      queryClient.invalidateQueries({ queryKey: ['notifications'] })
     },
     onError: (error) => {
       showErrorToast(error, 'Failed to mark all as read')
@@ -114,7 +114,7 @@ export function useDeleteNotification() {
       showErrorToast(error, 'Failed to delete notification')
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: notificationKeys.all })
+      queryClient.invalidateQueries({ queryKey: ['notifications'] })
     },
   })
 }
@@ -128,7 +128,7 @@ export function useDeleteAllRead() {
   return useMutation({
     mutationFn: () => notificationService.deleteAllRead(),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: notificationKeys.all })
+      queryClient.invalidateQueries({ queryKey: ['notifications'] })
     },
     onError: (error) => {
       showErrorToast(error, 'Failed to delete notifications')

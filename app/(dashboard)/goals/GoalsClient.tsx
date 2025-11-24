@@ -9,6 +9,7 @@ import { EmptyState } from '@/components/EmptyState'
 import { Modal, ConfirmDialog } from '@/components/ui/Modal'
 import { GoalForm } from '@/components/forms/GoalForm'
 import { ContributeForm } from '@/components/forms/ContributeForm'
+import { BalanceDisplay } from '@/components/BalanceDisplay'
 import {
   Plus,
   Pencil,
