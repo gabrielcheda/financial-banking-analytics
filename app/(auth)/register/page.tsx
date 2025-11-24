@@ -1,5 +1,6 @@
 'use client'
 
+import { useI18n } from '@/i18n'
 import { useState, useEffect } from 'react'
 import { useFormState, useFormStatus } from 'react-dom'
 import { useRouter } from 'next/navigation'
@@ -10,6 +11,7 @@ import { registerAction, type RegisterActionState } from '@/app/actions/auth'
 
 // Botão submit separado para useFormStatus
 function SubmitButton() {
+  const { t } = useI18n()
   const { pending } = useFormStatus()
 
   return (
@@ -19,7 +21,7 @@ function SubmitButton() {
       className="w-full py-3"
       disabled={pending}
     >
-      {pending ? 'Creating account...' : 'Create Account'}
+      {pending ? t('auth.creatingAccount') : t('auth.createAccount')}
     </Button>
   )
 }
@@ -30,6 +32,7 @@ const initialState: RegisterActionState = {
 }
 
 export default function RegisterPage() {
+  const { t } = useI18n()
   const [showPassword, setShowPassword] = useState(false)
   const [showConfirmPassword, setShowConfirmPassword] = useState(false)
   const [password, setPassword] = useState('')
@@ -59,7 +62,7 @@ export default function RegisterPage() {
     if (/\d/.test(pwd)) strength++
     if (/[@$!%*?&]/.test(pwd)) strength++
 
-    const labels = ['Very Weak', 'Weak', 'Fair', 'Good', 'Strong']
+    const labels = [t('auth.veryWeak'), t('auth.weak'), t('auth.fair'), t('auth.good'), t('auth.strong')]
     const colors = ['bg-red-500', 'bg-orange-500', 'bg-yellow-500', 'bg-blue-500', 'bg-green-500']
 
     return {
@@ -81,7 +84,7 @@ export default function RegisterPage() {
               Bank Dash
             </h1>
             <p className="text-gray-500 dark:text-gray-400 mt-2">
-              Create your account
+              {t('auth.createAccount')}
             </p>
           </div>
 
@@ -100,7 +103,7 @@ export default function RegisterPage() {
               {/* First Name */}
               <div>
                 <label htmlFor="firstName" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                  First Name <span className="text-red-500">*</span>
+                  {t('auth.firstName')} <span className="text-red-500">*</span>
                 </label>
                 <div className="relative">
                   <User className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
@@ -109,7 +112,7 @@ export default function RegisterPage() {
                     name="firstName"
                     type="text"
                     required
-                    placeholder="John"
+                    placeholder={t('auth.firstNamePlaceholder')}
                   className={`w-full pl-10 pr-4 py-3 rounded-lg border ${fieldErrors?.firstName ? 'border-red-500' : 'border-gray-300 dark:border-gray-700'
                     } bg-white dark:bg-gray-800 text-gray-900 dark:text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500`}
                   />
@@ -122,7 +125,7 @@ export default function RegisterPage() {
               {/* Last Name */}
               <div>
                 <label htmlFor="lastName" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                  Last Name <span className="text-red-500">*</span>
+                  {t('auth.lastName')} <span className="text-red-500">*</span>
                 </label>
                 <div className="relative">
                   <User className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
@@ -131,7 +134,7 @@ export default function RegisterPage() {
                     name="lastName"
                     type="text"
                     required
-                    placeholder="Doe"
+                    placeholder={t('auth.lastNamePlaceholder')}
                   className={`w-full pl-10 pr-4 py-3 rounded-lg border ${fieldErrors?.lastName ? 'border-red-500' : 'border-gray-300 dark:border-gray-700'
                     } bg-white dark:bg-gray-800 text-gray-900 dark:text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500`}
                   />
@@ -145,7 +148,7 @@ export default function RegisterPage() {
             {/* Email */}
             <div>
               <label htmlFor="email" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                Email Address <span className="text-red-500">*</span>
+                {t('auth.emailAddress')} <span className="text-red-500">*</span>
               </label>
               <div className="relative">
                 <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
@@ -154,7 +157,7 @@ export default function RegisterPage() {
                   name="email"
                   type="email"
                   required
-                  placeholder="john.doe@example.com"
+                  placeholder={t('auth.emailPlaceholder')}
                   className={`w-full pl-10 pr-4 py-3 rounded-lg border ${fieldErrors?.email ? 'border-red-500' : 'border-gray-300 dark:border-gray-700'
                     } bg-white dark:bg-gray-800 text-gray-900 dark:text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500`}
                 />
@@ -167,7 +170,7 @@ export default function RegisterPage() {
             {/* Phone */}
             <div>
               <label htmlFor="phone" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                Phone Number <span className="text-gray-400 text-xs">(optional)</span>
+                {t('auth.phoneNumber')} <span className="text-gray-400 text-xs">{t('auth.phoneOptional')}</span>
               </label>
               <div className="relative">
                 <Phone className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
@@ -177,8 +180,8 @@ export default function RegisterPage() {
                   type="tel"
                   inputMode="tel"
                   pattern="^[+]?[\d()\s-]{6,20}$"
-                  placeholder="+55 11 98765-4321"
-                  title="Use apenas números, espaços, parênteses, hífens ou +"
+                  placeholder={t('auth.phonePlaceholder')}
+                  title={t('common.phonePattern')}
                   className={`w-full pl-10 pr-4 py-3 rounded-lg border ${fieldErrors?.phone ? 'border-red-500' : 'border-gray-300 dark:border-gray-700'
                     } bg-white dark:bg-gray-800 text-gray-900 dark:text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500`}
                 />
@@ -191,7 +194,7 @@ export default function RegisterPage() {
             {/* Password */}
             <div>
               <label htmlFor="password" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                Password <span className="text-red-500">*</span>
+                {t('auth.password')} <span className="text-red-500">*</span>
               </label>
               <div className="relative">
                 <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
@@ -202,7 +205,7 @@ export default function RegisterPage() {
                   required
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
-                  placeholder="Create a strong password"
+                  placeholder={t('auth.createStrongPassword')}
                   className={`w-full pl-10 pr-12 py-3 rounded-lg border ${fieldErrors?.password ? 'border-red-500' : 'border-gray-300 dark:border-gray-700'
                     } bg-white dark:bg-gray-800 text-gray-900 dark:text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500`}
                 />
@@ -219,7 +222,7 @@ export default function RegisterPage() {
               {password && passwordStrength && (
                 <div className="mt-2">
                   <div className="flex justify-between mb-1">
-                    <span className="text-xs text-gray-600">Password strength:</span>
+                    <span className="text-xs text-gray-600">{t('auth.passwordStrength')}</span>
                     <span className="text-xs font-medium">{passwordStrength.label}</span>
                   </div>
                   <div className="h-2 bg-gray-200 rounded-full overflow-hidden">
@@ -239,7 +242,7 @@ export default function RegisterPage() {
             {/* Confirm Password */}
             <div>
               <label htmlFor="confirmPassword" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                Confirm Password <span className="text-red-500">*</span>
+                {t('auth.confirmPassword')} <span className="text-red-500">*</span>
               </label>
               <div className="relative">
                 <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
@@ -248,7 +251,7 @@ export default function RegisterPage() {
                   name="confirmPassword"
                   type={showConfirmPassword ? 'text' : 'password'}
                   required
-                  placeholder="Re-enter your password"
+                  placeholder={t('auth.reenterPassword')}
                   className={`w-full pl-10 pr-12 py-3 rounded-lg border ${fieldErrors?.confirmPassword ? 'border-red-500' : 'border-gray-300 dark:border-gray-700'
                     } bg-white dark:bg-gray-800 text-gray-900 dark:text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500`}
                 />
@@ -271,9 +274,9 @@ export default function RegisterPage() {
 
           {/* Sign In Link */}
           <p className="text-center text-sm text-gray-600 dark:text-gray-400 mt-6">
-            Already have an account?{' '}
+            {t('auth.alreadyHaveAccount')}{' '}
             <Link href="/login" className="text-blue-600 hover:text-blue-700 dark:text-blue-400 font-medium">
-              Sign in
+              {t('auth.signIn')}
             </Link>
           </p>
         </div>

@@ -76,7 +76,6 @@ export function useCreateGoal() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: goalKeys.lists() })
       queryClient.invalidateQueries({ queryKey: goalKeys.progress() })
-      toast.success('Goal created successfully!')
     },
     onError: (error) => {
       showErrorToast(error, 'Failed to Create Goal')
@@ -97,7 +96,6 @@ export function useUpdateGoal() {
       queryClient.invalidateQueries({ queryKey: goalKeys.lists() })
       queryClient.invalidateQueries({ queryKey: goalKeys.detail(variables.id) })
       queryClient.invalidateQueries({ queryKey: goalKeys.progress() })
-      toast.success('Goal updated successfully!')
     },
     onError: (error) => {
       showErrorToast(error, 'Failed to Update Goal')
@@ -117,7 +115,6 @@ export function useDeleteGoal() {
       queryClient.invalidateQueries({ queryKey: goalKeys.lists() })
       queryClient.removeQueries({ queryKey: goalKeys.detail(id) })
       queryClient.invalidateQueries({ queryKey: goalKeys.progress() })
-      toast.success('Goal deleted successfully!')
     },
     onError: (error) => {
       showErrorToast(error, 'Failed to Delete Goal')
@@ -142,7 +139,6 @@ export function useContributeToGoal() {
       queryClient.invalidateQueries({ queryKey: ['accounts'] })
       // Invalidar analytics para atualizar gráficos e estatísticas
       queryClient.invalidateQueries({ queryKey: ['analytics'] })
-      toast.success('Contribution added successfully!')
     },
     onError: (error) => {
       showErrorToast(error, 'Failed to Add Contribution')

@@ -1,6 +1,7 @@
 'use client'
 
 import { useState } from 'react'
+import { useI18n } from '@/i18n'
 import { Card, CardContent } from '@/components/ui/Card'
 import { Button } from '@/components/ui/Button'
 import { Skeleton } from '@/components/ui/Skeleton'
@@ -72,6 +73,8 @@ const priorityConfig = {
 }
 
 export default function NotificationsClient() {
+  const { t } = useI18n()
+  
   const [filter, setFilter] = useState<'all' | 'unread'>('all')
   const [typeFilter, setTypeFilter] = useState<NotificationDTO['type'] | 'all'>('all')
 
@@ -93,19 +96,19 @@ export default function NotificationsClient() {
   }
 
   const handleMarkAllAsRead = () => {
-    if (confirm('Mark all notifications as read?')) {
+    if (confirm(t('notifications.markAllAsReadConfirm'))) {
       markAllAsRead.mutate()
     }
   }
 
   const handleDelete = (id: string) => {
-    if (confirm('Delete this notification?')) {
+    if (confirm(t('notifications.deleteNotification'))) {
       deleteNotification.mutate(id)
     }
   }
 
   const handleDeleteAllRead = () => {
-    if (confirm('Delete all read notifications?')) {
+    if (confirm(t('notifications.deleteAllReadConfirm'))) {
       deleteAllRead.mutate()
     }
   }
@@ -116,12 +119,14 @@ export default function NotificationsClient() {
       <div className="flex items-start justify-between">
         <div>
           <h1 className="text-3xl font-bold text-gray-900 dark:text-white">
-            Notifications
+            {t('notifications.title')}
           </h1>
           <p className="text-gray-500 dark:text-gray-400 mt-1">
             {unreadCount > 0
-              ? `You have ${unreadCount} unread notification${unreadCount > 1 ? 's' : ''}`
-              : 'All caught up!'}
+              ? unreadCount === 1 
+                ? t('notifications.unreadCount', { count: unreadCount })
+                : t('notifications.unreadCountPlural', { count: unreadCount })
+              : t('notifications.allCaughtUp')}
           </p>
         </div>
       </div>
@@ -135,14 +140,14 @@ export default function NotificationsClient() {
             size="sm"
             onClick={() => setFilter('all')}
           >
-            All
+            {t('common.all')}
           </Button>
           <Button
             variant={filter === 'unread' ? 'primary' : 'ghost'}
             size="sm"
             onClick={() => setFilter('unread')}
           >
-            Unread ({unreadCount})
+            {t('notifications.unread')} ({unreadCount})
           </Button>
 
           <div className="h-6 w-px bg-gray-300 dark:bg-gray-700 mx-2" />
@@ -153,28 +158,28 @@ export default function NotificationsClient() {
             onClick={() => setTypeFilter('all')}
           >
             <Filter className="w-4 h-4 mr-1" />
-            All Types
+            {t('notifications.allTypes')}
           </Button>
           <Button
             variant={typeFilter === 'bill' ? 'primary' : 'ghost'}
             size="sm"
             onClick={() => setTypeFilter('bill')}
           >
-            Bills
+            {t('notifications.bills')}
           </Button>
           <Button
             variant={typeFilter === 'budget' ? 'primary' : 'ghost'}
             size="sm"
             onClick={() => setTypeFilter('budget')}
           >
-            Budgets
+            {t('notifications.budgets')}
           </Button>
           <Button
             variant={typeFilter === 'goal' ? 'primary' : 'ghost'}
             size="sm"
             onClick={() => setTypeFilter('goal')}
           >
-            Goals
+            {t('notifications.goals')}
           </Button>
         </div>
 
@@ -188,7 +193,7 @@ export default function NotificationsClient() {
               disabled={markAllAsRead.isPending}
             >
               <CheckCheck className="w-4 h-4 mr-1" />
-              Mark All Read
+              {t('notifications.markAllRead')}
             </Button>
           )}
           <Button
@@ -199,7 +204,7 @@ export default function NotificationsClient() {
             className="text-red-600 hover:text-red-700 hover:bg-red-50 dark:hover:bg-red-900/30"
           >
             <Trash2 className="w-4 h-4 mr-1" />
-            Clear Read
+            {t('notifications.clearRead')}
           </Button>
         </div>
       </div>
@@ -214,11 +219,11 @@ export default function NotificationsClient() {
       ) : notifications.length === 0 ? (
         <EmptyState
           icon={Bell}
-          title="No Notifications"
+          title={t('notifications.noNotifications')}
           description={
             filter === 'unread'
-              ? 'You have no unread notifications'
-              : 'You have no notifications yet'
+              ? t('notifications.noUnreadNotifications')
+              : t('notifications.noNotificationsYet')
           }
         />
       ) : (
@@ -286,7 +291,7 @@ export default function NotificationsClient() {
                               onClick={() => handleMarkAsRead(notification.id)}
                               disabled={markAsRead.isPending}
                               className="h-8 w-8 p-0"
-                              aria-label="Mark as read"
+                              aria-label={t('common.markAsRead')}
                             >
                               <CheckCheck className="w-4 h-4" />
                             </Button>
@@ -297,7 +302,7 @@ export default function NotificationsClient() {
                             onClick={() => handleDelete(notification.id)}
                             disabled={deleteNotification.isPending}
                             className="h-8 w-8 p-0 text-red-600 hover:text-red-700 hover:bg-red-50 dark:hover:bg-red-900/30"
-                            aria-label="Delete notification"
+                            aria-label={t('common.deleteNotification')}
                           >
                             <X className="w-4 h-4" />
                           </Button>
@@ -314,7 +319,7 @@ export default function NotificationsClient() {
                           }
                           className="mt-2 text-blue-600 hover:text-blue-700"
                         >
-                          View Details →
+                          {t('notifications.viewDetails')}
                         </Button>
                       )}
                     </div>

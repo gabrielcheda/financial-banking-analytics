@@ -1,13 +1,8 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
+import { toast } from 'sonner'
+import { showErrorToast } from '@/lib/error-utils'
 import { notificationService } from '@/services/api/notifications.service'
-import type { NotificationDTO } from '@/types/dto'
-
-interface NotificationFilters {
-  unreadOnly?: boolean
-  type?: 'bill' | 'budget' | 'goal' | 'transaction' | 'system'
-  page?: number
-  limit?: number
-}
+import type { NotificationDTO, NotificationFilters } from '@/types/dto'
 
 /**
  * Get all notifications with optional filters
@@ -40,6 +35,33 @@ export function useMarkAsRead() {
 
   return useMutation({
     mutationFn: (id: string) => notificationService.markAsRead(id),
+    onMutate: async (id) => {
+      // Cancel outgoing refetches
+      await queryClient.cancelQueries({ queryKey: ['notifications'] })
+
+      // Snapshot previous value
+      const previousNotifications = queryClient.getQueryData(['notifications'])
+
+      // Optimistically update
+      queryClient.setQueriesData({ queryKey: ['notifications'] }, (old: any) => {
+        if (!old) return old
+        return {
+          ...old,
+          data: old.data?.map((n: NotificationDTO) =>
+            n.id === id ? { ...n, isRead: true } : n
+          ),
+        }
+      })
+
+      return { previousNotifications }
+    },
+    onError: (error, _, context) => {
+      // Rollback on error
+      if (context?.previousNotifications) {
+        queryClient.setQueryData(['notifications'], context.previousNotifications)
+      }
+      showErrorToast(error, 'Failed to mark notification as read')
+    },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['notifications'] })
     },
@@ -55,7 +77,10 @@ export function useMarkAllAsRead() {
   return useMutation({
     mutationFn: () => notificationService.markAllAsRead(),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['notifications'] })
+      queryClient.invalidateQueries({ queryKey: notificationKeys.all })
+    },
+    onError: (error) => {
+      showErrorToast(error, 'Failed to mark all as read')
     },
   })
 }
@@ -68,8 +93,28 @@ export function useDeleteNotification() {
 
   return useMutation({
     mutationFn: (id: string) => notificationService.deleteNotification(id),
+    onMutate: async (id) => {
+      await queryClient.cancelQueries({ queryKey: ['notifications'] })
+      const previousNotifications = queryClient.getQueryData(['notifications'])
+
+      queryClient.setQueriesData({ queryKey: ['notifications'] }, (old: any) => {
+        if (!old) return old
+        return {
+          ...old,
+          data: old.data?.filter((n: NotificationDTO) => n.id !== id),
+        }
+      })
+
+      return { previousNotifications }
+    },
+    onError: (error, _, context) => {
+      if (context?.previousNotifications) {
+        queryClient.setQueryData(['notifications'], context.previousNotifications)
+      }
+      showErrorToast(error, 'Failed to delete notification')
+    },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['notifications'] })
+      queryClient.invalidateQueries({ queryKey: notificationKeys.all })
     },
   })
 }
@@ -83,7 +128,10 @@ export function useDeleteAllRead() {
   return useMutation({
     mutationFn: () => notificationService.deleteAllRead(),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['notifications'] })
+      queryClient.invalidateQueries({ queryKey: notificationKeys.all })
+    },
+    onError: (error) => {
+      showErrorToast(error, 'Failed to delete notifications')
     },
   })
 }

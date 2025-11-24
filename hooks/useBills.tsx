@@ -81,7 +81,6 @@ export function useCreateBill() {
       queryClient.invalidateQueries({ queryKey: transactionKeys.all })
       queryClient.invalidateQueries({ queryKey: transactionKeys.recent(undefined) })
       queryClient.invalidateQueries({ queryKey: accountKeys.summary() })
-      toast.success('Bill created successfully!')
     },
     onError: (error) => {
       showErrorToast(error, 'Failed to Create Bill')
@@ -101,7 +100,6 @@ export function useUpdateBill() {
     onSuccess: (_, variables) => {
       queryClient.invalidateQueries({ queryKey: billKeys.all })
       queryClient.invalidateQueries({ queryKey: billKeys.detail(variables.id) })
-      toast.success('Bill updated successfully!')
     },
     onError: (error) => {
       showErrorToast(error, 'Failed to Update Bill')
@@ -120,7 +118,6 @@ export function useDeleteBill() {
     onSuccess: (_, id) => {
       queryClient.invalidateQueries({ queryKey: billKeys.all })
       queryClient.removeQueries({ queryKey: billKeys.detail(id) })
-      toast.success('Bill deleted successfully!')
     },
     onError: (error) => {
       showErrorToast(error, 'Failed to Delete Bill')
@@ -150,7 +147,6 @@ export function usePayBill() {
       queryClient.invalidateQueries({ queryKey: billKeys.upcoming(7) })
       // Invalidar analytics para atualizar graficos e estatisticas
       queryClient.invalidateQueries({ queryKey: ['analytics'] })
-      toast.success('Bill paid successfully!')
     },
     onError: (error) => {
       showErrorToast(error, 'Failed to Pay Bill')
@@ -179,15 +175,3 @@ export function useOverdueBills() {
     staleTime: 1000 * 60 * 2, // 2 minutes
   })
 }
-
-/**
- * Hook to get recurring bills
- * TODO: Implement getRecurringBills method in BillService
- */
-// export function useRecurringBills() {
-//   return useQuery({
-//     queryKey: [...billKeys.all, 'recurring'],
-//     queryFn: () => billService.getRecurringBills(),
-//     staleTime: 1000 * 60 * 10, // 10 minutes
-//   })
-// }

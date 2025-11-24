@@ -1,10 +1,12 @@
 'use client'
 
 import { useState, useMemo, useEffect } from 'react'
+import { useI18n } from '@/i18n'
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/Card'
 import { Button } from '@/components/ui/Button'
 import { Skeleton } from '@/components/ui/Skeleton'
 import { EmptyState } from '@/components/EmptyState'
+import { BalanceDisplay } from '@/components/BalanceDisplay'
 import { BillForm } from '@/components/forms/BillForm'
 import {
   Plus,
@@ -38,6 +40,7 @@ import { parseLocaleNumber } from '@/lib/numberUtils'
 type TabType = 'all' | 'upcoming' | 'overdue' | 'paid'
 
 export default function BillsClient() {
+  const { t } = useI18n()
   const [activeTab, setActiveTab] = useState<TabType>('all')
   const [showAddModal, setShowAddModal] = useState(false)
   const [editingBill, setEditingBill] = useState<BillDTO | null>(null)
@@ -189,7 +192,7 @@ export default function BillsClient() {
   }
 
   const handleDeleteBill = async (id: string) => {
-    if (confirm('Are you sure you want to delete this bill? This action cannot be undone.')) {
+    if (confirm(t('bills.deleteConfirmation'))) {
       await deleteBill.mutateAsync(id)
     }
   }
@@ -235,14 +238,6 @@ export default function BillsClient() {
     setPaymentAccountId(fallbackAccount)
   }
 
-  const formatCurrency = (amount: number | null | undefined) => {
-    const safeAmount = amount ?? 0
-    return `$${Math.abs(safeAmount).toLocaleString('en-US', {
-      minimumFractionDigits: 2,
-      maximumFractionDigits: 2,
-    })}`
-  }
-
   const getDaysUntilDue = (dueDate: string): number => {
     return differenceInDays(parseBillDate(dueDate), new Date())
   }
@@ -274,13 +269,13 @@ export default function BillsClient() {
 
     let label = ''
     if (status === 'paid') {
-      label = 'Paid'
+      label = t('bills.paid')
     } else if (status === 'overdue') {
-      label = `${Math.abs(daysUntil)} days overdue`
+      label = t('bills.daysOverdue', { days: Math.abs(daysUntil) })
     } else if (status === 'upcoming') {
-      label = daysUntil === 0 ? 'Due today' : `Due in ${daysUntil} days`
+      label = daysUntil === 0 ? t('bills.dueToday') : t('bills.dueInDays', { days: daysUntil })
     } else {
-      label = 'Pending'
+      label = t('bills.pending')
     }
 
     return (
@@ -296,10 +291,10 @@ export default function BillsClient() {
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
           <h1 className="text-3xl font-bold text-gray-900 dark:text-white">
-            Bills
+            {t('bills.title')}
           </h1>
           <p className="text-gray-500 dark:text-gray-400 mt-1">
-            Track and manage your bills and payments
+            {t('bills.trackAndManage')}
           </p>
         </div>
         <Button
@@ -308,7 +303,7 @@ export default function BillsClient() {
           disabled={createBill.isPending}
         >
           <Plus className="w-5 h-5 mr-2" />
-          Add Bill
+          {t('bills.addBill')}
         </Button>
       </div>
 
@@ -331,10 +326,10 @@ export default function BillsClient() {
                 <div className="flex items-center justify-between">
                   <div>
                     <p className="text-sm text-gray-500 dark:text-gray-400">
-                      Upcoming (7 days)
+                      {t('bills.upcoming7Days')}
                     </p>
                     <p className="text-2xl font-bold text-gray-900 dark:text-white mt-2">
-                      {formatCurrency(stats.totalUpcoming)}
+                      $<BalanceDisplay amount={stats.totalUpcoming ?? 0} showSign={false} />
                     </p>
                   </div>
                   <div className="bg-blue-100 dark:bg-blue-900/30 p-3 rounded-full">
@@ -349,13 +344,13 @@ export default function BillsClient() {
                 <div className="flex items-center justify-between">
                   <div>
                     <p className="text-sm text-gray-500 dark:text-gray-400">
-                      Overdue
+                      {t('bills.overdue')}
                     </p>
                     <p className="text-2xl font-bold text-red-600 dark:text-red-400 mt-2">
-                      {formatCurrency(stats.totalOverdue)}
+                      $<BalanceDisplay amount={stats.totalOverdue ?? 0} showSign={false} />
                     </p>
                     <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
-                      {stats.overdueCount} {stats.overdueCount === 1 ? 'bill' : 'bills'}
+                      {stats.overdueCount} {stats.overdueCount === 1 ? t('bills.bill') : t('bills.bills')}
                     </p>
                   </div>
                   <div className="bg-red-100 dark:bg-red-900/30 p-3 rounded-full">
@@ -370,10 +365,10 @@ export default function BillsClient() {
                 <div className="flex items-center justify-between">
                   <div>
                     <p className="text-sm text-gray-500 dark:text-gray-400">
-                      Paid This Month
+                      {t('bills.paidThisMonth')}
                     </p>
                     <p className="text-2xl font-bold text-green-600 dark:text-green-400 mt-2">
-                      {formatCurrency(Number(stats.totalPaid))}
+                      $<BalanceDisplay amount={Number(stats.totalPaid)} showSign={false} />
                     </p>
                   </div>
                   <div className="bg-green-100 dark:bg-green-900/30 p-3 rounded-full">
@@ -388,7 +383,7 @@ export default function BillsClient() {
                 <div className="flex items-center justify-between">
                   <div>
                     <p className="text-sm text-gray-500 dark:text-gray-400">
-                      Total Bills
+                      {t('bills.totalBills')}
                     </p>
                     <p className="text-2xl font-bold text-gray-900 dark:text-white mt-2">
                       {allBills.length}
@@ -409,10 +404,10 @@ export default function BillsClient() {
         <CardContent className="pt-6">
           <div className="flex gap-2 flex-wrap">
             {[
-              { id: 'all', label: 'All Bills', count: allBills.length },
-              { id: 'upcoming', label: 'Upcoming', count: upcomingBills.length },
-              { id: 'overdue', label: 'Overdue', count: overdueBills.length },
-              { id: 'paid', label: 'Paid This Month', count: paidBills.length },
+              { id: 'all', label: t('bills.allBills'), count: allBills.length },
+              { id: 'upcoming', label: t('bills.upcoming'), count: upcomingBills.length },
+              { id: 'overdue', label: t('bills.overdue'), count: overdueBills.length },
+              { id: 'paid', label: t('bills.paidThisMonth'), count: paidBills.length },
             ].map((tab) => (
               <Button
                 key={tab.id}
@@ -446,16 +441,16 @@ export default function BillsClient() {
           <CardContent className="p-0">
             <EmptyState
               icon={Receipt}
-              title={`No ${activeTab === 'all' ? '' : activeTab} Bills Found`}
+              title={activeTab === 'all' ? t('bills.noBills') : t('bills.noBillsFound', { tab: activeTab })}
               description={
                 activeTab === 'all'
-                  ? "You haven't created any bills yet. Set up your first bill to start tracking your payments!"
-                  : `No ${activeTab} bills found. ${activeTab === 'overdue' ? 'Great job staying on top of your payments!' : ''}`
+                  ? t('bills.createFirstBill')
+                  : t('bills.noBillsDescription', { tab: activeTab, extra: activeTab === 'overdue' ? t('bills.greatJob') : '' })
               }
               action={
                 activeTab === 'all'
                   ? {
-                    label: 'Create Bill',
+                    label: t('bills.createBill'),
                     onClick: () => setShowAddModal(true),
                   }
                   : undefined
@@ -488,7 +483,7 @@ export default function BillsClient() {
                       size="sm"
                       onClick={() => openPayModal(bill)}
                       disabled={payBill.isPending}
-                      title="Pay bill"
+                      title={t('common.payBill')}
                     >
                         <CreditCard className="w-4 h-4 text-green-600" />
                       </Button>
@@ -516,15 +511,15 @@ export default function BillsClient() {
                   <div className="space-y-4">
                     {/* Amount */}
                     <div className="flex items-center justify-between">
-                      <span className="text-sm text-gray-500 dark:text-gray-400">Amount</span>
+                      <span className="text-sm text-gray-500 dark:text-gray-400">{t('bills.amount')}</span>
                       <span className="text-lg font-bold text-gray-900 dark:text-white">
-                        {formatCurrency(Number(bill.amount))}
+                        $<BalanceDisplay amount={Number(bill.amount)} showSign={false} />
                       </span>
                     </div>
 
                     {/* Due Date */}
                     <div className="flex items-center justify-between text-sm">
-                      <span className="text-gray-500 dark:text-gray-400">Due Date</span>
+                      <span className="text-gray-500 dark:text-gray-400">{t('bills.dueDate')}</span>
                       <div className="flex items-center gap-2">
                         <Calendar className="w-4 h-4 text-gray-400" />
                         <span className="text-gray-900 dark:text-white">
@@ -535,16 +530,16 @@ export default function BillsClient() {
 
                     {/* Merchant */}
                     <div className="flex items-center justify-between text-sm">
-                      <span className="text-gray-500 dark:text-gray-400">Merchant</span>
+                      <span className="text-gray-500 dark:text-gray-400">{t('bills.merchant')}</span>
                       <span className="text-gray-900 dark:text-white">
-                        {bill.merchant?.name || bill.merchantId || 'N/A'}
+                        {bill.merchant?.name || bill.merchantId || t('common.na')}
                       </span>
                     </div>
 
                     {/* Recurring Info */}
                     {bill.recurrence !== 'once' && (
                       <div className="flex items-center justify-between text-sm">
-                        <span className="text-gray-500 dark:text-gray-400">Recurrence</span>
+                        <span className="text-gray-500 dark:text-gray-400">{t('bills.recurrence')}</span>
                         <span className="text-gray-900 dark:text-white capitalize">
                           {bill.recurrence}
                         </span>
@@ -557,7 +552,7 @@ export default function BillsClient() {
                         <div className="flex items-center gap-2">
                           <AlertTriangle className="w-4 h-4 text-red-600 dark:text-red-400 flex-shrink-0" />
                           <p className="text-xs text-red-800 dark:text-red-300">
-                            This bill is {Math.abs(daysUntil)} {Math.abs(daysUntil) === 1 ? 'day' : 'days'} overdue
+                            {t('bills.billOverdue', { days: Math.abs(daysUntil), unit: Math.abs(daysUntil) === 1 ? t('common.day') : t('common.days') })}
                           </p>
                         </div>
                       </div>
@@ -583,7 +578,7 @@ export default function BillsClient() {
           <div className="bg-white dark:bg-gray-800 rounded-lg shadow-xl max-w-2xl w-full max-h-[90vh] overflow-y-auto">
             <div className="sticky top-0 bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700 px-6 py-4 flex items-center justify-between">
               <h2 className="text-xl font-semibold text-gray-900 dark:text-white">
-                Create New Bill
+                {t('bills.createNewBill')}
               </h2>
               <Button
                 variant="ghost"
@@ -611,7 +606,7 @@ export default function BillsClient() {
           <div className="bg-white dark:bg-gray-800 rounded-lg shadow-xl max-w-2xl w-full max-h-[90vh] overflow-y-auto">
             <div className="sticky top-0 bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700 px-6 py-4 flex items-center justify-between">
               <h2 className="text-xl font-semibold text-gray-900 dark:text-white">
-                Edit Bill: {editingBill.name}
+                {t('bills.editBill')}: {editingBill.name}
               </h2>
               <Button
                 variant="ghost"
@@ -643,7 +638,7 @@ export default function BillsClient() {
           <div className="bg-white dark:bg-gray-800 rounded-lg shadow-xl max-w-md w-full">
             <div className="border-b border-gray-200 dark:border-gray-700 px-6 py-4 flex items-center justify-between">
               <h2 className="text-xl font-semibold text-gray-900 dark:text-white">
-                Pay Bill
+                {t('bills.payBill')}
               </h2>
               <Button
                 variant="ghost"
@@ -660,32 +655,32 @@ export default function BillsClient() {
             <div className="p-6">
               <div className="space-y-4">
                 <div>
-                  <p className="text-sm text-gray-500 dark:text-gray-400">Bill Name</p>
+                  <p className="text-sm text-gray-500 dark:text-gray-400">{t('bills.billName')}</p>
                   <p className="text-lg font-semibold text-gray-900 dark:text-white">
                     {payingBill.name}
                   </p>
                 </div>
                 <div>
-                  <p className="text-sm text-gray-500 dark:text-gray-400">Amount Due</p>
+                  <p className="text-sm text-gray-500 dark:text-gray-400">{t('bills.amountDue')}</p>
                   <p className="text-2xl font-bold text-gray-900 dark:text-white">
-                    {formatCurrency(payingBill.amount)}
+                    $<BalanceDisplay amount={payingBill.amount} showSign={false} />
                   </p>
                 </div>
                 <div>
-                  <p className="text-sm text-gray-500 dark:text-gray-400">Due Date</p>
+                  <p className="text-sm text-gray-500 dark:text-gray-400">{t('bills.dueDate')}</p>
                   <p className="text-gray-900 dark:text-white">
                     {format(parseBillDate(payingBill.dueDate), 'MMM dd, yyyy')}
                   </p>
                 </div>
 
                 <div>
-                  <p className="text-sm text-gray-500 dark:text-gray-400 mb-1">Payment Account</p>
+                  <p className="text-sm text-gray-500 dark:text-gray-400 mb-1">{t('bills.paymentAccount')}</p>
                   <select
                     value={paymentAccountId}
                     onChange={(e) => setPaymentAccountId(e.target.value)}
                     className="w-full px-4 py-2 rounded-lg border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
                   >
-                    <option value="">Select an account</option>
+                    <option value="">{t('bills.selectAccount')}</option>
                     {activeAccounts.map((account) => (
                       <option key={account.id} value={account.id}>
                         {account.name} ({account.type})
@@ -693,7 +688,7 @@ export default function BillsClient() {
                     ))}
                   </select>
                   {accountsLoading && (
-                    <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">Loading accounts...</p>
+                    <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">{t('common.loading')}...</p>
                   )}
                 </div>
               </div>
@@ -708,7 +703,7 @@ export default function BillsClient() {
                   disabled={payBill.isPending || isPaying}
                   className="flex-1"
                 >
-                  Cancel
+                  {t('common.cancel')}
                 </Button>
                 <Button
                   variant="primary"
@@ -716,7 +711,7 @@ export default function BillsClient() {
                   disabled={payBill.isPending || isPaying || !paymentAccountId}
                   className="flex-1"
                 >
-                  {payBill.isPending || isPaying ? 'Processing...' : 'Confirm Payment'}
+                  {payBill.isPending || isPaying ? t('bills.processing') : t('bills.confirmPayment')}
                 </Button>
               </div>
             </div>

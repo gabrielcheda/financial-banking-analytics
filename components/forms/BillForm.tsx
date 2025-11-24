@@ -10,6 +10,7 @@ import { useActiveAccounts } from '@/hooks/useAccounts'
 import { format } from 'date-fns'
 import { useEffect, useMemo, useState } from 'react'
 import { parseLocaleInteger, parseLocaleNumber } from '@/lib/numberUtils'
+import { useI18n } from '@/i18n'
 
 interface BillFormProps {
   onSubmit: (data: CreateBillInput | UpdateBillInput) => Promise<void> | void
@@ -26,6 +27,7 @@ export function BillForm({
   isLoading = false,
   isEditing = false,
 }: BillFormProps) {
+  const { t } = useI18n()
   const [enableReminder, setEnableReminder] = useState(false)
 
   const {
@@ -61,6 +63,8 @@ export function BillForm({
   const selectedCategoryId = watch('categoryId')
   const selectedMerchantId = watch('merchantId')
 
+  const isFormLoading = isLoading || isSubmitting
+
   const filteredMerchants = useMemo(
     () => merchants.filter((merchant) => merchant.categoryId === selectedCategoryId),
     [merchants, selectedCategoryId]
@@ -93,13 +97,13 @@ export function BillForm({
             htmlFor="name"
             className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1"
           >
-            Bill Name <span className="text-red-500">*</span>
+            {t('forms.bill.billName')} <span className="text-red-500">*</span>
           </label>
           <input
             type="text"
             id="name"
             {...register('name')}
-            placeholder="e.g. Electricity, Internet, Rent"
+            placeholder={t('forms.bill.billNamePlaceholder')}
             className="w-full px-4 py-2 rounded-lg border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-900 dark:text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500"
           />
           {errors.name && (
@@ -116,7 +120,7 @@ export function BillForm({
           htmlFor="amount"
           className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1"
         >
-          Amount <span className="text-red-500">*</span>
+          {t('forms.bill.amount')} <span className="text-red-500">*</span>
         </label>
         <div className="relative">
           <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-500 dark:text-gray-400">
@@ -127,7 +131,7 @@ export function BillForm({
             id="amount"
             inputMode="decimal"
             {...register('amount', { setValueAs: parseLocaleNumber })}
-            placeholder="0,00"
+            placeholder={t('forms.bill.amountPlaceholder')}
             className="w-full pl-8 pr-4 py-2 rounded-lg border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-900 dark:text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500"
           />
         </div>
@@ -146,7 +150,7 @@ export function BillForm({
               htmlFor="categoryId"
               className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1"
             >
-              Category <span className="text-red-500">*</span>
+              {t('forms.bill.category')} <span className="text-red-500">*</span>
             </label>
             <select
               id="categoryId"
@@ -154,7 +158,7 @@ export function BillForm({
               disabled={categoriesLoading}
               className="w-full px-4 py-2 rounded-lg border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:opacity-50"
             >
-              <option value="">Select a category</option>
+              <option value="">{t('forms.bill.selectCategory')}</option>
               {categories.map((category) => (
                 <option key={category.id} value={category.id}>
                   {category.name}
@@ -173,7 +177,7 @@ export function BillForm({
               htmlFor="merchantId"
               className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1"
             >
-              Merchant <span className="text-red-500">*</span>
+              {t('forms.bill.merchant')} <span className="text-red-500">*</span>
             </label>
             <select
               id="merchantId"
@@ -182,7 +186,7 @@ export function BillForm({
               className="w-full px-4 py-2 rounded-lg border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:opacity-50"
             >
               <option value="">
-                {selectedCategoryId ? 'Select a merchant' : 'Select a category first'}
+                {selectedCategoryId ? t('forms.bill.selectMerchant') : t('forms.bill.selectCategoryFirst')}
               </option>
               {filteredMerchants.map((merchant) => (
                 <option key={merchant.id} value={merchant.id}>
@@ -202,7 +206,7 @@ export function BillForm({
               htmlFor="accountId"
               className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1"
             >
-              Payment Account <span className="text-red-500">*</span>
+              {t('forms.bill.paymentAccount')} <span className="text-red-500">*</span>
             </label>
             <select
               id="accountId"
@@ -210,7 +214,7 @@ export function BillForm({
               disabled={accountsLoading}
               className="w-full px-4 py-2 rounded-lg border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:opacity-50"
             >
-              <option value="">Select an account</option>
+              <option value="">{t('forms.bill.selectAccount')}</option>
               {accounts.map((account) => (
                 <option key={account.id} value={account.id}>
                   {account.name} - {account.accountNumber}
@@ -233,7 +237,7 @@ export function BillForm({
             htmlFor="dueDate"
             className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1"
           >
-            Due Date <span className="text-red-500">*</span>
+            {t('forms.bill.dueDate')} <span className="text-red-500">*</span>
           </label>
           <input
             type="date"
@@ -253,17 +257,17 @@ export function BillForm({
       {!isEditing && (
         <div className="border-t border-gray-200 dark:border-gray-700 pt-6">
           <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-4">
-            Recurring Bill
+            {t('forms.bill.recurringBill')}
           </h3>
 
           {/* Enable Recurring Toggle */}
           <div className="flex items-center justify-between mb-4">
             <div>
               <label htmlFor="isRecurring" className="text-sm font-medium text-gray-700 dark:text-gray-300">
-                This is a recurring bill
+                {t('forms.bill.isRecurring')}
               </label>
               <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
-                Automatically create next bill after payment
+                {t('forms.bill.isRecurringDescription')}
               </p>
             </div>
             <label className="relative inline-flex items-center cursor-pointer">
@@ -284,17 +288,17 @@ export function BillForm({
                 htmlFor="frequency"
                 className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1"
               >
-                Frequency <span className="text-red-500">*</span>
+                {t('forms.bill.frequency')} <span className="text-red-500">*</span>
               </label>
               <select
                 id="frequency"
                 {...register('frequency')}
                 className="w-full px-4 py-2 rounded-lg border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
               >
-                <option value="">Select frequency</option>
-                <option value="weekly">Weekly</option>
-                <option value="monthly">Monthly</option>
-                <option value="yearly">Yearly</option>
+                <option value="">{t('forms.bill.selectFrequency')}</option>
+                <option value="weekly">{t('forms.bill.weekly')}</option>
+                <option value="monthly">{t('forms.bill.monthly')}</option>
+                <option value="yearly">{t('forms.bill.yearly')}</option>
               </select>
               {errors.frequency && (
                 <p className="mt-1 text-sm text-red-600 dark:text-red-400">
@@ -310,17 +314,17 @@ export function BillForm({
       {!isEditing && (
         <div className="border-t border-gray-200 dark:border-gray-700 pt-6">
           <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-4">
-            Reminders
+            {t('forms.bill.reminders')}
           </h3>
 
           {/* Enable Reminder Toggle */}
           <div className="flex items-center justify-between mb-4">
             <div>
               <label htmlFor="enableReminder" className="text-sm font-medium text-gray-700 dark:text-gray-300">
-                Enable Payment Reminders
+                {t('forms.bill.enableReminders')}
               </label>
               <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
-                Get notified before the bill is due
+                {t('forms.bill.enableRemindersDescription')}
               </p>
             </div>
             <label className="relative inline-flex items-center cursor-pointer">
@@ -342,7 +346,7 @@ export function BillForm({
                 htmlFor="reminderDays"
                 className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1"
               >
-                Remind me (days before due date)
+                {t('forms.bill.reminderDays')}
               </label>
               <input
                 type="text"
@@ -353,7 +357,7 @@ export function BillForm({
                 className="w-full px-4 py-2 rounded-lg border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-900 dark:text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500"
               />
               <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
-                You'll receive a notification this many days before the bill is due
+                {t('forms.bill.reminderDaysDescription')}
               </p>
               {errors.reminders?.[0]?.daysBefore && (
                 <p className="mt-1 text-sm text-red-600 dark:text-red-400">
@@ -372,13 +376,13 @@ export function BillForm({
             htmlFor="notes"
             className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1"
           >
-            Notes (Optional)
+            {t('forms.bill.notesOptional')}
           </label>
           <textarea
             id="notes"
             {...register('notes')}
             rows={3}
-            placeholder="Add any additional notes about this bill..."
+            placeholder={t('forms.bill.notesPlaceholder')}
             className="w-full px-4 py-2 rounded-lg border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-900 dark:text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 resize-none"
           />
           {errors.notes && (
@@ -396,19 +400,19 @@ export function BillForm({
             type="button"
             variant="outline"
             onClick={onCancel}
-            disabled={isSubmitting || isLoading}
+            disabled={isFormLoading}
             className="w-full sm:w-auto order-2 sm:order-1"
           >
-            Cancel
+            {t('forms.bill.cancel')}
           </Button>
         )}
         <Button
           type="submit"
           variant="primary"
-          disabled={isSubmitting || isLoading || merchantsLoading || categoriesLoading || accountsLoading}
+          disabled={isFormLoading || merchantsLoading || categoriesLoading || accountsLoading}
           className="w-full sm:w-auto order-1 sm:order-2"
         >
-          {isSubmitting || isLoading ? 'Saving...' : isEditing ? 'Update Bill' : 'Create Bill'}
+          {isFormLoading ? t('forms.bill.saving') : isEditing ? t('forms.bill.update') : t('forms.bill.create')}
         </Button>
       </div>
     </form>

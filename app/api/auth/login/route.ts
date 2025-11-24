@@ -14,10 +14,6 @@ export async function POST(request: Request) {
 
         const result = await response.json()
 
-        if (process.env.NODE_ENV === 'development') {
-          console.log("result", result);
-        }
-
         if (!response.ok) {
             return NextResponse.json({
                 message: result.data.error.message || 'Login failed',

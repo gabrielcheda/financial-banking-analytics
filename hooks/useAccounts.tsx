@@ -104,13 +104,9 @@ export function useCreateAccount() {
       queryClient.invalidateQueries({ queryKey: accountKeys.all })
       // Invalidar analytics para atualizar gráficos e estatísticas
       queryClient.invalidateQueries({ queryKey: ['analytics'] })
-      toast.success('Account created successfully!')
     },
     onError: (error, _, result) => {
-      if (process.env.NODE_ENV === 'development') {
-        console.log('error', (result as any))
-      }
-      showErrorToast(error, (error as any)?.data?.error?.message || 'Failed to Create Account')
+      showErrorToast(error, 'Failed to create account')
     },
   })
 }
@@ -129,10 +125,9 @@ export function useUpdateAccount() {
       queryClient.invalidateQueries({ queryKey: accountKeys.all })
       // Invalidar analytics para atualizar gráficos e estatísticas
       queryClient.invalidateQueries({ queryKey: ['analytics'] })
-      toast.success('Account updated successfully!')
     },
     onError: (error) => {
-      showErrorToast(error, 'Failed to Update Account')
+      showErrorToast(error, 'Failed to update account')
     },
   })
 }
@@ -154,10 +149,9 @@ export function useDeleteAccount() {
       // Invalidar analytics e budgets tambem
       queryClient.invalidateQueries({ queryKey: ['analytics'] })
       queryClient.invalidateQueries({ queryKey: ['budgets'] })
-      toast.success('Account deleted successfully!')
     },
     onError: (error) => {
-      showErrorToast(error, 'Failed to Delete Account')
+      showErrorToast(error, 'Failed to delete account')
     },
   })
 }

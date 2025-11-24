@@ -1,5 +1,6 @@
 'use client'
 
+import { useCallback } from 'react'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { createBudgetSchema, updateBudgetSchema, type CreateBudgetInput, type UpdateBudgetInput } from '@/lib/validations/budget'
@@ -7,6 +8,7 @@ import { Button } from '@/components/ui/Button'
 import { useCategories } from '@/hooks/useCategories'
 import { format } from 'date-fns'
 import { parseLocaleInteger, parseLocaleNumber } from '@/lib/numberUtils'
+import { useI18n } from '@/i18n'
 
 interface BudgetFormProps {
   onSubmit: (data: CreateBudgetInput | UpdateBudgetInput) => Promise<void> | void
@@ -23,6 +25,7 @@ export function BudgetForm({
   isLoading = false,
   isEditing = false,
 }: BudgetFormProps) {
+  const { t } = useI18n()
   const {
     register,
     handleSubmit,
@@ -49,6 +52,8 @@ export function BudgetForm({
   const categories = categoriesData || []
   const alertsEnabled = watch('alerts.enabled')
 
+  const isFormLoading = isLoading || isSubmitting
+
   const handleFormSubmit = async (data: CreateBudgetInput) => {
     await onSubmit(data)
   }
@@ -62,7 +67,7 @@ export function BudgetForm({
             htmlFor="categoryId"
             className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1"
           >
-            Category <span className="text-red-500">*</span>
+            {t('forms.budget.category')} <span className="text-red-500">*</span>
           </label>
           <select
             id="categoryId"
@@ -70,7 +75,7 @@ export function BudgetForm({
             disabled={categoriesLoading}
             className="w-full px-4 py-2 rounded-lg border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:opacity-50"
           >
-            <option value="">Select a category</option>
+            <option value="">{t('forms.budget.selectCategory')}</option>
             {categories.map((category) => (
               <option key={category.id} value={category.id}>
                 {category.name}
@@ -92,7 +97,7 @@ export function BudgetForm({
             htmlFor="limit"
             className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1"
           >
-            Budget Limit <span className="text-red-500">*</span>
+            {t('forms.budget.budgetLimit')} <span className="text-red-500">*</span>
           </label>
           <div className="relative">
             <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-500 dark:text-gray-400">
@@ -103,7 +108,7 @@ export function BudgetForm({
               id="limit"
               inputMode="decimal"
               {...register('limit', { setValueAs: parseLocaleNumber })}
-              placeholder="0,00"
+              placeholder={t('forms.budget.limitPlaceholder')}
               className="w-full pl-8 pr-4 py-2 rounded-lg border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-900 dark:text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500"
             />
           </div>
@@ -120,15 +125,15 @@ export function BudgetForm({
               htmlFor="period"
               className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1"
             >
-              Period <span className="text-red-500">*</span>
+              {t('forms.budget.period')} <span className="text-red-500">*</span>
             </label>
             <select
               id="period"
               {...register('period')}
               className="w-full px-4 py-2 rounded-lg border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
             >
-              <option value="monthly">Monthly</option>
-              <option value="yearly">Yearly</option>
+              <option value="monthly">{t('forms.budget.monthly')}</option>
+              <option value="yearly">{t('forms.budget.yearly')}</option>
             </select>
             {errors.period && (
               <p className="mt-1 text-sm text-red-600 dark:text-red-400">
@@ -146,7 +151,7 @@ export function BudgetForm({
             htmlFor="startDate"
             className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1"
           >
-            Start Date <span className="text-red-500">*</span>
+            {t('forms.budget.startDate')} <span className="text-red-500">*</span>
           </label>
           <input
             type="date"
@@ -166,17 +171,17 @@ export function BudgetForm({
       {/* Alerts Section */}
       <div className="border-t border-gray-200 dark:border-gray-700 pt-6">
         <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-4">
-          Budget Alerts
+          {t('forms.budget.budgetAlerts')}
         </h3>
 
         {/* Enable Alerts Toggle */}
         <div className="flex items-center justify-between mb-4">
           <div>
             <label htmlFor="alerts.enabled" className="text-sm font-medium text-gray-700 dark:text-gray-300">
-              Enable Alerts
+              {t('forms.budget.enableAlerts')}
             </label>
             <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
-              Get notified when you reach your budget threshold
+              {t('forms.budget.enableAlertsDescription')}
             </p>
           </div>
           <label className="relative inline-flex items-center cursor-pointer">
@@ -197,18 +202,18 @@ export function BudgetForm({
               htmlFor="alerts.threshold"
               className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1"
             >
-              Alert Threshold (%)
+              {t('forms.budget.alertThreshold')}
             </label>
             <input
               type="text"
               id="alerts.threshold"
               inputMode="numeric"
               {...register('alerts.threshold', { setValueAs: parseLocaleInteger })}
-              placeholder="80"
+              placeholder={t('forms.budget.thresholdPlaceholder')}
               className="w-full px-4 py-2 rounded-lg border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-900 dark:text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500"
             />
             <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
-              You'll be notified when you reach this percentage of your budget
+              {t('forms.budget.thresholdDescription')}
             </p>
             {errors.alerts?.threshold && (
               <p className="mt-1 text-sm text-red-600 dark:text-red-400">
@@ -226,19 +231,19 @@ export function BudgetForm({
             type="button"
             variant="outline"
             onClick={onCancel}
-            disabled={isSubmitting || isLoading}
+            disabled={isFormLoading}
             className="w-full sm:w-auto order-2 sm:order-1"
           >
-            Cancel
+            {t('forms.budget.cancel')}
           </Button>
         )}
         <Button
           type="submit"
           variant="primary"
-          disabled={isSubmitting || isLoading || categoriesLoading}
+          disabled={isFormLoading || categoriesLoading}
           className="w-full sm:w-auto order-1 sm:order-2"
         >
-          {isSubmitting || isLoading ? 'Saving...' : isEditing ? 'Update Budget' : 'Create Budget'}
+          {isFormLoading ? t('forms.budget.saving') : isEditing ? t('forms.budget.update') : t('forms.budget.create')}
         </Button>
       </div>
     </form>

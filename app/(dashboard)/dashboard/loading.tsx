@@ -25,8 +25,8 @@ export default function DashboardLoading() {
 
       {/* Charts Row */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        <SkeletonChart title="Daily Spending Trend" />
-        <SkeletonChart title="Budget Overview" />
+        <SkeletonChart />
+        <SkeletonChart />
       </div>
 
       {/* Transactions and Bills */}

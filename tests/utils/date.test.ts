@@ -23,14 +23,14 @@ describe('Date Utils', () => {
   })
 
   describe('formatSmartDate', () => {
-    it('should show "Today" for today\'s date', () => {
+    it('should return translation key for today\'s date', () => {
       const today = new Date('2025-11-03T15:00:00Z')
-      expect(formatSmartDate(today)).toBe('Today')
+      expect(formatSmartDate(today)).toBe('common.today')
     })
 
-    it('should show "Yesterday" for yesterday\'s date', () => {
+    it('should return translation key for yesterday\'s date', () => {
       const yesterday = new Date('2025-11-02T15:00:00Z')
-      expect(formatSmartDate(yesterday)).toBe('Yesterday')
+      expect(formatSmartDate(yesterday)).toBe('common.yesterday')
     })
 
     it('should show day name for dates within last 7 days', () => {

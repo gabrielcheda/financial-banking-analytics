@@ -41,8 +41,8 @@ export default function ReportsLoading() {
 
       {/* Charts */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        <SkeletonChart title="Monthly Summary" />
-        <SkeletonChart title="Category Breakdown" />
+        <SkeletonChart />
+        <SkeletonChart />
       </div>
 
       {/* Detailed Table Skeleton */}

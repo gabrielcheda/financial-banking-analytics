@@ -1,6 +1,7 @@
 'use client'
 
 import { useState, useMemo } from 'react'
+import { useI18n } from '@/i18n'
 import { Card, CardContent } from '@/components/ui/Card'
 import { Button } from '@/components/ui/Button'
 import { Skeleton } from '@/components/ui/Skeleton'
@@ -39,6 +40,7 @@ type PriorityFilter = 'all' | 'low' | 'medium' | 'high'
 type SortOption = 'deadline' | 'progress' | 'amount'
 
 export default function GoalsClient() {
+  const { t } = useI18n()
   const [showAddModal, setShowAddModal] = useState(false)
   const [editingGoal, setEditingGoal] = useState<GoalDTO | null>(null)
   const [contributingGoal, setContributingGoal] = useState<GoalDTO | null>(null)
@@ -168,9 +170,7 @@ export default function GoalsClient() {
 
   const handleMarkAsCancelled = async (goal: GoalDTO) => {
     if (
-      confirm(
-        'Are you sure you want to mark this goal as cancelled? You can reactivate it later.'
-      )
+      confirm(t('goals.cancelConfirmation'))
     ) {
       await updateGoal.mutateAsync({
         id: goal.id,
@@ -184,14 +184,6 @@ export default function GoalsClient() {
       id: goal.id,
       data: { status: 'active' },
     })
-  }
-
-  const formatCurrency = (amount: number | null | undefined) => {
-    const safeAmount = amount ?? 0
-    return `$${Math.abs(safeAmount).toLocaleString('en-US', {
-      minimumFractionDigits: 2,
-      maximumFractionDigits: 2,
-    })}`
   }
 
   const getPriorityColor = (priority: string) => {
@@ -243,9 +235,9 @@ export default function GoalsClient() {
       {/* Page Header */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-bold text-gray-900 dark:text-white">Financial Goals</h1>
+          <h1 className="text-2xl font-bold text-gray-900 dark:text-white">{t('goals.title')}</h1>
           <p className="text-gray-600 dark:text-gray-400 mt-1">
-            Set and track your financial goals
+            {t('goals.setAndTrack')}
           </p>
         </div>
         <Button
@@ -254,7 +246,7 @@ export default function GoalsClient() {
           className="w-full sm:w-auto"
         >
           <Plus className="w-4 h-4 mr-2" />
-          Add Goal
+          {t('goals.addGoal')}
         </Button>
       </div>
 
@@ -264,7 +256,7 @@ export default function GoalsClient() {
           <CardContent className="pt-6">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm text-gray-600 dark:text-gray-400">Active Goals</p>
+                <p className="text-sm text-gray-600 dark:text-gray-400">{t('goals.activeGoals')}</p>
                 <p className="text-2xl font-bold text-gray-900 dark:text-white mt-1">
                   {stats.activeCount}
                 </p>
@@ -280,7 +272,7 @@ export default function GoalsClient() {
           <CardContent className="pt-6">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm text-gray-600 dark:text-gray-400">Completed</p>
+                <p className="text-sm text-gray-600 dark:text-gray-400">{t('goals.completed')}</p>
                 <p className="text-2xl font-bold text-gray-900 dark:text-white mt-1">
                   {stats.completedCount}
                 </p>
@@ -296,9 +288,9 @@ export default function GoalsClient() {
           <CardContent className="pt-6">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm text-gray-600 dark:text-gray-400">Total Saved</p>
+                <p className="text-sm text-gray-600 dark:text-gray-400">{t('goals.totalSaved')}</p>
                 <p className="text-2xl font-bold text-gray-900 dark:text-white mt-1">
-                  {formatCurrency(stats.totalSaved)}
+                  $<BalanceDisplay amount={stats.totalSaved ?? 0} showSign={false} />
                 </p>
               </div>
               <div className="p-3 bg-purple-100 dark:bg-purple-900/30 rounded-lg">
@@ -312,7 +304,7 @@ export default function GoalsClient() {
           <CardContent className="pt-6">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm text-gray-600 dark:text-gray-400">Overall Progress</p>
+                <p className="text-sm text-gray-600 dark:text-gray-400">{t('goals.overallProgress')}</p>
                 <p className="text-2xl font-bold text-gray-900 dark:text-white mt-1">
                   {stats.overallProgress.toFixed(1)}%
                 </p>
@@ -332,7 +324,7 @@ export default function GoalsClient() {
             {/* Status Filter */}
             <div className="flex-1">
               <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                Status
+                {t('goals.status')}
               </label>
               <div className="flex flex-wrap gap-2">
                 {(['all', 'active', 'completed', 'cancelled'] as StatusFilter[]).map((status) => (
@@ -344,7 +336,7 @@ export default function GoalsClient() {
                         : 'bg-gray-100 text-gray-700 dark:bg-gray-800 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-700'
                       }`}
                   >
-                    {status.charAt(0).toUpperCase() + status.slice(1)}
+                    {t(`goals.${status}`)}
                   </button>
                 ))}
               </div>
@@ -353,7 +345,7 @@ export default function GoalsClient() {
             {/* Priority Filter */}
             <div className="flex-1">
               <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                Priority
+                {t('goals.priority')}
               </label>
               <div className="flex flex-wrap gap-2">
                 {(['all', 'high', 'medium', 'low'] as PriorityFilter[]).map((priority) => (
@@ -365,7 +357,7 @@ export default function GoalsClient() {
                         : 'bg-gray-100 text-gray-700 dark:bg-gray-800 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-700'
                       }`}
                   >
-                    {priority.charAt(0).toUpperCase() + priority.slice(1)}
+                    {t(`goals.${priority}`)}
                   </button>
                 ))}
               </div>
@@ -374,16 +366,16 @@ export default function GoalsClient() {
             {/* Sort By */}
             <div className="flex-1">
               <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                Sort By
+                {t('goals.sortBy')}
               </label>
               <select
                 value={sortBy}
                 onChange={(e) => setSortBy(e.target.value as SortOption)}
                 className="w-full px-3 py-1.5 rounded-lg border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-900 dark:text-white text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
               >
-                <option value="deadline">Deadline</option>
-                <option value="progress">Progress</option>
-                <option value="amount">Target Amount</option>
+                <option value="deadline">{t('goals.deadline')}</option>
+                <option value="progress">{t('goals.progress')}</option>
+                <option value="amount">{t('goals.targetAmount')}</option>
               </select>
             </div>
           </div>
@@ -411,14 +403,14 @@ export default function GoalsClient() {
       ) : filteredAndSortedGoals.length === 0 ? (
         <EmptyState
           icon={Target}
-          title="No goals found"
+          title={t('goals.noGoalsFound')}
           description={
             statusFilter !== 'all' || priorityFilter !== 'all'
-              ? 'Try adjusting your filters to see more goals.'
-              : 'Create your first financial goal to start tracking your progress.'
+              ? t('goals.adjustFilters')
+              : t('goals.createFirstGoal')
           }
           action={{
-            label: "Create Goal",
+            label: t('goals.createGoal'),
             onClick: () => setShowAddModal(true)
           }}
         />
@@ -475,7 +467,7 @@ export default function GoalsClient() {
                   <div className="mb-4">
                     <div className="flex justify-between items-center mb-2">
                       <span className="text-sm font-medium text-gray-700 dark:text-gray-300">
-                        Progress
+                        {t('goals.progress')}
                       </span>
                       <span className="text-sm font-bold text-blue-600 dark:text-blue-400">
                         {percentage.toFixed(1)}%
@@ -509,21 +501,21 @@ export default function GoalsClient() {
                   {/* Amounts */}
                   <div className="grid grid-cols-3 gap-4 mb-4 p-3 bg-gray-50 dark:bg-gray-800/50 rounded-lg">
                     <div>
-                      <p className="text-xs text-gray-600 dark:text-gray-400 mb-1">Current</p>
+                      <p className="text-xs text-gray-600 dark:text-gray-400 mb-1">{t('goals.current')}</p>
                       <p className="text-sm font-semibold text-gray-900 dark:text-white">
-                        {formatCurrency(goal.currentAmount)}
+                        $<BalanceDisplay amount={goal.currentAmount ?? 0} showSign={false} />
                       </p>
                     </div>
                     <div>
-                      <p className="text-xs text-gray-600 dark:text-gray-400 mb-1">Target</p>
+                      <p className="text-xs text-gray-600 dark:text-gray-400 mb-1">{t('goals.target')}</p>
                       <p className="text-sm font-semibold text-gray-900 dark:text-white">
-                        {formatCurrency(goal.targetAmount)}
+                        $<BalanceDisplay amount={goal.targetAmount ?? 0} showSign={false} />
                       </p>
                     </div>
                     <div>
-                      <p className="text-xs text-gray-600 dark:text-gray-400 mb-1">Remaining</p>
+                      <p className="text-xs text-gray-600 dark:text-gray-400 mb-1">{t('goals.remaining')}</p>
                       <p className="text-sm font-semibold text-red-600 dark:text-red-400">
-                        {formatCurrency(remainingAmount)}
+                        $<BalanceDisplay amount={remainingAmount} showSign={false} />
                       </p>
                     </div>
                   </div>
@@ -533,7 +525,7 @@ export default function GoalsClient() {
                     <div className="flex items-center justify-between text-sm">
                       <span className="flex items-center gap-1 text-gray-600 dark:text-gray-400">
                         <Calendar className="w-4 h-4" />
-                        Deadline
+                        {t('goals.deadline')}
                       </span>
                       <span
                         className={`font-medium ${isOverdue
@@ -546,7 +538,7 @@ export default function GoalsClient() {
                         {format(new Date(goal.deadline), 'MMM dd, yyyy')}
                         {goal.status === 'active' && (
                           <span className="ml-2 text-xs">
-                            ({isOverdue ? 'overdue' : `${daysUntilDeadline}d left`})
+                            ({isOverdue ? t('goals.overdue') : t('goals.daysLeft', { days: daysUntilDeadline })})
                           </span>
                         )}
                       </span>
@@ -556,10 +548,10 @@ export default function GoalsClient() {
                       <div className="flex items-center justify-between text-sm">
                         <span className="flex items-center gap-1 text-gray-600 dark:text-gray-400">
                           <ArrowUpCircle className="w-4 h-4" />
-                          Monthly
+                          {t('goals.monthly')}
                         </span>
                         <span className="font-medium text-gray-900 dark:text-white">
-                          {formatCurrency(goal.monthlyContribution)}
+                          $<BalanceDisplay amount={goal.monthlyContribution ?? 0} showSign={false} />
                         </span>
                       </div>
                     )}
@@ -571,7 +563,7 @@ export default function GoalsClient() {
                       <div className="flex items-center gap-2">
                         <AlertCircle className="w-4 h-4 text-red-600 dark:text-red-400" />
                         <p className="text-xs text-red-700 dark:text-red-300 font-medium">
-                          This goal is past its deadline
+                          {t('goals.pastDeadline')}
                         </p>
                       </div>
                     </div>
@@ -582,7 +574,7 @@ export default function GoalsClient() {
                       <div className="flex items-center gap-2">
                         <Trophy className="w-4 h-4 text-green-600 dark:text-green-400" />
                         <p className="text-xs text-green-700 dark:text-green-300 font-medium">
-                          Congratulations! You've reached your goal!
+                          {t('goals.congratulations')}
                         </p>
                       </div>
                     </div>
@@ -599,7 +591,7 @@ export default function GoalsClient() {
                           className="flex-1"
                         >
                           <Plus className="w-3 h-3 mr-1" />
-                          Add Contribution
+                          {t('goals.addContribution')}
                         </Button>
                         <Button
                           variant="outline"
@@ -615,7 +607,7 @@ export default function GoalsClient() {
                             onClick={() => handleMarkAsCompleted(goal)}
                           >
                             <CheckCircle className="w-3 h-3 mr-1" />
-                            Mark Complete
+                            {t('goals.markComplete')}
                           </Button>
                         )}
                         <Button
@@ -631,7 +623,7 @@ export default function GoalsClient() {
                       <>
                         <div className="flex-1 flex items-center justify-center gap-2 text-green-600 dark:text-green-400 text-sm font-medium">
                           <Trophy className="w-4 h-4" />
-                          Goal Completed!
+                          {t('goals.goalCompleted')}
                         </div>
                         <Button
                           variant="outline"
@@ -651,7 +643,7 @@ export default function GoalsClient() {
                           className="flex-1"
                         >
                           <TrendingUp className="w-3 h-3 mr-1" />
-                          Reactivate
+                          {t('goals.reactivate')}
                         </Button>
                         <Button
                           variant="outline"
@@ -674,7 +666,7 @@ export default function GoalsClient() {
       <Modal
         isOpen={showAddModal}
         onClose={() => setShowAddModal(false)}
-        title="Create New Goal"
+        title={t('goals.createGoal')}
         size="lg"
       >
         <GoalForm
@@ -688,7 +680,7 @@ export default function GoalsClient() {
       <Modal
         isOpen={!!editingGoal}
         onClose={() => setEditingGoal(null)}
-        title="Edit Goal"
+        title={t('goals.editGoal')}
         size="lg"
       >
         {editingGoal && (
@@ -716,7 +708,7 @@ export default function GoalsClient() {
       <Modal
         isOpen={!!contributingGoal}
         onClose={() => setContributingGoal(null)}
-        title="Add Contribution"
+        title={t('goals.addContribution')}
         size="lg"
       >
         {contributingGoal && (
@@ -734,9 +726,9 @@ export default function GoalsClient() {
         isOpen={!!deletingGoalId}
         onClose={() => setDeletingGoalId(null)}
         onConfirm={handleDeleteGoal}
-        title="Delete Goal"
-        description="Are you sure you want to delete this goal? This action cannot be undone and all associated data will be lost."
-        confirmLabel="Delete Goal"
+        title={t('goals.deleteGoal')}
+        description={t('goals.deleteConfirmation')}
+        confirmLabel={t('goals.deleteGoal')}
         variant="danger"
         isLoading={deleteGoal.isPending}
       />

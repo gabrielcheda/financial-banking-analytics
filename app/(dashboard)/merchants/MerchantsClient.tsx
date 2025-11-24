@@ -1,6 +1,7 @@
 'use client'
 
 import { useState } from 'react'
+import { useI18n } from '@/i18n'
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/Card'
 import { Button } from '@/components/ui/Button'
 import { Skeleton } from '@/components/ui/Skeleton'
@@ -18,6 +19,7 @@ import { Plus, Store, Edit, Trash2, MapPin, Phone, Tag } from 'lucide-react'
 import type { MerchantDTO } from '@/types/dto'
 
 export default function MerchantsClient() {
+  const { t } = useI18n()
   const [showAddModal, setShowAddModal] = useState(false)
   const [showEditModal, setShowEditModal] = useState(false)
   const [showDeleteModal, setShowDeleteModal] = useState(false)
@@ -75,14 +77,14 @@ export default function MerchantsClient() {
       {/* Header */}
       <div className="flex justify-between items-center">
         <div>
-          <h1 className="text-3xl font-bold text-gray-900 dark:text-white">Merchants</h1>
+          <h1 className="text-3xl font-bold text-gray-900 dark:text-white">{t('merchants.title')}</h1>
           <p className="text-gray-500 dark:text-gray-400 mt-1">
-            Manage your favorite stores and establishments
+            {t('merchants.manage')}
           </p>
         </div>
         <Button onClick={() => setShowAddModal(true)}>
           <Plus className="w-4 h-4 mr-2" />
-          Add Merchant
+          {t('merchants.addMerchant')}
         </Button>
       </div>
 
@@ -93,7 +95,7 @@ export default function MerchantsClient() {
         <CardContent className="pt-6">
           <input
             type="text"
-            placeholder="Search merchants by name, city, or category..."
+            placeholder={t('merchants.searchPlaceholder')}
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
             className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent dark:bg-gray-800 dark:text-white"
@@ -104,7 +106,7 @@ export default function MerchantsClient() {
       {/* Merchants List */}
       <Card>
         <CardHeader>
-          <CardTitle>All Merchants ({filteredMerchants.length})</CardTitle>
+          <CardTitle>{t('merchants.allMerchants')} ({filteredMerchants.length})</CardTitle>
         </CardHeader>
         <CardContent>
           {isLoading ? (
@@ -185,11 +187,11 @@ export default function MerchantsClient() {
           ) : (
             <EmptyState
               icon={Store}
-              title="No Merchants Found"
+              title={t('merchants.noMerchantsFound')}
               description={
                 searchQuery
-                  ? "No merchants match your search criteria"
-                  : "Create your first merchant to get started"
+                  ? t('merchants.noMatch')
+                  : t('merchants.createFirst')
               }
             />
           )}
@@ -200,7 +202,7 @@ export default function MerchantsClient() {
       <Modal
         isOpen={showAddModal}
         onClose={() => setShowAddModal(false)}
-        title="Add New Merchant"
+        title={t('merchants.addMerchant')}
       >
         <MerchantForm
           onSubmit={handleCreate}
@@ -216,7 +218,7 @@ export default function MerchantsClient() {
           setShowEditModal(false)
           setSelectedMerchant(null)
         }}
-        title="Edit Merchant"
+        title={t('merchants.editMerchant')}
       >
         {selectedMerchant && (
           <MerchantForm
@@ -238,15 +240,14 @@ export default function MerchantsClient() {
           setShowDeleteModal(false)
           setSelectedMerchant(null)
         }}
-        title="Delete Merchant"
+        title={t('merchants.deleteMerchant')}
       >
         <div className="space-y-4">
           <p className="text-gray-600 dark:text-gray-300">
-            Are you sure you want to delete <strong>{selectedMerchant?.name}</strong>?
+            {t('merchants.deleteConfirmation', { name: selectedMerchant?.name || '' })}
           </p>
           <p className="text-sm text-gray-500 dark:text-gray-400">
-            This action cannot be undone. Transactions associated with this merchant will not be deleted,
-            but the merchant reference will be removed.
+            {t('merchants.deleteWarning')}
           </p>
           <div className="flex gap-3 pt-4">
             <Button
@@ -258,14 +259,14 @@ export default function MerchantsClient() {
               disabled={deleteMutation.isPending}
               className="flex-1"
             >
-              Cancel
+              {t('common.cancel')}
             </Button>
             <Button
               onClick={handleDelete}
               disabled={deleteMutation.isPending}
               className="flex-1 bg-red-600 hover:bg-red-700 text-white"
             >
-              {deleteMutation.isPending ? 'Deleting...' : 'Delete'}
+              {deleteMutation.isPending ? t('common.deleting') : t('common.delete')}
             </Button>
           </div>
         </div>

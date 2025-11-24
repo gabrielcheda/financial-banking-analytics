@@ -1,6 +1,7 @@
 'use client'
 
 import { memo } from 'react'
+import { useBalanceFormatter } from '@/hooks/useBalanceFormatter'
 import {
   LineChart,
   Line,
@@ -21,6 +22,8 @@ interface DailySpendingChartProps {
 }
 
 function DailySpendingChartComponent({ data }: DailySpendingChartProps) {
+  const { formatBalance } = useBalanceFormatter()
+  
   return (
     <ResponsiveContainer width="100%" height={260}>
       <LineChart data={data} margin={{ top: 10, right: 0, left: 0, bottom: 0 }}>
@@ -37,7 +40,7 @@ function DailySpendingChartComponent({ data }: DailySpendingChartProps) {
             border: 'none',
             color: '#f9fafb',
           }}
-          formatter={(value: number) => [`$${value.toFixed(2)}`, 'Spending']}
+          formatter={(value: number) => [formatBalance(value), 'Spending']}
         />
         <Line
           type="monotone"

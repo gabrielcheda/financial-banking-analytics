@@ -2,6 +2,8 @@
 
 import { useState, useRef, type ChangeEvent } from 'react'
 import Image from 'next/image'
+import { useI18n } from '@/i18n'
+import { useTheme } from '@/components/ThemeProvider'
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/Card'
 import { Button } from '@/components/ui/Button'
 import { Skeleton } from '@/components/ui/Skeleton'
@@ -24,40 +26,40 @@ import { z } from 'zod'
 import { toast } from 'sonner'
 
 const tabs = [
-  { id: 'profile', label: 'Profile', icon: User },
-  { id: 'preferences', label: 'Preferences', icon: Palette },
-  { id: 'notifications', label: 'Notifications', icon: Bell },
-  { id: 'security', label: 'Security', icon: Lock },
-  { id: 'privacy', label: 'Privacy', icon: Shield },
+  { id: 'profile', label: 'settings.profile', icon: User },
+  { id: 'preferences', label: 'settings.preferences', icon: Palette },
+  { id: 'notifications', label: 'settings.notifications', icon: Bell },
+  { id: 'security', label: 'settings.security', icon: Lock },
+  { id: 'privacy', label: 'settings.privacy', icon: Shield },
 ] as const
 
 type TabId = typeof tabs[number]['id']
 
 const emailNotificationOptions = [
-  { key: 'billReminders', label: 'Bill Reminders' },
-  { key: 'budgetAlerts', label: 'Budget Alerts' },
-  { key: 'weeklyReports', label: 'Weekly Reports' },
-  { key: 'monthlyReports', label: 'Monthly Reports' },
+  { key: 'billReminders', label: (t: ReturnType<typeof useI18n>['t']) => t('settings.billReminders') },
+  { key: 'budgetAlerts', label: (t: ReturnType<typeof useI18n>['t']) => t('settings.budgetAlerts') },
+  { key: 'weeklyReports', label: (t: ReturnType<typeof useI18n>['t']) => t('settings.weeklyReports') },
+  { key: 'monthlyReports', label: (t: ReturnType<typeof useI18n>['t']) => t('settings.monthlyReports') },
 ] as const satisfies Array<{
   key: keyof UserPreferencesDTO['notifications']['email']
-  label: string
+  label: (t: ReturnType<typeof useI18n>['t']) => string
 }>
 
 const pushNotificationOptions = [
-  { key: 'billReminders', label: 'Bill Reminders' },
-  { key: 'budgetAlerts', label: 'Budget Alerts' },
-  { key: 'largeTransactions', label: 'Large Transactions' },
+  { key: 'billReminders', label: (t: ReturnType<typeof useI18n>['t']) => t('settings.billReminders') },
+  { key: 'budgetAlerts', label: (t: ReturnType<typeof useI18n>['t']) => t('settings.budgetAlerts') },
+  { key: 'largeTransactions', label: (t: ReturnType<typeof useI18n>['t']) => t('settings.largeTransactions') },
 ] as const satisfies Array<{
   key: keyof UserPreferencesDTO['notifications']['push']
-  label: string
+  label: (t: ReturnType<typeof useI18n>['t']) => string
 }>
 
 const privacyOptions = [
-  { key: 'showBalance', label: 'Show account balances' },
-  { key: 'analyticsConsent', label: 'Enable analytics & insights' },
+  { key: 'showBalance', label: t => t('settings.showBalance') },
+  { key: 'analyticsConsent', label: t => t('settings.analyticsConsent') },
 ] as const satisfies Array<{
   key: keyof UserPreferencesDTO['privacy']
-  label: string
+  label: (t: ReturnType<typeof useI18n>['t']) => string
 }>
 
 const AVATAR_MAX_SIZE = 2 * 1024 * 1024 // 2MB
@@ -75,9 +77,15 @@ const passwordSchema = z.object({
 }).refine((data) => data.newPassword === data.confirmPassword, {
   message: "Passwords don't match",
   path: ['confirmPassword'],
+}).refine((data) => data.newPassword !== data.currentPassword, {
+  message: "New password must be different from current password",
+  path: ['newPassword'],
 })
 
 export default function SettingsClient() {
+  const { t } = useI18n()
+  const { setTheme } = useTheme()
+  
   const [activeTab, setActiveTab] = useState<TabId>('profile')
   const { data: profile, isLoading: profileLoading } = useProfile()
   const updateProfile = useUpdateProfile()
@@ -108,34 +116,36 @@ export default function SettingsClient() {
   const onProfileSubmit = profileForm.handleSubmit(async (data) => {
     try {
       await updateProfile.mutateAsync(data)
-      toast.success('Profile updated successfully')
+      toast.success(t('settings.profileUpdated'))
     } catch (error: any) {
-      toast.error(error.message || 'Failed to update profile')
+      toast.error(error.message || t('settings.failedToUpdate'))
     }
   })
 
   const onPasswordSubmit = passwordForm.handleSubmit(async (data) => {
     try {
       await changePassword.mutateAsync(data)
-      toast.success('Password changed successfully')
+      toast.success(t('settings.passwordChanged'))
       passwordForm.reset()
     } catch (error: any) {
-      toast.error(error.message || 'Failed to change password')
+      toast.error(error.message || t('settings.failedToChange'))
     }
   })
 
-  const handlePreferenceUpdate = async (data: UpdatePreferencesDTO, successMessage = 'Preferences updated') => {
+  const handlePreferenceUpdate = async (data: UpdatePreferencesDTO, successMessage?: string) => {
     try {
       await updatePreferences.mutateAsync(data)
-      toast.success(successMessage)
+      toast.success(successMessage || t('settings.preferencesUpdated'))
     } catch (error: any) {
-      toast.error(error?.message || 'Failed to update preferences')
+      toast.error(error?.message || t('settings.failedToUpdate'))
     }
   }
 
   const handleThemeChange = (theme: 'dark' | 'light' | 'system') => {
     if (preferences?.theme === theme || updatePreferences.isPending) return
-    void handlePreferenceUpdate({ theme }, 'Theme updated')
+    // Update UI theme immediately
+    setTheme(theme)
+    void handlePreferenceUpdate({ theme }, t('settings.themeUpdated'))
   }
 
   const handleAvatarChange = (event: ChangeEvent<HTMLInputElement>) => {
@@ -145,13 +155,13 @@ export default function SettingsClient() {
     const inputElement = event.target
 
     if (!file.type.startsWith('image/')) {
-      toast.error('Please select an image file')
+      toast.error(t('settings.selectImage'))
       inputElement.value = ''
       return
     }
 
     if (file.size > AVATAR_MAX_SIZE) {
-      toast.error('Image must be smaller than 2MB')
+      toast.error(t('settings.imageTooLarge'))
       inputElement.value = ''
       return
     }
@@ -162,16 +172,16 @@ export default function SettingsClient() {
       ;(async () => {
         try {
           await uploadAvatar.mutateAsync(base64)
-          toast.success('Profile photo updated')
+          toast.success(t('settings.photoUpdated'))
         } catch (error: any) {
-          toast.error(error?.message || 'Failed to upload photo')
+          toast.error(error?.message || t('settings.failedToUpload'))
         } finally {
           inputElement.value = ''
         }
       })()
     }
     reader.onerror = () => {
-      toast.error('Failed to read image file')
+      toast.error(t('settings.failedToRead'))
       inputElement.value = ''
     }
 
@@ -192,16 +202,13 @@ export default function SettingsClient() {
       monthlyReports: currentEmail?.monthlyReports ?? false,
       goalMilestones: currentEmail?.goalMilestones ?? false,
       securityAlerts: currentEmail?.securityAlerts ?? false,
-      ...(currentEmail?.weeklyReport !== undefined
-        ? { weeklyReport: currentEmail.weeklyReport }
-        : {}),
     }
     emailUpdate[key] = value
     void handlePreferenceUpdate(
       {
         notifications: { email: emailUpdate },
       },
-      'Notification preferences updated'
+      t('settings.notificationPreferencesUpdated')
     )
   }
 
@@ -222,7 +229,7 @@ export default function SettingsClient() {
       {
         notifications: { push: pushUpdate },
       },
-      'Notification preferences updated'
+      t('settings.notificationPreferencesUpdated')
     )
   }
 
@@ -230,7 +237,7 @@ export default function SettingsClient() {
     const privacyUpdate: Partial<UserPreferencesDTO['privacy']> = {
       [key]: value,
     }
-    void handlePreferenceUpdate({ privacy: privacyUpdate }, 'Privacy preferences updated')
+    void handlePreferenceUpdate({ privacy: privacyUpdate }, t('settings.privacyPreferencesUpdated'))
   }
 
   return (
@@ -238,10 +245,10 @@ export default function SettingsClient() {
       {/* Page Header */}
       <div>
         <h1 className="text-3xl font-bold text-gray-900 dark:text-white">
-          Settings
+          {t('settings.title')}
         </h1>
         <p className="text-gray-500 dark:text-gray-400 mt-1">
-          Manage your account settings and preferences
+          {t('settings.description')}
         </p>
       </div>
 
@@ -263,7 +270,7 @@ export default function SettingsClient() {
                 }`}
               >
                 <Icon className="w-5 h-5" />
-                <span className="font-medium">{tab.label}</span>
+                <span className="font-medium">{t(tab.label)}</span>
               </button>
             )
           })}
@@ -279,7 +286,7 @@ export default function SettingsClient() {
               {activeTab === 'profile' && (
                 <Card>
                   <CardHeader>
-                    <CardTitle>Profile Information</CardTitle>
+                    <CardTitle>{t('settings.profileInformation')}</CardTitle>
                   </CardHeader>
                   <CardContent>
                     <form onSubmit={onProfileSubmit} className="space-y-6">
@@ -316,10 +323,10 @@ export default function SettingsClient() {
                             disabled={uploadAvatar.isPending}
                           >
                             <Upload className="w-4 h-4 mr-2" />
-                            {uploadAvatar.isPending ? 'Uploading...' : 'Upload Photo'}
+                            {uploadAvatar.isPending ? t('settings.uploading') : t('settings.uploadPhoto')}
                           </Button>
                           <p className="text-xs text-gray-500 mt-2">
-                            JPG, PNG or GIF. Max size 2MB
+                            {t('settings.maxSize2MB')}
                           </p>
                         </div>
                       </div>
@@ -327,7 +334,7 @@ export default function SettingsClient() {
                       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                         <div>
                           <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                            First Name *
+                            {t('settings.firstNameRequired')}
                           </label>
                           <input
                             {...profileForm.register('firstName')}
@@ -342,7 +349,7 @@ export default function SettingsClient() {
 
                         <div>
                           <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                            Last Name *
+                            {t('settings.lastNameRequired')}
                           </label>
                           <input
                             {...profileForm.register('lastName')}
@@ -358,7 +365,7 @@ export default function SettingsClient() {
 
                       <div>
                         <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                          Email
+                          {t('settings.email')}
                         </label>
                         <input
                           type="email"
@@ -367,13 +374,13 @@ export default function SettingsClient() {
                           className="w-full px-4 py-2 border border-gray-300 dark:border-gray-700 rounded-lg bg-gray-50 dark:bg-gray-900 text-gray-500"
                         />
                         <p className="text-xs text-gray-500 mt-1">
-                          Email cannot be changed
+                          {t('settings.emailCannotChange')}
                         </p>
                       </div>
 
                       <div>
                         <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                          Phone
+                          {t('settings.phone')}
                         </label>
                         <input
                           {...profileForm.register('phone')}
@@ -387,7 +394,7 @@ export default function SettingsClient() {
                           type="submit"
                           disabled={updateProfile.isPending}
                         >
-                          {updateProfile.isPending ? 'Saving...' : 'Save Changes'}
+                          {updateProfile.isPending ? t('common.saving') : t('settings.saveChanges')}
                         </Button>
                       </div>
                     </form>
@@ -399,7 +406,7 @@ export default function SettingsClient() {
               {activeTab === 'preferences' && (
                 <Card>
                   <CardHeader>
-                    <CardTitle>App Preferences</CardTitle>
+                    <CardTitle>{t('settings.appPreferences')}</CardTitle>
                   </CardHeader>
                   <CardContent className="space-y-6">
                     <div>
@@ -438,7 +445,7 @@ export default function SettingsClient() {
                       <select
                         value={preferences?.currency || 'USD'}
                         onChange={(e) =>
-                          handlePreferenceUpdate({ currency: e.target.value }, 'Currency updated')
+                          handlePreferenceUpdate({ currency: e.target.value }, t('settings.currencyUpdated'))
                         }
                         disabled={updatePreferences.isPending}
                         className="w-full px-4 py-2 border border-gray-300 dark:border-gray-700 rounded-lg focus:ring-2 focus:ring-blue-500 dark:bg-gray-800"
@@ -452,12 +459,12 @@ export default function SettingsClient() {
 
                     <div>
                       <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                        Date Format
+                        {t('settings.dateFormat')}
                       </label>
                       <select
                         value={preferences?.dateFormat || 'MM/DD/YYYY'}
                         onChange={(e) =>
-                          handlePreferenceUpdate({ dateFormat: e.target.value }, 'Date format updated')
+                          handlePreferenceUpdate({ dateFormat: e.target.value }, t('settings.dateFormatUpdated'))
                         }
                         disabled={updatePreferences.isPending}
                         className="w-full px-4 py-2 border border-gray-300 dark:border-gray-700 rounded-lg focus:ring-2 focus:ring-blue-500 dark:bg-gray-800"
@@ -470,18 +477,18 @@ export default function SettingsClient() {
 
                     <div>
                       <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                        Time Format
+                        {t('settings.timeFormat')}
                       </label>
                       <select
                         value={preferences?.timeFormat || '12h'}
                         onChange={(e) =>
-                          handlePreferenceUpdate({ timeFormat: e.target.value as '12h' | '24h' }, 'Time format updated')
+                          handlePreferenceUpdate({ timeFormat: e.target.value as '12h' | '24h' }, t('settings.timeFormatUpdated'))
                         }
                         disabled={updatePreferences.isPending}
                         className="w-full px-4 py-2 border border-gray-300 dark:border-gray-700 rounded-lg focus:ring-2 focus:ring-blue-500 dark:bg-gray-800"
                       >
-                        <option value="12h">12-hour</option>
-                        <option value="24h">24-hour</option>
+                        <option value="12h">{t('settings.12hour')}</option>
+                        <option value="24h">{t('settings.24hour')}</option>
                       </select>
                     </div>
                   </CardContent>
@@ -492,12 +499,12 @@ export default function SettingsClient() {
               {activeTab === 'notifications' && (
                 <Card>
                   <CardHeader>
-                    <CardTitle>Notification Settings</CardTitle>
+                    <CardTitle>{t('settings.notificationSettings')}</CardTitle>
                   </CardHeader>
                   <CardContent className="space-y-6">
                     <div>
                       <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">
-                        Email Notifications
+                        {t('settings.emailNotifications')}
                       </h3>
                       <div className="space-y-3">
                         {emailNotificationOptions.map(({ key, label }) => (
@@ -506,7 +513,7 @@ export default function SettingsClient() {
                             className="flex items-center justify-between p-4 border border-gray-200 dark:border-gray-700 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-800 cursor-pointer"
                           >
                             <span className="text-gray-700 dark:text-gray-300">
-                              {label}
+                              {label(t)}
                             </span>
                             <input
                               type="checkbox"
@@ -531,7 +538,7 @@ export default function SettingsClient() {
                             className="flex items-center justify-between p-4 border border-gray-200 dark:border-gray-700 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-800 cursor-pointer"
                           >
                             <span className="text-gray-700 dark:text-gray-300">
-                              {label}
+                              {label(t)}
                             </span>
                             <input
                               type="checkbox"
@@ -552,7 +559,7 @@ export default function SettingsClient() {
               {activeTab === 'security' && (
                 <Card>
                   <CardHeader>
-                    <CardTitle>Change Password</CardTitle>
+                    <CardTitle>{t('auth.changePassword')}</CardTitle>
                   </CardHeader>
                   <CardContent>
                     <form onSubmit={onPasswordSubmit} className="space-y-4">
@@ -621,7 +628,7 @@ export default function SettingsClient() {
               {activeTab === 'privacy' && (
                 <Card>
                   <CardHeader>
-                    <CardTitle>Privacy Settings</CardTitle>
+                    <CardTitle>{t('settings.privacySettings')}</CardTitle>
                   </CardHeader>
                   <CardContent className="space-y-6">
                     {privacyOptions.map(({ key, label }) => (
@@ -631,12 +638,12 @@ export default function SettingsClient() {
                       >
                         <div>
                           <p className="font-medium text-gray-900 dark:text-white">
-                            {label}
+                            {label(t)}
                           </p>
                           <p className="text-sm text-gray-500">
                             {key === 'showBalance'
-                              ? 'Display your account balance in the dashboard'
-                              : 'Allow collection of anonymized usage data'}
+                              ? t('settings.showBalanceDesc')
+                              : t('settings.analyticsConsentDesc')}
                           </p>
                         </div>
                         <input
@@ -651,10 +658,10 @@ export default function SettingsClient() {
 
                     <div className="pt-6 border-t border-gray-200 dark:border-gray-700">
                       <h3 className="text-lg font-semibold text-red-600 mb-2">
-                        Danger Zone
+                        {t('settings.dangerZone')}
                       </h3>
                       <p className="text-sm text-gray-500 mb-4">
-                        Once you delete your account, there is no going back. Please be certain.
+                        {t('settings.deleteAccountWarning')}
                       </p>
                       <Button
                         variant="outline"

@@ -24,7 +24,6 @@ export function useLogin() {
       // Store user data in query cache
       queryClient.setQueryData(['user'], response.user)
 
-      toast.success('Signed in successfully')
       router.push('/dashboard')
     },
     onError: (error) => {
@@ -43,13 +42,9 @@ export function useRegister() {
   return useMutation({
     mutationFn: async (data: RegisterDTO) => await authService.register(data),
     onSuccess: (response) => {
-      if (process.env.NODE_ENV === 'development') {
-        console.log("Register Response", response);
-      }
       // Store user data in query cache
       queryClient.setQueryData(['user'], response.user)
 
-      toast.success('Account created successfully')
       router.push('/dashboard')
     },
     onError: (error) => {
@@ -78,7 +73,6 @@ export function useLogout() {
       queryClient.clear()
       window.localStorage.removeItem('accessToken');
       window.localStorage.removeItem('refreshToken');
-      toast.success('Logged out successfully')
       router.push('/login')
     },
     onError: (error: any) => {
@@ -97,7 +91,6 @@ export function useChangePassword() {
     mutationFn: (data: { currentPassword: string; newPassword: string }) =>
       authService.changePassword(data),
     onSuccess: () => {
-      toast.success('Password changed successfully')
     },
     onError: (error) => {
       showErrorToast(error, 'Failed to Change Password')
@@ -112,7 +105,6 @@ export function useForgotPassword() {
   return useMutation({
     mutationFn: (email: string) => authService.forgotPassword(email),
     onSuccess: () => {
-      toast.success('Password reset link sent to your email')
     },
     onError: (error) => {
       showErrorToast(error, 'Failed to Send Reset Link')
@@ -130,7 +122,6 @@ export function useResetPassword() {
     mutationFn: (data: { token: string; password: string }) =>
       authService.resetPassword(data),
     onSuccess: () => {
-      toast.success('Password reset successfully')
       router.push('/login')
     },
     onError: (error) => {

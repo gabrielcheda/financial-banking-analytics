@@ -1,4 +1,6 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
+import { toast } from 'sonner'
+import { showErrorToast } from '@/lib/error-utils'
 import { reportService } from '@/services/api/reports.service'
 import type { GenerateReportDTO } from '@/types/dto'
 
@@ -34,7 +36,10 @@ export function useGenerateReport() {
   return useMutation({
     mutationFn: (data: GenerateReportDTO) => reportService.generateReport(data),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['reports'] })
+      queryClient.invalidateQueries({ queryKey: reportKeys.all })
+    },
+    onError: (error) => {
+      showErrorToast(error, 'Failed to generate report')
     },
   })
 }
@@ -46,6 +51,11 @@ export function useDownloadReport() {
   return useMutation({
     mutationFn: ({ id, filename }: { id: string; filename?: string }) =>
       reportService.downloadReport(id, filename),
+    onSuccess: () => {
+    },
+    onError: (error) => {
+      showErrorToast(error, 'Failed to download report')
+    },
   })
 }
 
@@ -58,7 +68,10 @@ export function useDeleteReport() {
   return useMutation({
     mutationFn: (id: string) => reportService.deleteReport(id),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['reports'] })
+      queryClient.invalidateQueries({ queryKey: reportKeys.all })
+    },
+    onError: (error) => {
+      showErrorToast(error, 'Failed to delete report')
     },
   })
 }

@@ -1,5 +1,6 @@
 'use client'
 
+import { useI18n } from '@/i18n'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { contributeToGoalSchema, type ContributeToGoalInput } from '@/lib/validations/goal'
@@ -10,6 +11,7 @@ import type { GoalDTO, AccountDTO } from '@/types/dto'
 import { TrendingUp, DollarSign } from 'lucide-react'
 import { parseLocaleNumber } from '@/lib/numberUtils'
 import { formatCurrency } from '@/utils/currency'
+import { BalanceDisplay } from '@/components/BalanceDisplay'
 
 interface ContributeFormProps {
   goal: GoalDTO
@@ -24,6 +26,7 @@ export function ContributeForm({
   onCancel,
   isLoading = false,
 }: ContributeFormProps) {
+  const { t } = useI18n()
   const {
     register,
     handleSubmit,
@@ -38,6 +41,8 @@ export function ContributeForm({
   })
 
   const { data: accounts, isLoading: accountsLoading } = useActiveAccounts()
+
+  const isFormLoading = isLoading || isSubmitting
 
   const contributionAmount = watch('amount')
 
@@ -75,30 +80,30 @@ export function ContributeForm({
       {/* Current Goal Progress */}
       <div className="p-4 rounded-lg bg-gray-50 dark:bg-gray-800/50 border border-gray-200 dark:border-gray-700">
         <h3 className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-3">
-          Current Progress
+          {t('forms.contribute.currentProgress')}
         </h3>
         <div className="space-y-2">
           <div className="flex justify-between items-center text-sm">
-            <span className="text-gray-600 dark:text-gray-400">Current Amount</span>
+            <span className="text-gray-600 dark:text-gray-400">{t('forms.contribute.currentAmount')}</span>
             <span className="font-semibold text-gray-900 dark:text-white">
-              {formatCurrency(goal.currentAmount)}
+              $<BalanceDisplay amount={goal.currentAmount} showSign={false} />
             </span>
           </div>
           <div className="flex justify-between items-center text-sm">
-            <span className="text-gray-600 dark:text-gray-400">Target Amount</span>
+            <span className="text-gray-600 dark:text-gray-400">{t('forms.contribute.targetAmount')}</span>
             <span className="font-semibold text-gray-900 dark:text-white">
-              {formatCurrency(goal.targetAmount)}
+              $<BalanceDisplay amount={goal.targetAmount} showSign={false} />
             </span>
           </div>
           <div className="flex justify-between items-center text-sm">
-            <span className="text-gray-600 dark:text-gray-400">Remaining</span>
+            <span className="text-gray-600 dark:text-gray-400">{t('forms.contribute.remaining')}</span>
             <span className="font-semibold text-red-600 dark:text-red-400">
-              {formatCurrency(currentRemainingAmount)}
+              $<BalanceDisplay amount={currentRemainingAmount} showSign={false} />
             </span>
           </div>
           <div className="pt-2 border-t border-gray-200 dark:border-gray-700">
             <div className="flex justify-between items-center text-sm mb-1">
-              <span className="text-gray-600 dark:text-gray-400">Progress</span>
+              <span className="text-gray-600 dark:text-gray-400">{t('forms.contribute.progress')}</span>
               <span className="font-semibold text-blue-600 dark:text-blue-400">
                 {currentPercentage.toFixed(1)}%
               </span>
@@ -119,7 +124,7 @@ export function ContributeForm({
           htmlFor="amount"
           className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1"
         >
-          Contribution Amount <span className="text-red-500">*</span>
+          {t('forms.contribute.contributionAmount')} <span className="text-red-500">*</span>
         </label>
         <div className="relative">
           <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-500 dark:text-gray-400">
@@ -130,7 +135,7 @@ export function ContributeForm({
             id="amount"
             inputMode="decimal"
             {...register('amount', { setValueAs: parseLocaleNumber })}
-            placeholder="0,00"
+            placeholder={t('forms.contribute.amountPlaceholder')}
             className="w-full pl-8 pr-4 py-2 rounded-lg border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-900 dark:text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500"
           />
         </div>
@@ -147,25 +152,25 @@ export function ContributeForm({
           <div className="flex items-center gap-2 mb-3">
             <TrendingUp className="w-4 h-4 text-green-600 dark:text-green-400" />
             <h3 className="text-sm font-medium text-green-700 dark:text-green-300">
-              New Progress After Contribution
+              {t('forms.contribute.newProgressAfterContribution')}
             </h3>
           </div>
           <div className="space-y-2">
             <div className="flex justify-between items-center text-sm">
-              <span className="text-green-600 dark:text-green-400">New Amount</span>
+              <span className="text-green-600 dark:text-green-400">{t('forms.contribute.newAmount')}</span>
               <span className="font-semibold text-green-700 dark:text-green-300">
-                {formatCurrency(newAmount)}
+                $<BalanceDisplay amount={newAmount} showSign={false} />
               </span>
             </div>
             <div className="flex justify-between items-center text-sm">
-              <span className="text-green-600 dark:text-green-400">New Remaining</span>
+              <span className="text-green-600 dark:text-green-400">{t('forms.contribute.newRemaining')}</span>
               <span className="font-semibold text-green-700 dark:text-green-300">
-                {formatCurrency(newRemaining)}
+                $<BalanceDisplay amount={newRemaining} showSign={false} />
               </span>
             </div>
             <div className="pt-2 border-t border-green-200 dark:border-green-800">
               <div className="flex justify-between items-center text-sm mb-1">
-                <span className="text-green-600 dark:text-green-400">New Progress</span>
+                <span className="text-green-600 dark:text-green-400">{t('forms.contribute.newProgress')}</span>
                 <span className="font-semibold text-green-700 dark:text-green-300">
                   {newPercentage.toFixed(1)}%
                   <span className="ml-2 text-xs">
@@ -183,7 +188,7 @@ export function ContributeForm({
             {newPercentage >= 100 && (
               <div className="mt-2 p-2 bg-green-100 dark:bg-green-900/40 rounded-lg">
                 <p className="text-xs text-green-700 dark:text-green-300 text-center font-medium">
-                  This contribution will complete your goal!
+                  {t('forms.contribute.contributionWillComplete')}
                 </p>
               </div>
             )}
@@ -197,7 +202,7 @@ export function ContributeForm({
           htmlFor="date"
           className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1"
         >
-          Date <span className="text-red-500">*</span>
+          {t('forms.contribute.date')} <span className="text-red-500">*</span>
         </label>
         <input
           type="date"
@@ -220,7 +225,7 @@ export function ContributeForm({
           htmlFor="accountId"
           className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1"
         >
-          Account <span className="text-red-500">*</span>
+          {t('forms.contribute.account')} <span className="text-red-500">*</span>
         </label>
         <select
           id="accountId"
@@ -228,10 +233,10 @@ export function ContributeForm({
           disabled={accountsLoading}
           className="w-full px-4 py-2 rounded-lg border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:opacity-50"
         >
-          <option value="">Select an account</option>
+          <option value="">{t('forms.contribute.selectAccount')}</option>
           {accounts?.map((account: AccountDTO) => (
             <option key={account.id} value={account.id}>
-              {account.name} - {formatCurrency(account.balance)}
+              {account.name} - ${account.balance.toFixed(2)}
             </option>
           ))}
         </select>
@@ -248,12 +253,12 @@ export function ContributeForm({
           htmlFor="notes"
           className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1"
         >
-          Notes (Optional)
+          {t('forms.contribute.notesOptional')}
         </label>
         <textarea
           id="notes"
           {...register('notes')}
-          placeholder="Add any notes about this contribution..."
+          placeholder={t('forms.contribute.notesPlaceholder')}
           rows={3}
           className="w-full px-4 py-2 rounded-lg border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-900 dark:text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 resize-none"
         />
@@ -271,19 +276,19 @@ export function ContributeForm({
             type="button"
             variant="outline"
             onClick={onCancel}
-            disabled={isSubmitting || isLoading}
+            disabled={isFormLoading}
             className="w-full sm:w-auto order-2 sm:order-1"
           >
-            Cancel
+            {t('forms.contribute.cancel')}
           </Button>
         )}
         <Button
           type="submit"
           variant="primary"
-          disabled={isSubmitting || isLoading || accountsLoading}
+          disabled={isFormLoading || accountsLoading}
           className="w-full sm:w-auto order-1 sm:order-2"
         >
-          {isSubmitting || isLoading ? 'Processing...' : 'Add Contribution'}
+          {isFormLoading ? t('forms.contribute.processing') : t('forms.contribute.addContribution')}
         </Button>
       </div>
     </form>

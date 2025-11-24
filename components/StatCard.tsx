@@ -1,11 +1,11 @@
 'use client'
 
-import { memo } from 'react'
+import { memo, type ReactNode } from 'react'
 import { LucideIcon } from 'lucide-react'
 
 interface StatCardProps {
   title: string
-  value: string
+  value: string | ReactNode
   change?: string
   changeType?: 'increase' | 'decrease' | 'neutral'
   icon: LucideIcon

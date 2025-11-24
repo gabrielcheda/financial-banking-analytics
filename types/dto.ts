@@ -731,6 +731,19 @@ export interface NotificationDTO {
   createdAt: string
 }
 
+export interface NotificationFilters {
+  unreadOnly?: boolean
+  type?: 'bill' | 'budget' | 'goal' | 'transaction' | 'system'
+  page?: number
+  limit?: number
+}
+
+export interface NotificationPaginatedResponse extends PaginatedResponse<NotificationDTO> {
+  pagination: PaginatedResponse<NotificationDTO>['pagination'] & {
+    unreadCount: number
+  }
+}
+
 // ============================================================================
 // User Preferences DTOs
 // ============================================================================

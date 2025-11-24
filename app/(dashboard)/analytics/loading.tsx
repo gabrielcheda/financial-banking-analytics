@@ -31,17 +31,17 @@ export default function AnalyticsLoading() {
 
       {/* Charts Grid */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        <SkeletonChart title="Income vs Expenses" />
-        <SkeletonChart title="Expense Breakdown" />
+        <SkeletonChart />
+        <SkeletonChart />
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        <SkeletonChart title="Spending Trends" />
-        <SkeletonChart title="Category Analysis" />
+        <SkeletonChart />
+        <SkeletonChart />
       </div>
 
       {/* Full Width Chart */}
-      <SkeletonChart title="Monthly Overview" />
+      <SkeletonChart />
     </div>
   )
 }

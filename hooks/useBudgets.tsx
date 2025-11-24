@@ -74,7 +74,6 @@ export function useCreateBudget() {
       queryClient.invalidateQueries({ queryKey: budgetKeys.alerts() })
       // Invalidar analytics para atualizar gráficos e estatísticas
       queryClient.invalidateQueries({ queryKey: ['analytics'] })
-      toast.success('Budget created successfully!')
     },
     onError: (error) => {
       showErrorToast(error, 'Failed to Create Budget')
@@ -98,7 +97,6 @@ export function useUpdateBudget() {
       queryClient.invalidateQueries({ queryKey: budgetKeys.alerts() })
       // Invalidar analytics para atualizar gráficos e estatísticas
       queryClient.invalidateQueries({ queryKey: ['analytics'] })
-      toast.success('Budget updated successfully!')
     },
     onError: (error) => {
       showErrorToast(error, 'Failed to Update Budget')
@@ -121,7 +119,6 @@ export function useDeleteBudget() {
       queryClient.invalidateQueries({ queryKey: budgetKeys.alerts() })
       // Invalidar analytics para atualizar gráficos e estatísticas
       queryClient.invalidateQueries({ queryKey: ['analytics'] })
-      toast.success('Budget deleted successfully!')
     },
     onError: (error) => {
       showErrorToast(error, 'Failed to Delete Budget')

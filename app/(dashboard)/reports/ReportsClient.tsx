@@ -1,6 +1,7 @@
 'use client'
 
 import { useState, useMemo } from 'react'
+import { useI18n } from '@/i18n'
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/Card'
 import { Button } from '@/components/ui/Button'
 import { EmptyState } from '@/components/EmptyState'
@@ -20,11 +21,16 @@ import { useCategories } from '@/hooks/useCategories'
 import { useReports, useGenerateReport, useDownloadReport, useDeleteReport } from '@/hooks/useReports'
 import { toast } from 'sonner'
 import { format, subMonths } from 'date-fns'
+import { useBalanceFormatter } from '@/hooks/useBalanceFormatter'
+import { BalanceDisplay } from '@/components/BalanceDisplay'
 
 type ReportType = 'monthly' | 'tax' | 'expense' | 'custom'
 type ExportFormat = 'pdf' | 'csv' | 'excel'
 
 export default function ReportsClient() {
+  const { t } = useI18n()
+  const { formatBalance } = useBalanceFormatter()
+  
   const [selectedType, setSelectedType] = useState<ReportType>('monthly')
   const [startDate, setStartDate] = useState(
     format(subMonths(new Date(), 1), 'yyyy-MM-dd')
@@ -54,26 +60,26 @@ export default function ReportsClient() {
   const reportTypes = [
     {
       type: 'monthly' as ReportType,
-      title: 'Monthly Statement',
-      description: 'Complete overview of monthly transactions',
+      title: t('reports.monthlyStatement'),
+      description: t('reports.monthlyStatementDesc'),
       icon: Calendar,
     },
     {
       type: 'tax' as ReportType,
-      title: 'Tax Summary',
-      description: 'Annual summary for tax purposes',
+      title: t('reports.taxSummary'),
+      description: t('reports.taxSummaryDesc'),
       icon: FileText,
     },
     {
       type: 'expense' as ReportType,
-      title: 'Expense Report',
-      description: 'Detailed expense breakdown',
+      title: t('reports.expenseReport'),
+      description: t('reports.expenseReportDesc'),
       icon: FileSpreadsheet,
     },
     {
       type: 'custom' as ReportType,
-      title: 'Custom Report',
-      description: 'Create your own custom report',
+      title: t('reports.customReport'),
+      description: t('reports.customReportDesc'),
       icon: Filter,
     },
   ]
@@ -122,14 +128,22 @@ export default function ReportsClient() {
   // Export to CSV
   const exportToCSV = () => {
     if (!transactionsResponse?.data) {
-      alert('No data to export')
+      toast.error(t('reports.noDataToExport'))
       return
     }
 
     const transactions = transactionsResponse.data
 
     // CSV Header
-    const headers = ['Date', 'Description', 'Category', 'Merchant', 'Type', 'Amount', 'Status']
+    const headers = [
+      t('reports.csvDate'),
+      t('reports.csvDescription'),
+      t('reports.csvCategory'),
+      t('reports.csvMerchant'),
+      t('reports.csvType'),
+      t('reports.csvAmount'),
+      t('reports.csvStatus')
+    ]
 
     // CSV Rows
     const rows = transactions.map((t) => {
@@ -140,7 +154,7 @@ export default function ReportsClient() {
         category?.name || 'Uncategorized',
         t.merchant || 'N/A',
         t.type,
-        t.amount.toFixed(2),
+        formatBalance(t.amount),
         t.status,
       ]
     })
@@ -167,17 +181,21 @@ export default function ReportsClient() {
     link.click()
     document.body.removeChild(link)
 
-    alert('CSV report generated successfully!')
+    toast.success(t('reports.csvGenerated'))
   }
 
   // Export to Excel (XLSX format)
   const exportToExcel = () => {
     if (!transactionsResponse?.data) {
-      alert('No data to export')
+      toast.error(t('reports.noDataToExport'))
       return
     }
 
     const transactions = transactionsResponse.data
+
+    // Translations for Excel PDF
+    const pdfUncategorized = t('reports.pdfUncategorized')
+    const pdfNA = t('reports.pdfNA')
 
     // Create Excel-compatible HTML
     const excelContent = `
@@ -194,51 +212,51 @@ export default function ReportsClient() {
         </style>
       </head>
       <body>
-        <h1>Financial Report - ${selectedType.toUpperCase()}</h1>
-        <p>Generated: ${format(new Date(), 'MMMM dd, yyyy')}</p>
+        <h1>${t('reports.pdfTitle')} - ${selectedType.toUpperCase()}</h1>
+        <p>${t('reports.pdfGenerated')}: ${format(new Date(), 'MMMM dd, yyyy')}</p>
         ${
           startDate && endDate
-            ? `<p>Period: ${format(new Date(startDate), 'MMM dd, yyyy')} - ${format(
+            ? `<p>${t('reports.pdfPeriod')}: ${format(new Date(startDate), 'MMM dd, yyyy')} - ${format(
                 new Date(endDate),
                 'MMM dd, yyyy'
               )}</p>`
             : ''
         }
 
-        <h2>Summary</h2>
+        <h2>${t('reports.pdfSummary')}</h2>
         <table>
           <tr>
-            <th>Metric</th>
-            <th>Value</th>
+            <th>${t('reports.pdfMetric')}</th>
+            <th>${t('reports.pdfValue')}</th>
           </tr>
           <tr>
-            <td>Total Transactions</td>
+            <td>${t('reports.pdfTotalTransactions')}</td>
             <td>${preview.count}</td>
           </tr>
           <tr class="income">
-            <td>Total Income</td>
-            <td>$${Number(preview.totalIncome).toFixed(2)}</td>
+            <td>${t('reports.pdfTotalIncome')}</td>
+            <td>${formatBalance(Number(preview.totalIncome))}</td>
           </tr>
           <tr class="expense">
-            <td>Total Expenses</td>
-            <td>$${Number(preview.totalExpenses).toFixed(2)}</td>
+            <td>${t('reports.pdfTotalExpenses')}</td>
+            <td>${formatBalance(Number(preview.totalExpenses))}</td>
           </tr>
           <tr class="summary">
-            <td>Net Income</td>
-            <td>$${Number(preview.netIncome).toFixed(2)}</td>
+            <td>${t('reports.pdfNetIncome')}</td>
+            <td>${formatBalance(Number(preview.netIncome))}</td>
           </tr>
         </table>
 
-        <h2>Transactions</h2>
+        <h2>${t('reports.pdfTransactions')}</h2>
         <table>
           <tr>
-            <th>Date</th>
-            <th>Description</th>
-            <th>Category</th>
-            <th>Merchant</th>
-            <th>Type</th>
-            <th>Amount</th>
-            <th>Status</th>
+            <th>${t('reports.csvDate')}</th>
+            <th>${t('transactions.description')}</th>
+            <th>${t('common.category')}</th>
+            <th>${t('common.merchant')}</th>
+            <th>${t('transactions.type')}</th>
+            <th>${t('transactions.amount')}</th>
+            <th>${t('transactions.status')}</th>
           </tr>
           ${transactions
             .map(
@@ -248,12 +266,12 @@ export default function ReportsClient() {
             <tr>
               <td>${format(new Date(t.date), 'MMM dd, yyyy')}</td>
               <td>${t.description}</td>
-              <td>${category?.name || 'Uncategorized'}</td>
-              <td>${t.merchant || 'N/A'}</td>
+              <td>${category?.name || pdfUncategorized}</td>
+              <td>${t.merchant || pdfNA}</td>
               <td>${t.type}</td>
-              <td class="${t.type}">${t.type === 'income' ? '+' : '-'}$${Math.abs(
+              <td class="${t.type}">${t.type === 'income' ? '+' : '-'}${formatBalance(Math.abs(
                 t.amount
-              ).toFixed(2)}</td>
+              ), { showSign: false })}</td>
               <td>${t.status}</td>
             </tr>
           `
@@ -280,17 +298,21 @@ export default function ReportsClient() {
     link.click()
     document.body.removeChild(link)
 
-    alert('Excel report generated successfully!')
+    toast.success(t('reports.excelGenerated'))
   }
 
   // Export to PDF
   const exportToPDF = () => {
     if (!transactionsResponse?.data) {
-      alert('No data to export')
+      toast.error(t('reports.noDataToExport'))
       return
     }
 
     const transactions = transactionsResponse.data
+
+    // Translations for printable PDF
+    const pdfUncategorized = t('reports.pdfUncategorized')
+    const pdfNA = t('reports.pdfNA')
 
     // Create a printable HTML page
     const pdfContent = `
@@ -298,7 +320,7 @@ export default function ReportsClient() {
       <html>
       <head>
         <meta charset="utf-8">
-        <title>Financial Report</title>
+        <title>${t('reports.pdfTitle')}</title>
         <style>
           @media print {
             body { margin: 0; }
@@ -369,13 +391,13 @@ export default function ReportsClient() {
         </style>
       </head>
       <body>
-        <button class="print-btn no-print" onclick="window.print()">Print / Save as PDF</button>
+        <button class="print-btn no-print" onclick="window.print()">${t('reports.pdfPrintSave')}</button>
 
-        <h1>Financial Report - ${selectedType.toUpperCase()}</h1>
-        <p><strong>Generated:</strong> ${format(new Date(), 'MMMM dd, yyyy HH:mm')}</p>
+        <h1>${t('reports.pdfTitle')} - ${selectedType.toUpperCase()}</h1>
+        <p><strong>${t('reports.pdfGenerated')}:</strong> ${format(new Date(), 'MMMM dd, yyyy HH:mm')}</p>
         ${
           startDate && endDate
-            ? `<p><strong>Period:</strong> ${format(new Date(startDate), 'MMM dd, yyyy')} - ${format(
+            ? `<p><strong>${t('reports.pdfPeriod')}:</strong> ${format(new Date(startDate), 'MMM dd, yyyy')} - ${format(
                 new Date(endDate),
                 'MMM dd, yyyy'
               )}</p>`
@@ -383,43 +405,41 @@ export default function ReportsClient() {
         }
         ${
           selectedCategories.length > 0
-            ? `<p><strong>Categories:</strong> ${selectedCategories.length} selected</p>`
+            ? `<p><strong>${t('common.categories')}:</strong> ${selectedCategories.length} selected</p>`
             : ''
         }
 
-        <h2>Summary</h2>
+        <h2>${t('reports.pdfSummary')}</h2>
         <div class="summary-grid">
           <div class="summary-card">
-            <div class="label">Total Transactions</div>
+            <div class="label">${t('reports.pdfTotalTransactions')}</div>
             <div class="value">${preview.count}</div>
           </div>
           <div class="summary-card">
-            <div class="label">Total Income</div>
-            <div class="value income">$${Number(preview.totalIncome).toFixed(2)}</div>
+            <div class="label">${t('reports.pdfTotalIncome')}</div>
+            <div class="value income">${formatBalance(Number(preview.totalIncome))}</div>
           </div>
           <div class="summary-card">
-            <div class="label">Total Expenses</div>
-            <div class="value expense">$${preview.totalExpenses.toFixed(2)}</div>
+            <div class="label">${t('reports.pdfTotalExpenses')}</div>
+            <div class="value expense">${formatBalance(preview.totalExpenses)}</div>
           </div>
           <div class="summary-card">
-            <div class="label">Net Income</div>
-            <div class="value">${preview.netIncome >= 0 ? '+' : ''}$${preview.netIncome.toFixed(
-              2
-            )}</div>
+            <div class="label">${t('reports.pdfNetIncome')}</div>
+            <div class="value">${preview.netIncome >= 0 ? '+' : ''}${formatBalance(preview.netIncome)}</div>
           </div>
         </div>
 
-        <h2>Transaction Details</h2>
+        <h2>${t('transactions.transactionDetails')}</h2>
         <table>
           <thead>
             <tr>
-              <th>Date</th>
-              <th>Description</th>
-              <th>Category</th>
-              <th>Merchant</th>
-              <th>Type</th>
-              <th>Amount</th>
-              <th>Status</th>
+              <th>${t('reports.csvDate')}</th>
+              <th>${t('transactions.description')}</th>
+              <th>${t('common.category')}</th>
+              <th>${t('common.merchant')}</th>
+              <th>${t('transactions.type')}</th>
+              <th>${t('transactions.amount')}</th>
+              <th>${t('transactions.status')}</th>
             </tr>
           </thead>
           <tbody>
@@ -431,12 +451,12 @@ export default function ReportsClient() {
               <tr>
                 <td>${format(new Date(t.date), 'MMM dd, yyyy')}</td>
                 <td>${t.description}</td>
-                <td>${category?.name || 'Uncategorized'}</td>
-                <td>${t.merchant || 'N/A'}</td>
+                <td>${category?.name || pdfUncategorized}</td>
+                <td>${t.merchant || pdfNA}</td>
                 <td style="text-transform: capitalize;">${t.type}</td>
-                <td class="${t.type}">${t.type === 'income' ? '+' : '-'}$${Math.abs(
+                <td class="${t.type}">${t.type === 'income' ? '+' : '-'}${formatBalance(Math.abs(
                   t.amount
-                ).toFixed(2)}</td>
+), { showSign: false })}</td>
                 <td style="text-transform: capitalize;">${t.status}</td>
               </tr>
             `
@@ -447,7 +467,7 @@ export default function ReportsClient() {
         </table>
 
         <div style="margin-top: 40px; padding-top: 20px; border-top: 1px solid #e5e7eb; color: #6b7280; font-size: 12px;">
-          <p>Generated by BankDash Financial Analytics Platform</p>
+          <p>${t('reports.generatedBy')}</p>
         </div>
       </body>
       </html>
@@ -460,7 +480,7 @@ export default function ReportsClient() {
       printWindow.document.close()
       printWindow.focus()
     } else {
-      alert('Please allow popups to generate PDF reports')
+      toast.error(t('settings.allowPopups'))
     }
   }
 
@@ -478,7 +498,7 @@ export default function ReportsClient() {
           includeTransactionDetails: true,
         })
 
-        toast.success('Report generated successfully!')
+        toast.success(t('reports.reportGenerated'))
 
         // Automatically download if available
         if (result.downloadUrl) {
@@ -488,7 +508,7 @@ export default function ReportsClient() {
           })
         }
       } catch (error: any) {
-        toast.error(error.message || 'Failed to generate report')
+        toast.error(error.message || t('reports.failedToGenerate'))
       }
     } else {
       // Client-side generation (existing functionality)
@@ -507,12 +527,12 @@ export default function ReportsClient() {
   }
 
   const handleDeleteReport = async (reportId: string) => {
-    if (confirm('Are you sure you want to delete this report?')) {
+    if (confirm(t('settings.confirmDeleteReport'))) {
       try {
         await deleteReport.mutateAsync(reportId)
-        toast.success('Report deleted successfully')
+        toast.success(t('reports.reportDeleted'))
       } catch (error: any) {
-        toast.error('Failed to delete report')
+        toast.error(t('reports.failedToDelete'))
       }
     }
   }
@@ -520,9 +540,9 @@ export default function ReportsClient() {
   const handleDownloadSavedReport = async (reportId: string, reportName: string) => {
     try {
       await downloadReport.mutateAsync({ id: reportId, filename: reportName })
-      toast.success('Download started')
+      toast.success(t('reports.downloadStarted'))
     } catch (error: any) {
-      toast.error('Failed to download report')
+      toast.error(t('reports.failedToDownload'))
     }
   }
 
@@ -533,9 +553,9 @@ export default function ReportsClient() {
     <div className="space-y-6">
       {/* Page Header */}
       <div>
-        <h1 className="text-3xl font-bold text-gray-900 dark:text-white">Reports</h1>
+        <h1 className="text-3xl font-bold text-gray-900 dark:text-white">{t('reports.title')}</h1>
         <p className="text-gray-500 dark:text-gray-400 mt-1">
-          Generate and download financial reports
+          {t('reports.description')}
         </p>
       </div>
 
@@ -576,13 +596,13 @@ export default function ReportsClient() {
         <div className="lg:col-span-1">
           <Card>
             <CardHeader>
-              <CardTitle>Report Settings</CardTitle>
+              <CardTitle>{t('reports.reportSettings')}</CardTitle>
             </CardHeader>
             <CardContent className="space-y-4">
               {/* Date Range */}
               <div>
                 <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                  Date Range
+                  {t('reports.dateRange')}
                 </label>
                 <div className="space-y-2">
                   <input
@@ -603,11 +623,11 @@ export default function ReportsClient() {
               {/* Category Filter */}
               <div>
                 <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                  Categories
+                  {t('reports.categories')}
                 </label>
                 <div className="space-y-2 max-h-60 overflow-y-auto">
                   {isLoadingCategories ? (
-                    <p className="text-sm text-gray-500">Loading categories...</p>
+                    <p className="text-sm text-gray-500">{t('reports.loadingCategories')}</p>
                   ) : categories && categories.length > 0 ? (
                     categories.map((cat) => (
                       <label
@@ -626,7 +646,7 @@ export default function ReportsClient() {
                       </label>
                     ))
                   ) : (
-                    <p className="text-sm text-gray-500">No categories available</p>
+                    <p className="text-sm text-gray-500">{t('reports.noCategories')}</p>
                   )}
                 </div>
               </div>
@@ -634,7 +654,7 @@ export default function ReportsClient() {
               {/* Export Options */}
               <div>
                 <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                  Export Format
+                  {t('reports.exportFormat')}
                 </label>
                 <div className="grid grid-cols-3 gap-2">
                   <Button
@@ -643,7 +663,7 @@ export default function ReportsClient() {
                     onClick={() => setExportFormat('pdf')}
                   >
                     <FileText className="w-4 h-4 mr-1" />
-                    PDF
+                    {t('reports.pdf')}
                   </Button>
                   <Button
                     variant={exportFormat === 'csv' ? 'primary' : 'outline'}
@@ -651,7 +671,7 @@ export default function ReportsClient() {
                     onClick={() => setExportFormat('csv')}
                   >
                     <FileSpreadsheet className="w-4 h-4 mr-1" />
-                    CSV
+                    {t('reports.csv')}
                   </Button>
                   <Button
                     variant={exportFormat === 'excel' ? 'primary' : 'outline'}
@@ -659,7 +679,7 @@ export default function ReportsClient() {
                     onClick={() => setExportFormat('excel')}
                   >
                     <FileSpreadsheet className="w-4 h-4 mr-1" />
-                    Excel
+                    {t('reports.excel')}
                   </Button>
                 </div>
               </div>
@@ -674,7 +694,7 @@ export default function ReportsClient() {
                     className="w-4 h-4 text-blue-600 rounded focus:ring-blue-500"
                   />
                   <span className="text-sm text-gray-700 dark:text-gray-300">
-                    Use server-side generation (saved to history)
+                    {t('reports.useServerGeneration')}
                   </span>
                 </label>
               </div>
@@ -686,7 +706,7 @@ export default function ReportsClient() {
                 disabled={isLoading || generateReport.isPending}
               >
                 <Download className="w-4 h-4 mr-2" />
-                {generateReport.isPending ? 'Generating...' : `Generate ${exportFormat.toUpperCase()} Report`}
+                {generateReport.isPending ? t('reports.generating') : `${t('reports.generate')} ${exportFormat.toUpperCase()} ${t('nav.reports')}`}
               </Button>
             </CardContent>
           </Card>
@@ -696,7 +716,7 @@ export default function ReportsClient() {
         <div className="lg:col-span-2">
           <Card>
             <CardHeader>
-              <CardTitle>Report Preview</CardTitle>
+              <CardTitle>{t('reports.reportPreview')}</CardTitle>
             </CardHeader>
             <CardContent>
               {isLoading ? (
@@ -708,8 +728,8 @@ export default function ReportsClient() {
               ) : !hasTransactions ? (
                 <EmptyState
                   icon={Receipt}
-                  title="No Transactions Found"
-                  description="Add transactions to your account to generate financial reports. Reports will show summaries and detailed transaction data."
+                  title={t('reports.noTransactionsFound')}
+                  description={t('reports.tryAdjustingFilters')}
                   variant="default"
                 />
               ) : (
@@ -718,7 +738,7 @@ export default function ReportsClient() {
                   <div className="grid grid-cols-3 gap-4 mb-6 p-4 bg-gray-50 dark:bg-gray-800 rounded-lg">
                     <div className="text-center">
                       <p className="text-sm text-gray-500 dark:text-gray-400">
-                        Transactions
+                        {t('reports.transactions')}
                       </p>
                       <p className="text-2xl font-bold text-gray-900 dark:text-white">
                         {preview.count}
@@ -726,18 +746,18 @@ export default function ReportsClient() {
                     </div>
                     <div className="text-center">
                       <p className="text-sm text-gray-500 dark:text-gray-400">
-                        Total Income
+                        {t('reports.totalIncome')}
                       </p>
                       <p className="text-2xl font-bold text-green-600">
-                        ${Number(preview.totalIncome).toFixed(2)}
+                        $<BalanceDisplay amount={Number(preview.totalIncome)} showSign={false} />
                       </p>
                     </div>
                     <div className="text-center">
                       <p className="text-sm text-gray-500 dark:text-gray-400">
-                        Total Expenses
+                        {t('reports.totalExpenses')}
                       </p>
                       <p className="text-2xl font-bold text-red-600">
-                        ${preview.totalExpenses.toFixed(2)}
+                        $<BalanceDisplay amount={preview.totalExpenses} showSign={false} />
                       </p>
                     </div>
                   </div>
@@ -745,16 +765,16 @@ export default function ReportsClient() {
                   {/* Transaction Preview */}
                   <div className="space-y-2">
                     <h4 className="font-semibold text-gray-900 dark:text-white mb-3">
-                      Recent Transactions (Preview - showing first 10)
+                      {t('reports.recentTransactions')}
                     </h4>
                     {preview.transactions.length === 0 ? (
                       <div className="text-center py-8 text-gray-500 dark:text-gray-400">
-                        <p>No transactions found for the selected period</p>
-                        <p className="text-sm mt-2">Try adjusting your date range or filters</p>
+                        <p>{t('reports.noTransactionsFound')}</p>
+                        <p className="text-sm mt-2">{t('reports.tryAdjustingFilters')}</p>
                       </div>
                     ) : (
-                      <div className="overflow-x-auto">
-                        <table className="w-full text-sm">
+                      <div className="overflow-x-auto -mx-4 px-4 sm:mx-0 sm:px-0">
+                        <table className="w-full text-sm min-w-[600px]">
                           <thead className="border-b border-gray-200 dark:border-gray-700">
                             <tr>
                               <th className="text-left py-2 text-gray-500 dark:text-gray-400">
@@ -793,7 +813,7 @@ export default function ReportsClient() {
                                   }`}
                                 >
                                   {transaction.type === 'income' ? '+' : '-'}$
-                                  {Math.abs(transaction.amount).toFixed(2)}
+                                  <BalanceDisplay amount={Math.abs(transaction.amount)} showSign={false} />
                                 </td>
                               </tr>
                             )})}
@@ -812,7 +832,7 @@ export default function ReportsClient() {
       {/* Saved Reports Section */}
       <Card>
         <CardHeader>
-          <CardTitle>Saved Reports</CardTitle>
+          <CardTitle>{t('reports.savedReports')}</CardTitle>
         </CardHeader>
         <CardContent>
           {isLoadingReports ? (
@@ -824,8 +844,8 @@ export default function ReportsClient() {
           ) : !savedReports || savedReports.length === 0 ? (
             <EmptyState
               icon={FileText}
-              title="No Saved Reports"
-              description="Generate reports using server-side generation to save them here"
+              title={t('reports.noSavedReports')}
+              description={t('reports.generateToSave')}
             />
           ) : (
             <div className="space-y-3">

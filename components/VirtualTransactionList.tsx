@@ -1,9 +1,11 @@
 'use client'
 
+import { useI18n } from '@/i18n'
 import { useRef } from 'react'
 import { useVirtualizer } from '@tanstack/react-virtual'
 import { format } from 'date-fns'
 import { getCategoryColor } from '@/lib/mockData'
+import { BalanceDisplay } from './BalanceDisplay'
 
 interface Transaction {
   id: string
@@ -25,6 +27,7 @@ export function VirtualTransactionList({
   transactions,
   onTransactionClick,
 }: VirtualTransactionListProps) {
+  const { t } = useI18n()
   const parentRef = useRef<HTMLDivElement>(null)
 
   const rowVirtualizer = useVirtualizer({
@@ -46,22 +49,22 @@ export function VirtualTransactionList({
       <div className="sticky top-0 z-10 bg-gray-50 dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700">
         <div className="grid grid-cols-12 gap-4 px-6 py-3">
           <div className="col-span-2 text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
-            Date
+            {t('transactions.date')}
           </div>
           <div className="col-span-3 text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
-            Description
+            {t('transactions.description')}
           </div>
           <div className="col-span-2 text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
-            Category
+            {t('transactions.category')}
           </div>
           <div className="col-span-2 text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
-            Merchant
+            {t('transactions.merchant')}
           </div>
           <div className="col-span-2 text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider text-right">
-            Amount
+            {t('transactions.amount')}
           </div>
           <div className="col-span-1 text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
-            Status
+            {t('transactions.status')}
           </div>
         </div>
       </div>
@@ -132,7 +135,7 @@ export function VirtualTransactionList({
                     }
                   >
                     {transaction.type === 'income' ? '+' : transaction.type === 'expense' ? '-' : '↔ '}
-                    ${Math.abs(transaction.amount).toFixed(2)}
+                    <BalanceDisplay amount={transaction.amount} showSign={false} />
                   </span>
                 </div>
 
@@ -159,7 +162,7 @@ export function VirtualTransactionList({
       {/* Empty State */}
       {transactions.length === 0 && (
         <div className="flex items-center justify-center h-40">
-          <p className="text-gray-500 dark:text-gray-400">No transactions found</p>
+          <p className="text-gray-500 dark:text-gray-400">{t('dashboard.noTransactionsFound')}</p>
         </div>
       )}
     </div>

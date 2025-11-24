@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useMemo, useState } from 'react'
+import { useEffect, useMemo, useState, useCallback } from 'react'
 import { useForm, Controller } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { createTransactionSchema, type CreateTransactionInput } from '@/lib/validations/transaction'
@@ -10,6 +10,7 @@ import { useActiveAccounts } from '@/hooks/useAccounts'
 import { useMerchants } from '@/hooks/useMerchants'
 import { toast } from 'sonner'
 import { parseLocaleNumber } from '@/lib/numberUtils'
+import { useI18n } from '@/i18n'
 
 interface TransactionFormProps {
   onSubmit: (data: CreateTransactionInput) => Promise<void>
@@ -26,6 +27,7 @@ export function TransactionForm({
   isLoading = false,
   isEditing = false,
 }: TransactionFormProps) {
+  const { t } = useI18n()
   const [showAdvanced, setShowAdvanced] = useState(false)
   const [tagInput, setTagInput] = useState('')
   const [tags, setTags] = useState<string[]>(defaultValues?.tags || [])
@@ -53,7 +55,8 @@ export function TransactionForm({
     },
   })
 
-  if (process.env.NODE_ENV === 'development') {
+  // Debug errors in development
+  if (process.env.NODE_ENV === 'development' && Object.keys(errors).length > 0) {
     console.log('Form errors:', errors)
   }
 
@@ -130,7 +133,7 @@ export function TransactionForm({
     }
   }, [selectedAccountId, selectedDestinationAccountId, transactionType, setValue])
 
-  const handleFormSubmit = async (data: CreateTransactionInput) => {
+  const handleFormSubmit = useCallback(async (data: CreateTransactionInput) => {
     try {
       // Keep tags synchronized
       const submitData = {
@@ -139,12 +142,14 @@ export function TransactionForm({
       }
 
       await onSubmit(submitData)
-      toast.success(isEditing ? 'Transaction updated successfully' : 'Transaction created successfully')
+      toast.success(isEditing ? t('transactions.updateSuccess') : t('transactions.createSuccess'))
     } catch (error) {
       console.error('Transaction form error:', error)
       // Error toast is handled by the parent component via error-utils
     }
-  }
+  }, [onSubmit, tags, isEditing])
+
+  const isFormLoading = isLoading || isSubmitting
 
   const handleAddTag = () => {
     if (tagInput.trim() && !tags.includes(tagInput.trim())) {
@@ -173,7 +178,7 @@ export function TransactionForm({
       {/* Type Selection */}
       <div>
         <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-          Transaction Type <span className="text-red-500">*</span>
+          {t('forms.transaction.type')} <span className="text-red-500">*</span>
         </label>
         <div className="grid grid-cols-3 gap-3">
           <label
@@ -186,9 +191,9 @@ export function TransactionForm({
             <input type="radio" {...register('type')} value="income" className="sr-only" />
             <div className="flex flex-1 flex-col items-center text-center">
               <span className="block text-sm font-medium text-gray-900 dark:text-white">
-                Income
+                {t('forms.transaction.income')}
               </span>
-              <span className="mt-1 text-xs text-gray-500 dark:text-gray-400">Money in</span>
+              <span className="mt-1 text-xs text-gray-500 dark:text-gray-400">{t('transactions.moneyIn')}</span>
             </div>
           </label>
 
@@ -202,9 +207,9 @@ export function TransactionForm({
             <input type="radio" {...register('type')} value="expense" className="sr-only" />
             <div className="flex flex-1 flex-col items-center text-center">
               <span className="block text-sm font-medium text-gray-900 dark:text-white">
-                Expense
+                {t('forms.transaction.expense')}
               </span>
-              <span className="mt-1 text-xs text-gray-500 dark:text-gray-400">Money out</span>
+              <span className="mt-1 text-xs text-gray-500 dark:text-gray-400">{t('transactions.moneyOut')}</span>
             </div>
           </label>
 
@@ -218,9 +223,9 @@ export function TransactionForm({
             <input type="radio" {...register('type')} value="transfer" className="sr-only" />
             <div className="flex flex-1 flex-col items-center text-center">
               <span className="block text-sm font-medium text-gray-900 dark:text-white">
-                Transfer
+                {t('forms.transaction.transfer')}
               </span>
-              <span className="mt-1 text-xs text-gray-500 dark:text-gray-400">Between accounts</span>
+              <span className="mt-1 text-xs text-gray-500 dark:text-gray-400">{t('transactions.betweenAccounts')}</span>
             </div>
           </label>
         </div>
@@ -235,13 +240,13 @@ export function TransactionForm({
           htmlFor="description"
           className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1"
         >
-          Description <span className="text-red-500">*</span>
+          {t('forms.transaction.description')} <span className="text-red-500">*</span>
         </label>
         <input
           type="text"
           id="description"
           {...register('description')}
-          placeholder="e.g., Grocery shopping at Whole Foods"
+          placeholder={t('forms.transaction.descriptionPlaceholder')}
           maxLength={255}
           className="w-full px-4 py-2 rounded-lg border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-900 dark:text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500"
         />
@@ -259,7 +264,7 @@ export function TransactionForm({
             htmlFor="amount"
             className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1"
           >
-            Amount <span className="text-red-500">*</span>
+            {t('forms.transaction.amount')} <span className="text-red-500">*</span>
           </label>
           <div className="relative">
             <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-500 dark:text-gray-400">
@@ -286,7 +291,7 @@ export function TransactionForm({
             htmlFor="date"
             className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1"
           >
-            Date <span className="text-red-500">*</span>
+            {t('forms.transaction.date')} <span className="text-red-500">*</span>
           </label>
           <Controller
             name="date"
@@ -320,7 +325,7 @@ export function TransactionForm({
             htmlFor="accountId"
             className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1"
           >
-            Account <span className="text-red-500">*</span>
+            {t('forms.transaction.fromAccount')} <span className="text-red-500">*</span>
           </label>
           <select
             id="accountId"
@@ -328,7 +333,7 @@ export function TransactionForm({
             disabled={accountsLoading}
             className="w-full px-4 py-2 rounded-lg border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:opacity-50"
           >
-            <option value="">Select an account</option>
+            <option value="">{t('forms.transaction.selectAccount')}</option>
             {accountsData.map((account) => (
               <option key={account.id} value={account.id}>
                 {account.name} ({account.type})
@@ -347,7 +352,7 @@ export function TransactionForm({
             htmlFor="categoryId"
             className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1"
           >
-            Category <span className="text-red-500">*</span>
+            {t('forms.transaction.category')} <span className="text-red-500">*</span>
           </label>
           <select
             id="categoryId"
@@ -355,7 +360,7 @@ export function TransactionForm({
             disabled={categoriesLoading}
             className="w-full px-4 py-2 rounded-lg border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:opacity-50"
           >
-            <option value="">Select a category</option>
+            <option value="">{t('forms.transaction.selectCategory')}</option>
             {filteredCategories.map((cat) => (
               <option key={cat.id} value={cat.id}>
                 {cat.icon && `${cat.icon} `}
@@ -377,7 +382,7 @@ export function TransactionForm({
             htmlFor="toAccountId"
             className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1"
           >
-            Destination Account <span className="text-red-500">*</span>
+            {t('forms.transaction.toAccount')} <span className="text-red-500">*</span>
           </label>
           <select
             id="toAccountId"
@@ -385,7 +390,7 @@ export function TransactionForm({
             disabled={accountsLoading || destinationAccounts.length === 0}
             className="w-full px-4 py-2 rounded-lg border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:opacity-50"
           >
-            <option value="">Select a destination account</option>
+            <option value="">{t('forms.transaction.selectDestinationAccount')}</option>
             {destinationAccounts.map((account) => (
               <option key={account.id} value={account.id}>
                 {account.name} ({account.type})
@@ -394,7 +399,7 @@ export function TransactionForm({
           </select>
           {destinationAccounts.length === 0 && (
             <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
-              You need at least two active accounts to create a transfer.
+              {t('forms.transaction.needTwoAccounts')}
             </p>
           )}
           {errors.toAccountId && (
@@ -412,16 +417,16 @@ export function TransactionForm({
             htmlFor="status"
             className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1"
           >
-            Status
+            {t('forms.transaction.status')}
           </label>
           <select
             id="status"
             {...register('status')}
             className="w-full px-4 py-2 rounded-lg border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
           >
-            <option value="completed">Completed</option>
-            <option value="pending">Pending</option>
-            <option value="cancelled">Cancelled</option>
+            <option value="completed">{t('forms.transaction.completed')}</option>
+            <option value="pending">{t('forms.transaction.pending')}</option>
+            <option value="cancelled">{t('forms.transaction.cancelled')}</option>
           </select>
           {errors.status && (
             <p className="mt-1 text-sm text-red-600 dark:text-red-400">{errors.status.message}</p>
@@ -433,7 +438,7 @@ export function TransactionForm({
             htmlFor="merchantId"
             className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1"
           >
-            Merchant
+            {t('forms.transaction.merchant')}
           </label>
           <select
             id="merchantId"
@@ -441,7 +446,7 @@ export function TransactionForm({
             disabled={merchantsLoading || filteredMerchants.length === 0}
             className="w-full px-4 py-2 rounded-lg border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
           >
-            <option value="">No merchant selected</option>
+            <option value="">{t('forms.transaction.noMerchant')}</option>
             {filteredMerchants.map((merchant) => (
               <option key={merchant.id} value={merchant.id}>
                 {merchant.icon && `${merchant.icon} `}{merchant.name}
@@ -450,7 +455,7 @@ export function TransactionForm({
           </select>
           {selectedCategoryId && filteredMerchants.length === 0 && (
             <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
-              No merchants are linked to the selected category.
+              {t('forms.transaction.noMerchantsLinked')}
             </p>
           )}
           {errors.merchantId && (
@@ -465,13 +470,13 @@ export function TransactionForm({
           htmlFor="notes"
           className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1"
         >
-          Notes
+          {t('forms.transaction.notes')}
         </label>
         <textarea
           id="notes"
           {...register('notes')}
           rows={3}
-          placeholder="Add any additional notes..."
+          placeholder={t('forms.transaction.notesPlaceholder')}
           className="w-full px-4 py-2 rounded-lg border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-900 dark:text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 resize-none"
         />
         {errors.notes && (
@@ -485,7 +490,7 @@ export function TransactionForm({
           htmlFor="tags"
           className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1"
         >
-          Tags
+          {t('forms.transaction.tags')}
         </label>
         <div className="space-y-2">
           <div className="flex gap-2">
@@ -495,11 +500,11 @@ export function TransactionForm({
               value={tagInput}
               onChange={(e) => setTagInput(e.target.value)}
               onKeyDown={handleTagInputKeyDown}
-              placeholder="Add tag and press Enter"
+              placeholder={t('forms.transaction.tagsPlaceholder')}
               className="flex-1 px-4 py-2 rounded-lg border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-900 dark:text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500"
             />
             <Button type="button" variant="outline" onClick={handleAddTag} size="sm">
-              Add
+              {t('forms.transaction.addTag')}
             </Button>
           </div>
           {tags.length > 0 && (
@@ -542,7 +547,7 @@ export function TransactionForm({
           >
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
           </svg>
-          Advanced Options
+          {t('forms.transaction.advancedOptions')}
         </button>
       </div>
 
@@ -553,20 +558,20 @@ export function TransactionForm({
 
           {/* Metadata */}
           <div>
-            <h4 className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-3">Metadata</h4>
+            <h4 className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-3">{t('transactions.metadata')}</h4>
             <div className="grid grid-cols-1 gap-4">
               <div>
                 <label
                   htmlFor="source"
                   className="block text-xs font-medium text-gray-600 dark:text-gray-400 mb-1"
                 >
-                  Source
+                  {t('common.source')}
                 </label>
                 <input
                   type="text"
                   id="source"
                   {...register('metadata.source')}
-                  placeholder="e.g., web, mobile_app, import"
+                  placeholder={t('transactions.metadataSourcePlaceholder')}
                   className="w-full px-3 py-2 text-sm rounded-lg border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-900 dark:text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500"
                 />
               </div>
@@ -576,13 +581,13 @@ export function TransactionForm({
                   htmlFor="ipAddress"
                   className="block text-xs font-medium text-gray-600 dark:text-gray-400 mb-1"
                 >
-                  IP Address
+                  {t('transactions.ipAddress')}
                 </label>
                 <input
                   type="text"
                   id="ipAddress"
                   {...register('metadata.ipAddress')}
-                  placeholder="e.g., 192.168.1.1"
+                  placeholder={t('transactions.metadataIpPlaceholder')}
                   className="w-full px-3 py-2 text-sm rounded-lg border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-900 dark:text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500"
                 />
               </div>
@@ -592,13 +597,13 @@ export function TransactionForm({
                   htmlFor="userAgent"
                   className="block text-xs font-medium text-gray-600 dark:text-gray-400 mb-1"
                 >
-                  User Agent
+                  {t('transactions.userAgent')}
                 </label>
                 <input
                   type="text"
                   id="userAgent"
                   {...register('metadata.userAgent')}
-                  placeholder="Browser/device information"
+                  placeholder={t('transactions.metadataUserAgentPlaceholder')}
                   className="w-full px-3 py-2 text-sm rounded-lg border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-900 dark:text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500"
                 />
               </div>
@@ -608,8 +613,7 @@ export function TransactionForm({
           {/* Attachments Note */}
           <div className="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg p-4">
             <p className="text-sm text-blue-700 dark:text-blue-300">
-              <strong>Note:</strong> File attachments are not yet implemented in this form. They will
-              be added in a future update.
+              <strong>{t('transactions.metadataNote')}</strong> {t('transactions.metadataNoteText')}
             </p>
           </div>
         </div>
@@ -622,23 +626,23 @@ export function TransactionForm({
             type="button"
             variant="outline"
             onClick={onCancel}
-            disabled={isSubmitting || isLoading}
+            disabled={isFormLoading}
             className="w-full sm:w-auto order-2 sm:order-1"
           >
-            Cancel
+            {t('forms.transaction.cancel')}
           </Button>
         )}
         <Button
           type="submit"
           variant="primary"
-          disabled={isSubmitting || isLoading}
+          disabled={isFormLoading}
           className="w-full sm:w-auto order-1 sm:order-2"
         >
-          {isSubmitting || isLoading
-            ? 'Saving...'
+          {isFormLoading
+            ? t('forms.transaction.saving')
             : isEditing
-            ? 'Update Transaction'
-            : 'Create Transaction'}
+            ? t('forms.transaction.update')
+            : t('forms.transaction.create')}
         </Button>
       </div>
     </form>

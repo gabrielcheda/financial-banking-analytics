@@ -1,5 +1,6 @@
 'use client'
 
+import { useI18n } from '@/i18n'
 import { useEffect, useRef } from 'react'
 import FocusTrap from 'focus-trap-react'
 import { X } from 'lucide-react'
@@ -22,6 +23,7 @@ export function Modal({
   size = 'md',
   showCloseButton = true,
 }: ModalProps) {
+  const { t } = useI18n()
   const modalRef = useRef<HTMLDivElement>(null)
 
   // Handle escape key
@@ -93,8 +95,8 @@ export function Modal({
             {showCloseButton && (
               <button
                 onClick={onClose}
-                className="p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors min-w-[44px] min-h-[44px] flex items-center justify-center"
-                aria-label="Close modal"
+                className="p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors min-w-[44px] min-h-[44px] flex items-center justify-center focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 dark:focus:ring-offset-gray-900"
+                aria-label={t('common.close')}
               >
                 <X className="w-5 h-5 text-gray-500 dark:text-gray-400" />
               </button>
@@ -129,11 +131,17 @@ export function ConfirmDialog({
   onConfirm,
   title,
   description,
-  confirmLabel = 'Confirm',
-  cancelLabel = 'Cancel',
+  confirmLabel,
+  cancelLabel,
   variant = 'primary',
   isLoading = false,
 }: ConfirmDialogProps) {
+  const { t } = useI18n()
+  
+  const defaultConfirmLabel = confirmLabel || t('common.confirm')
+  const defaultCancelLabel = cancelLabel || t('common.cancel')
+  const processingLabel = t('common.processing')
+  
   return (
     <Modal isOpen={isOpen} onClose={onClose} title={title} size="sm">
       <div className="space-y-4">
@@ -146,7 +154,7 @@ export function ConfirmDialog({
             disabled={isLoading}
             className="w-full sm:w-auto order-2 sm:order-1"
           >
-            {cancelLabel}
+            {defaultCancelLabel}
           </Button>
           <Button
             variant={variant}
@@ -154,7 +162,7 @@ export function ConfirmDialog({
             disabled={isLoading}
             className="w-full sm:w-auto order-1 sm:order-2"
           >
-            {isLoading ? 'Processing...' : confirmLabel}
+            {isLoading ? processingLabel : defaultConfirmLabel}
           </Button>
         </div>
       </div>

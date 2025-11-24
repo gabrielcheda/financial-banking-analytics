@@ -1,11 +1,12 @@
 'use client'
 
 import { useState } from 'react'
-import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/Card'
+import { useI18n } from '@/i18n'
+import { Card, CardContent } from '@/components/ui/Card'
 import { Button } from '@/components/ui/Button'
 import { Skeleton } from '@/components/ui/Skeleton'
 import { EmptyState } from '@/components/EmptyState'
-import { Modal, ConfirmDialog } from '@/components/ui/Modal'
+import { Modal } from '@/components/ui/Modal'
 import { CategoryForm } from '@/components/forms/CategoryForm'
 import {
   useCategories,
@@ -30,6 +31,7 @@ interface DeleteDialogState {
 }
 
 export default function CategoriesClient() {
+  const { t } = useI18n()
   const [filter, setFilter] = useState<'all' | 'income' | 'expense'>('all')
   const [modalState, setModalState] = useState<ModalState>({
     isOpen: false,
@@ -117,15 +119,15 @@ export default function CategoriesClient() {
       <div className="flex justify-between items-center">
         <div>
           <h1 className="text-3xl font-bold text-gray-900 dark:text-white">
-            Categories
+            {t('categories.title')}
           </h1>
           <p className="text-gray-500 dark:text-gray-400 mt-1">
-            Manage transaction categories
+            {t('categories.manage')}
           </p>
         </div>
         <Button variant="primary" onClick={openCreateModal}>
           <Plus className="w-5 h-5 mr-2" />
-          Add Category
+          {t('categories.addCategory')}
         </Button>
       </div>
 
@@ -136,21 +138,21 @@ export default function CategoriesClient() {
           onClick={() => setFilter('all')}
           size="sm"
         >
-          All
+          {t('categories.all')}
         </Button>
         <Button
           variant={filter === 'income' ? 'primary' : 'ghost'}
           onClick={() => setFilter('income')}
           size="sm"
         >
-          Income
+          {t('categories.income')}
         </Button>
         <Button
           variant={filter === 'expense' ? 'primary' : 'ghost'}
           onClick={() => setFilter('expense')}
           size="sm"
         >
-          Expense
+          {t('categories.expense')}
         </Button>
       </div>
 
@@ -168,10 +170,10 @@ export default function CategoriesClient() {
       ) : categories.length === 0 ? (
         <EmptyState
           icon={Tag}
-          title="No Categories"
-          description="Create your first category to organize transactions"
+          title={t('categories.noCategories')}
+          description={t('categories.createFirst')}
           action={{
-            label: 'Add Category',
+            label: t('categories.addCategory'),
             onClick: openCreateModal,
           }}
         />
@@ -204,7 +206,7 @@ export default function CategoriesClient() {
                     <button
                       onClick={() => openEditModal(category)}
                       className="p-2 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-lg transition-colors"
-                      aria-label="Edit category"
+                      aria-label={t('common.edit')}
                     >
                       <Edit className="w-4 h-4 text-gray-600 dark:text-gray-400" />
                     </button>
@@ -212,7 +214,7 @@ export default function CategoriesClient() {
                       <button
                         onClick={() => openDeleteDialog(category)}
                         className="p-2 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg transition-colors"
-                        aria-label="Delete category"
+                        aria-label={t('common.delete')}
                       >
                         <Trash2 className="w-4 h-4 text-red-600 dark:text-red-400" />
                       </button>
@@ -229,7 +231,7 @@ export default function CategoriesClient() {
       <Modal
         isOpen={modalState.isOpen}
         onClose={() => setModalState({ isOpen: false, mode: 'create' })}
-        title={modalState.mode === 'create' ? 'Add New Category' : 'Edit Category'}
+        title={modalState.mode === 'create' ? t('categories.addCategory') : t('categories.editCategory')}
         size="lg"
       >
         <CategoryForm
@@ -248,25 +250,24 @@ export default function CategoriesClient() {
       <Modal
         isOpen={deleteDialogState.isOpen}
         onClose={() => setDeleteDialogState({ isOpen: false })}
-        title="Delete Category"
+        title={t('categories.deleteCategory')}
         size="md"
       >
         <div className="space-y-4">
           <p className="text-gray-700 dark:text-gray-300">
-            Are you sure you want to delete "{deleteDialogState.categoryName}"?
-            All transactions using this category will be reassigned.
+            {t('categories.deleteConfirmation', { name: deleteDialogState.categoryName! })}
           </p>
 
           <div>
             <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-              Reassign transactions to: <span className="text-red-500">*</span>
+              {t('categories.reassignTo')}: <span className="text-red-500">*</span>
             </label>
             <select
               value={reassignCategoryId}
               onChange={(e) => setReassignCategoryId(e.target.value)}
               className="w-full px-4 py-2 rounded-lg border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
             >
-              <option value="">Select a category</option>
+              <option value="">{t('categories.selectCategory')}</option>
               {filteredForReassign.map((cat) => (
                 <option key={cat.id} value={cat.id}>
                   {cat.icon && `${cat.icon} `}
@@ -281,14 +282,14 @@ export default function CategoriesClient() {
               variant="outline"
               onClick={() => setDeleteDialogState({ isOpen: false })}
             >
-              Cancel
+              {t('common.cancel')}
             </Button>
             <Button
               variant="danger"
               onClick={handleDeleteCategory}
               disabled={!reassignCategoryId || deleteMutation.isPending}
             >
-              {deleteMutation.isPending ? 'Deleting...' : 'Delete Category'}
+              {deleteMutation.isPending ? t('common.deleting') : t('categories.deleteCategory')}
             </Button>
           </div>
         </div>

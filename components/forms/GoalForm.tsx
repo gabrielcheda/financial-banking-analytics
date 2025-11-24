@@ -9,6 +9,7 @@ import { useActiveAccounts } from '@/hooks/useAccounts'
 import { format } from 'date-fns'
 import type { AccountDTO } from '@/types/dto'
 import { parseLocaleNumber } from '@/lib/numberUtils'
+import { useI18n } from '@/i18n'
 
 interface GoalFormProps {
   onSubmit: (data: CreateGoalInput | UpdateGoalInput) => Promise<void> | void
@@ -25,6 +26,7 @@ export function GoalForm({
   isLoading = false,
   isEditing = false,
 }: GoalFormProps) {
+  const { t } = useI18n()
   const {
     register,
     handleSubmit,
@@ -48,6 +50,8 @@ export function GoalForm({
   const categories = categoriesData || []
   const accounts = accountsData || []
 
+  const isFormLoading = isLoading || isSubmitting
+
   const targetAmount = watch('targetAmount')
   const currentAmount = watch('currentAmount')
   const monthlyContribution = watch('monthlyContribution')
@@ -64,7 +68,7 @@ export function GoalForm({
     }
 
     const remaining = targetAmount - (currentAmount || 0)
-    if (remaining <= 0) return 'Already completed'
+    if (remaining <= 0) return t('forms.goal.alreadyCompleted')
 
     const monthsNeeded = Math.ceil(remaining / monthlyContribution)
     const projectedDate = new Date()
@@ -83,13 +87,13 @@ export function GoalForm({
           htmlFor="name"
           className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1"
         >
-          Goal Name <span className="text-red-500">*</span>
+          {t('forms.goal.goalName')} <span className="text-red-500">*</span>
         </label>
         <input
           type="text"
           id="name"
           {...register('name')}
-          placeholder="e.g., Emergency Fund, New Car, Vacation"
+          placeholder={t('forms.goal.goalNamePlaceholder')}
           className="w-full px-4 py-2 rounded-lg border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-900 dark:text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500"
         />
         {errors.name && (
@@ -105,12 +109,12 @@ export function GoalForm({
           htmlFor="description"
           className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1"
         >
-          Description
+          {t('forms.goal.description')}
         </label>
         <textarea
           id="description"
           {...register('description')}
-          placeholder="Add details about your goal..."
+          placeholder={t('forms.goal.descriptionPlaceholder')}
           rows={3}
           className="w-full px-4 py-2 rounded-lg border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-900 dark:text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 resize-none"
         />
@@ -128,7 +132,7 @@ export function GoalForm({
             htmlFor="targetAmount"
             className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1"
           >
-            Target Amount <span className="text-red-500">*</span>
+            {t('forms.goal.targetAmount')} <span className="text-red-500">*</span>
           </label>
           <div className="relative">
             <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-500 dark:text-gray-400">
@@ -155,7 +159,7 @@ export function GoalForm({
             htmlFor="currentAmount"
             className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1"
           >
-            Current Amount
+            {t('forms.goal.currentAmount')}
           </label>
           <div className="relative">
             <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-500 dark:text-gray-400">
@@ -185,7 +189,7 @@ export function GoalForm({
             htmlFor="deadline"
             className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1"
           >
-            Deadline <span className="text-red-500">*</span>
+            {t('forms.goal.deadline')} <span className="text-red-500">*</span>
           </label>
           <input
             type="date"
@@ -206,16 +210,16 @@ export function GoalForm({
             htmlFor="priority"
             className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1"
           >
-            Priority <span className="text-red-500">*</span>
+            {t('forms.goal.priority')} <span className="text-red-500">*</span>
           </label>
           <select
             id="priority"
             {...register('priority')}
             className="w-full px-4 py-2 rounded-lg border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
           >
-            <option value="low">Low</option>
-            <option value="medium">Medium</option>
-            <option value="high">High</option>
+            <option value="low">{t('forms.goal.low')}</option>
+            <option value="medium">{t('forms.goal.medium')}</option>
+            <option value="high">{t('forms.goal.high')}</option>
           </select>
           {errors.priority && (
             <p className="mt-1 text-sm text-red-600 dark:text-red-400">
@@ -232,7 +236,7 @@ export function GoalForm({
             htmlFor="categoryId"
             className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1"
           >
-            Category <span className="text-red-500">*</span>
+            {t('forms.goal.category')} <span className="text-red-500">*</span>
           </label>
           <select
             id="categoryId"
@@ -240,7 +244,7 @@ export function GoalForm({
             disabled={categoriesLoading}
             className="w-full px-4 py-2 rounded-lg border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:opacity-50"
           >
-            <option value="">Select a category</option>
+            <option value="">{t('forms.goal.selectCategory')}</option>
             {categories.map((category) => (
               <option key={category.id} value={category.id}>
                 {category.name}
@@ -259,7 +263,7 @@ export function GoalForm({
             htmlFor="linkedAccountId"
             className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1"
           >
-            Linked Account (Optional)
+            {t('forms.goal.linkedAccountOptional')}
           </label>
           <select
             id="linkedAccountId"
@@ -267,7 +271,7 @@ export function GoalForm({
             disabled={accountsLoading}
             className="w-full px-4 py-2 rounded-lg border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:opacity-50"
           >
-            <option value="">No linked account</option>
+            <option value="">{t('forms.goal.selectAccount')}</option>
             {accounts.map((account: AccountDTO) => (
               <option key={account.id} value={account.id}>
                 {account.name} - {account.type}
@@ -288,7 +292,7 @@ export function GoalForm({
           htmlFor="monthlyContribution"
           className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1"
         >
-          Monthly Contribution (Optional)
+          {t('forms.goal.monthlyContribution')}
         </label>
         <div className="relative">
           <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-500 dark:text-gray-400">
@@ -305,7 +309,7 @@ export function GoalForm({
         </div>
         {projectedCompletion && (
           <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">
-            Projected completion: <span className="font-medium">{projectedCompletion}</span>
+            {t('forms.goal.projectedCompletion')}: <span className="font-medium">{projectedCompletion}</span>
           </p>
         )}
         {errors.monthlyContribution && (
@@ -322,19 +326,19 @@ export function GoalForm({
             type="button"
             variant="outline"
             onClick={onCancel}
-            disabled={isSubmitting || isLoading}
+            disabled={isFormLoading}
             className="w-full sm:w-auto order-2 sm:order-1"
           >
-            Cancel
+            {t('forms.goal.cancel')}
           </Button>
         )}
         <Button
           type="submit"
           variant="primary"
-          disabled={isSubmitting || isLoading || categoriesLoading || accountsLoading}
+          disabled={isFormLoading || categoriesLoading || accountsLoading}
           className="w-full sm:w-auto order-1 sm:order-2"
         >
-          {isSubmitting || isLoading ? 'Saving...' : isEditing ? 'Update Goal' : 'Create Goal'}
+          {isFormLoading ? t('forms.goal.creating') : isEditing ? t('forms.goal.update') : t('forms.goal.create')}
         </Button>
       </div>
     </form>

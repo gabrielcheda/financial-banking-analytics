@@ -2,6 +2,8 @@
 
 import { useState } from 'react'
 import dynamic from 'next/dynamic'
+import { useI18n } from '@/i18n'
+import { BalanceDisplay } from '@/components/BalanceDisplay'
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/Card'
 import { Button } from '@/components/ui/Button'
 import { Skeleton } from '@/components/ui/Skeleton'
@@ -43,29 +45,6 @@ const ACCOUNT_TYPE_COLORS: Record<AccountType, string> = {
   investment: 'bg-orange-100 text-orange-600 dark:bg-orange-900/30 dark:text-orange-400',
 }
 
-const ACCOUNT_TEXT = {
-  fields: {
-    currentBalance: 'Current Balance',
-    noInstitution: 'No institution',
-    status: {
-      active: 'Active',
-      inactive: 'Inactive',
-    },
-  },
-  modals: {
-    createTitle: 'Add New Account',
-    editTitle: 'Edit Account',
-    deleteTitle: 'Delete Account',
-    deleteDescription:
-      'Are you sure you want to delete "{name}"? This action cannot be undone and will also delete all associated transactions.',
-    deleteConfirm: 'Delete Account',
-  },
-}
-
-const COMMON_ACTIONS = {
-  cancel: 'Cancel',
-}
-
 const DynamicAccountForm = dynamic(
   () => import('@/components/forms/AccountForm').then((mod) => mod.AccountForm),
   {
@@ -88,6 +67,7 @@ interface ModalState {
 }
 
 export default function AccountsClient() {
+  const { t } = useI18n()
   const [modalState, setModalState] = useState<ModalState>({
     isOpen: false,
     mode: 'create',
@@ -191,15 +171,15 @@ export default function AccountsClient() {
       <div className="flex justify-between items-center">
         <div>
           <h1 className="text-3xl font-bold text-gray-900 dark:text-white">
-            Accounts
+            {t('accounts.title')}
           </h1>
           <p className="text-gray-500 dark:text-gray-400 mt-1">
-            Manage your financial accounts
+            {t('accounts.manageAccounts')}
           </p>
         </div>
         <Button variant="primary" onClick={openCreateModal}>
           <Plus className="w-5 h-5 mr-2" />
-          Add Account
+          {t('accounts.addAccount')}
         </Button>
       </div>
 
@@ -222,10 +202,10 @@ export default function AccountsClient() {
                 <div className="flex items-center justify-between">
                   <div>
                     <p className="text-sm text-gray-500 dark:text-gray-400">
-                      Total Balance
+                      {t('accounts.totalBalance')}
                     </p>
                     <p className="text-2xl font-bold text-gray-900 dark:text-white mt-1">
-                      ${summary?.totalBalance?.toLocaleString('en-US', { minimumFractionDigits: 2 }) ?? '0.00'}
+                      <BalanceDisplay amount={summary?.totalBalance ?? 0} />
                     </p>
                   </div>
                   <div className="p-3 bg-blue-100 dark:bg-blue-900/30 rounded-lg">
@@ -240,7 +220,7 @@ export default function AccountsClient() {
                 <div className="flex items-center justify-between">
                   <div>
                     <p className="text-sm text-gray-500 dark:text-gray-400">
-                      Accounts
+                      {t('accounts.totalAccounts')}
                     </p>
                     <p className="text-2xl font-bold text-gray-900 dark:text-white mt-1">
                       {accounts.length}
@@ -258,10 +238,10 @@ export default function AccountsClient() {
                 <div className="flex items-center justify-between">
                   <div>
                     <p className="text-sm text-gray-500 dark:text-gray-400">
-                      Total Assets
+                      {t('accounts.totalAssets')}
                     </p>
                     <p className="text-2xl font-bold text-gray-900 dark:text-white mt-1">
-                      ${summary?.totalAssets?.toLocaleString('en-US', { minimumFractionDigits: 2 }) ?? '0.00'}
+                      $<BalanceDisplay amount={summary?.totalAssets ?? 0} showSign={false} />
                     </p>
                   </div>
                   <div className="p-3 bg-purple-100 dark:bg-purple-900/30 rounded-lg">
@@ -276,10 +256,10 @@ export default function AccountsClient() {
                 <div className="flex items-center justify-between">
                   <div>
                     <p className="text-sm text-gray-500 dark:text-gray-400">
-                      Net Worth
+                      {t('accounts.netWorth')}
                     </p>
                     <p className="text-2xl font-bold text-gray-900 dark:text-white mt-1">
-                      ${summary?.netWorth?.toLocaleString('en-US', { minimumFractionDigits: 2 }) ?? '0.00'}
+                      $<BalanceDisplay amount={summary?.netWorth ?? 0} showSign={false} />
                     </p>
                   </div>
                   <div className="p-3 bg-orange-100 dark:bg-orange-900/30 rounded-lg">
@@ -308,10 +288,10 @@ export default function AccountsClient() {
           <CardContent className="p-6">
             <EmptyState
               icon={Wallet}
-              title="No Accounts"
-              description="Create your first account to get started"
+              title={t('empty.noAccounts')}
+              description={t('accounts.createFirstAccount')}
               action={{
-                label: "Add Account",
+                label: t('accounts.addAccount'),
                 onClick: openCreateModal,
               }}
             />
@@ -335,14 +315,14 @@ export default function AccountsClient() {
                       <button
                         onClick={() => openEditModal(account)}
                         className="p-2 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-lg transition-colors"
-                        aria-label="Edit account"
+                        aria-label={t('common.edit')}
                       >
                         <Edit className="w-4 h-4 text-gray-600 dark:text-gray-400" />
                       </button>
                       <button
                         onClick={() => openDeleteDialog(account)}
                         className="p-2 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg transition-colors"
-                        aria-label="Delete account"
+                        aria-label={t('common.delete')}
                       >
                         <Trash2 className="w-4 h-4 text-red-600 dark:text-red-400" />
                       </button>
@@ -362,10 +342,10 @@ export default function AccountsClient() {
                   {/* Balance */}
                   <div className="mb-4">
                     <p className="text-sm text-gray-500 dark:text-gray-400">
-                      {ACCOUNT_TEXT.fields.currentBalance}
+                      {t('accounts.currentBalance')}
                     </p>
                     <p className="text-2xl font-bold text-gray-900 dark:text-white">
-                      ${(account.balance ?? 0).toLocaleString('en-US', { minimumFractionDigits: 2 })} {account.currency}
+                      <BalanceDisplay amount={account.balance ?? 0} currency={account.currency} />
                     </p>
                   </div>
 
@@ -374,7 +354,7 @@ export default function AccountsClient() {
                     <div className="flex items-center gap-2">
                       <Building2 className="w-4 h-4 text-gray-400" />
                       <span className="text-sm text-gray-600 dark:text-gray-400">
-                        {account.institution || ACCOUNT_TEXT.fields.noInstitution}
+                        {account.institution || t('accounts.noInstitution')}
                       </span>
                     </div>
                     <span
@@ -384,8 +364,8 @@ export default function AccountsClient() {
                         }`}
                     >
                       {account.isActive
-                        ? ACCOUNT_TEXT.fields.status.active
-                        : ACCOUNT_TEXT.fields.status.inactive}
+                        ? t('accounts.active')
+                        : t('accounts.inactive')}
                     </span>
                   </div>
                 </CardContent>
@@ -401,8 +381,8 @@ export default function AccountsClient() {
         onClose={() => setModalState({ isOpen: false, mode: 'create' })}
         title={
           modalState.mode === 'create'
-            ? ACCOUNT_TEXT.modals.createTitle
-            : ACCOUNT_TEXT.modals.editTitle
+            ? t('accounts.addAccount')
+            : t('accounts.editAccount')
         }
         size="lg"
       >
@@ -425,32 +405,29 @@ export default function AccountsClient() {
           setDeleteDialogState({ isOpen: false })
           setTransferAccountId('')
         }}
-        title={ACCOUNT_TEXT.modals.deleteTitle}
+        title={t('accounts.deleteAccount')}
         size="md"
       >
         <div className="space-y-4">
           <p className="text-gray-700 dark:text-gray-300">
-            {ACCOUNT_TEXT.modals.deleteDescription.replace(
-              '{name}',
-              deleteDialogState.accountName ?? ''
-            )}
+            {t('accounts.deleteConfirmation', { name: deleteDialogState.accountName ?? '' })}
           </p>
 
           {availableTransferAccounts.length === 0 ? (
             <div className="p-3 rounded-md border border-yellow-300 bg-yellow-50 text-sm text-yellow-800 dark:border-yellow-900 dark:bg-yellow-900/20 dark:text-yellow-200">
-              You need at least one other active account to transfer existing transactions, bills, and goals before deleting this account.
+              {t('accounts.transferWarning')}
             </div>
           ) : (
             <div>
               <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                Transfer data to <span className="text-red-500">*</span>
+                {t('accounts.transferDataTo')} <span className="text-red-500">*</span>
               </label>
               <select
                 value={transferAccountId}
                 onChange={(e) => setTransferAccountId(e.target.value)}
                 className="w-full px-4 py-2 rounded-lg border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
               >
-                <option value="">Select destination account</option>
+                <option value="">{t('accounts.selectDestination')}</option>
                 {availableTransferAccounts.map((account) => (
                   <option key={account.id} value={account.id}>
                     {account.name} ({account.type})
@@ -458,7 +435,7 @@ export default function AccountsClient() {
                 ))}
               </select>
               <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
-                All transactions, bills, and goals linked to this account will be moved to the selected account.
+                {t('accounts.transferDescription')}
               </p>
             </div>
           )}
@@ -471,7 +448,7 @@ export default function AccountsClient() {
                 setTransferAccountId('')
               }}
             >
-              {COMMON_ACTIONS.cancel}
+              {t('common.cancel')}
             </Button>
             <Button
               variant="danger"
@@ -482,7 +459,7 @@ export default function AccountsClient() {
                 !transferAccountId
               }
             >
-              {deleteMutation.isPending ? 'Deleting...' : ACCOUNT_TEXT.modals.deleteConfirm}
+              {deleteMutation.isPending ? t('common.deleting') : t('accounts.deleteAccount')}
             </Button>
           </div>
         </div>

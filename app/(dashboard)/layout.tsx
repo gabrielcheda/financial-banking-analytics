@@ -1,6 +1,7 @@
 import { Suspense } from 'react'
 import { Sidebar } from '@/components/Sidebar'
 import { Header } from '@/components/Header'
+import { BalanceVisibilityProvider } from '@/contexts/BalanceVisibilityContext'
 
 export default function DashboardLayout({
   children,
@@ -8,19 +9,21 @@ export default function DashboardLayout({
   children: React.ReactNode
 }) {
   return (
-    <div className="min-h-screen bg-gray-50 dark:bg-gray-950">
-      <Suspense fallback={<div className="lg:w-64" />}>
-        <Sidebar />
-      </Suspense>
-
-      <div className="lg:pl-64">
-        <Suspense fallback={<div className="h-16" />}>
-          <Header />
+    <BalanceVisibilityProvider>
+      <div className="min-h-screen bg-gray-50 dark:bg-gray-950">
+        <Suspense fallback={<div className="lg:w-64" />}>
+          <Sidebar />
         </Suspense>
-        <main className="p-6">
-          {children}
-        </main>
+
+        <div className="lg:pl-64">
+          <Suspense fallback={<div className="h-16" />}>
+            <Header />
+          </Suspense>
+          <main className="p-6">
+            {children}
+          </main>
+        </div>
       </div>
-    </div>
+    </BalanceVisibilityProvider>
   )
 }

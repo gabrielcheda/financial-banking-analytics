@@ -23,21 +23,21 @@ import { useEffect, useRef, useState } from 'react'
 import { usePrefetch } from '@/hooks/usePrefetch'
 import { useProfile } from '@/hooks/useUser'
 import { useLogout } from '@/hooks/useAuth'
-
+import { useI18n } from '@/i18n'
 const navigation = [
-  { name: 'Dashboard', href: '/dashboard', icon: LayoutDashboard, priority: 'high' },
-  { name: 'Transactions', href: '/transactions', icon: ArrowLeftRight, priority: 'high' },
-  { name: 'Accounts', href: '/accounts', icon: Wallet, priority: 'high' },
-  { name: 'Budgets', href: '/budgets', icon: PiggyBank, priority: 'medium' },
-  { name: 'Bills', href: '/bills', icon: Receipt, priority: 'medium' },
-  { name: 'Goals', href: '/goals', icon: Flag, priority: 'medium' },
-  { name: 'Categories', href: '/categories', icon: Tag, priority: 'medium' },
-  { name: 'Merchants', href: '/merchants', icon: Store, priority: 'medium' },
-  { name: 'Analytics', href: '/analytics', icon: TrendingUp, priority: 'low' },
-  { name: 'Reports', href: '/reports', icon: FileText, priority: 'low' },
-  { name: 'Planning', href: '/planning', icon: Target, priority: 'low' },
-  { name: 'Notifications', href: '/notifications', icon: Bell, priority: 'low' },
-  { name: 'Settings', href: '/settings', icon: Settings, priority: 'low' },
+  { nameKey: 'nav.dashboard', href: '/dashboard', icon: LayoutDashboard, priority: 'high' },
+  { nameKey: 'nav.transactions', href: '/transactions', icon: ArrowLeftRight, priority: 'high' },
+  { nameKey: 'nav.accounts', href: '/accounts', icon: Wallet, priority: 'high' },
+  { nameKey: 'nav.budgets', href: '/budgets', icon: PiggyBank, priority: 'medium' },
+  { nameKey: 'nav.bills', href: '/bills', icon: Receipt, priority: 'medium' },
+  { nameKey: 'nav.goals', href: '/goals', icon: Flag, priority: 'medium' },
+  { nameKey: 'nav.categories', href: '/categories', icon: Tag, priority: 'medium' },
+  { nameKey: 'nav.merchants', href: '/merchants', icon: Store, priority: 'medium' },
+  { nameKey: 'nav.analytics', href: '/analytics', icon: TrendingUp, priority: 'low' },
+  { nameKey: 'nav.reports', href: '/reports', icon: FileText, priority: 'low' },
+  { nameKey: 'nav.planning', href: '/planning', icon: Target, priority: 'low' },
+  { nameKey: 'nav.notifications', href: '/notifications', icon: Bell, priority: 'low' },
+  { nameKey: 'nav.settings', href: '/settings', icon: Settings, priority: 'low' },
 ] as const
 
 // Prefetch delays based on priority
@@ -48,6 +48,7 @@ const PREFETCH_DELAYS = {
 } as const
 
 export function Sidebar() {
+  const { t } = useI18n()
   const pathname = usePathname()
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false)
   const [isProfileMenuOpen, setIsProfileMenuOpen] = useState(false)
@@ -156,20 +157,18 @@ export function Sidebar() {
 
   return (
     <>
-      {/* Mobile menu button */}
-      <button
-        onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
-        className="lg:hidden fixed top-4 left-4 z-50 p-3 rounded-lg bg-white dark:bg-gray-800 shadow-lg min-w-[48px] min-h-[48px] flex items-center justify-center hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors"
-        aria-label={isMobileMenuOpen ? 'Close navigation menu' : 'Open navigation menu'}
-        aria-expanded={isMobileMenuOpen}
-        aria-controls="sidebar-navigation"
-      >
-        {isMobileMenuOpen ? (
-          <X className="w-6 h-6 text-gray-900 dark:text-white" aria-hidden="true" />
-        ) : (
+      {/* Mobile menu button - Menu hamburger */}
+      {!isMobileMenuOpen && (
+        <button
+          onClick={() => setIsMobileMenuOpen(true)}
+          className="lg:hidden fixed top-4 left-4 z-50 p-3 rounded-lg bg-white dark:bg-gray-800 shadow-lg min-w-[48px] min-h-[48px] flex items-center justify-center hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors"
+          aria-label={t('nav.openMenu')}
+          aria-expanded={false}
+          aria-controls="sidebar-navigation"
+        >
           <Menu className="w-6 h-6 text-gray-900 dark:text-white" aria-hidden="true" />
-        )}
-      </button>
+        </button>
+      )}
 
       {/* Overlay for mobile */}
       {isMobileMenuOpen && (
@@ -189,28 +188,41 @@ export function Sidebar() {
           transition-transform duration-300 ease-in-out
           ${isMobileMenuOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0'}
         `}
-        aria-label="Main navigation"
+        aria-label={t('nav.mainNavigation')}
       >
         <div className="h-full flex flex-col">
-          {/* Logo */}
-          <div className="p-6 border-b border-gray-200 dark:border-gray-800">
-            <h1 className="text-2xl font-bold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
-              BankDash
-            </h1>
-            <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">
-              Financial Analytics
-            </p>
+          {/* Logo with close button on mobile */}
+          <div className="p-6 border-b border-gray-200 dark:border-gray-800 relative">
+            <div className="flex items-start justify-between gap-2">
+              <div className="flex-1">
+                <h1 className="text-2xl font-bold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
+                  {t('common.appName')}
+                </h1>
+                <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">
+                  {t('common.appSubtitle')}
+                </p>
+              </div>
+              {/* Close button visible only on mobile when menu is open */}
+              <button
+                onClick={() => setIsMobileMenuOpen(false)}
+                className="lg:hidden p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors flex-shrink-0"
+                aria-label={t('nav.closeMenu')}
+              >
+                <X className="w-5 h-5 text-gray-900 dark:text-white" aria-hidden="true" />
+              </button>
+            </div>
           </div>
 
           {/* Navigation */}
-          <nav className="flex-1 p-4 space-y-2" aria-label="Main navigation">
+          <nav className="flex-1 p-4 space-y-2" aria-label={t('nav.mainNavigation')}>
             {navigation.map((item) => {
               const isActive = pathname === item.href
               const Icon = item.icon
+              const itemName = t(item.nameKey)
 
               return (
                 <Link
-                  key={item.name}
+                  key={item.nameKey}
                   href={item.href}
                   onClick={() => setIsMobileMenuOpen(false)}
                   onMouseEnter={() => schedulePrefetch(item.href, item.priority)}
@@ -225,10 +237,10 @@ export function Sidebar() {
                     }
                   `}
                   aria-current={isActive ? 'page' : undefined}
-                  aria-label={`Navigate to ${item.name}`}
+                  aria-label={t('nav.navigateTo', { page: itemName })}
                 >
                   <Icon className="w-5 h-5" aria-hidden="true" />
-                  <span>{item.name}</span>
+                  <span>{itemName}</span>
                 </Link>
               )
             })}
@@ -248,10 +260,10 @@ export function Sidebar() {
               </div>
               <div className="flex-1 text-left">
                 <p className="text-sm font-medium text-gray-900 dark:text-white line-clamp-1">
-                  {profile ? `${profile.firstName ?? ''} ${profile.lastName ?? ''}`.trim() || profile.email : 'Loading...'}
+                  {profile ? `${profile.firstName ?? ''} ${profile.lastName ?? ''}`.trim() || profile.email : t('common.loading')}
                 </p>
                 <p className="text-xs text-gray-500 dark:text-gray-400 line-clamp-1">
-                  {profile?.email || 'Fetching profile'}
+                  {profile?.email || t('common.loading')}
                 </p>
               </div>
             </button>
@@ -266,7 +278,7 @@ export function Sidebar() {
                   className="w-full text-left px-4 py-2 text-sm text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-800 flex items-center justify-between"
                   disabled={logout.isPending}
                 >
-                  Logout
+                  {t('auth.logout')}
                   {logout.isPending && <span className="text-xs text-gray-400">...</span>}
                 </button>
               </div>

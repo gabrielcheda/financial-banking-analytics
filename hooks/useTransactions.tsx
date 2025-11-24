@@ -85,25 +85,6 @@ export function useTransaction(
 }
 
 /**
- * Hook para estatísticas de transações
- * TODO: Implement getStats method in TransactionService
- */
-// export function useTransactionStats(
-//   startDate: string,
-//   endDate: string,
-//   accountId?: string,
-//   options?: Omit<UseQueryOptions<TransactionStatsDTO>, 'queryKey' | 'queryFn'>
-// ) {
-//   return useQuery({
-//     queryKey: transactionKeys.stats(startDate, endDate, accountId),
-//     queryFn: () => transactionService.getStats(startDate, endDate, accountId),
-//     enabled: !!startDate && !!endDate,
-//     staleTime: 1000 * 60 * 10, // 10 minutos
-//     ...options,
-//   })
-// }
-
-/**
  * Hook para criar transação
  */
 export function useCreateTransaction() {
@@ -113,7 +94,6 @@ export function useCreateTransaction() {
     mutationFn: (data: CreateTransactionDTO) => transactionService.createTransaction(data),
     onSuccess: (response) => {
       invalidateTransactionDependencies(queryClient)
-      toast.success('Transaction created successfully!')
     },
     onError: (error) => {
       showErrorToast(error, 'Failed to Create Transaction')
@@ -132,7 +112,6 @@ export function useUpdateTransaction() {
       transactionService.updateTransaction(id, data),
     onSuccess: (response, variables) => {
       invalidateTransactionDependencies(queryClient, { transactionId: variables.id })
-      toast.success('Transaction updated successfully!')
     },
     onError: (error) => {
       showErrorToast(error, 'Failed to Update Transaction')
@@ -151,8 +130,6 @@ export function useDeleteTransaction() {
     onSuccess: (_, id) => {
       invalidateTransactionDependencies(queryClient, { transactionId: id })
       queryClient.removeQueries({ queryKey: transactionKeys.detail(id) })
-
-      toast.success('Transaction deleted successfully!')
     },
     onError: (error) => {
       showErrorToast(error, 'Failed to Delete Transaction')
@@ -178,7 +155,6 @@ export function useExportTransactions() {
         document.body.removeChild(link)
         window.URL.revokeObjectURL(url)
       }
-      toast.success('Export completed successfully!')
     },
     onError: (error) => {
       showErrorToast(error, 'Failed to Export Transactions')
@@ -204,8 +180,6 @@ export function useImportTransactions() {
             description: result.errors?.slice(0, 3).join('\n'),
           }
         )
-      } else {
-        toast.success(`Successfully imported ${result.imported} transactions!`)
       }
     },
     onError: (error) => {

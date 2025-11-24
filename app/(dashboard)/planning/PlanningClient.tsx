@@ -1,11 +1,14 @@
 'use client'
 
 import { useState, useMemo } from 'react'
+import { useI18n } from '@/i18n'
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/Card'
 import { Button } from '@/components/ui/Button'
 import { EmptyState } from '@/components/EmptyState'
 import { Skeleton } from '@/components/ui/Skeleton'
 import { ChartContainer } from '@/components/ChartContainer'
+import { BalanceDisplay } from '@/components/BalanceDisplay'
+import { useBalanceFormatter } from '@/hooks/useBalanceFormatter'
 import {
   Target,
   Plus,
@@ -32,6 +35,9 @@ import type { GoalDTO, BillDTO, BudgetDTO } from '@/types/dto'
 import { parseLocaleNumber } from '@/lib/numberUtils'
 
 export default function PlanningClient() {
+  const { t } = useI18n()
+  const { formatBalance } = useBalanceFormatter()
+  
   // Savings calculator state
   const [savingsGoal, setSavingsGoal] = useState(10000)
   const [monthlyContribution, setMonthlyContribution] = useState(500)
@@ -87,10 +93,10 @@ export default function PlanningClient() {
       {/* Page Header */}
       <div>
         <h1 className="text-3xl font-bold text-gray-900 dark:text-white">
-          Financial Planning
+          {t('planning.title')}
         </h1>
         <p className="text-gray-500 dark:text-gray-400 mt-1">
-          Set goals, create budgets, and plan for the future
+          {t('planning.description')}
         </p>
       </div>
 
@@ -100,8 +106,8 @@ export default function PlanningClient() {
           <CardContent className="p-6">
             <EmptyState
               icon={ClipboardList}
-              title="No Planning Data"
-              description="Set up budgets and goals to see your financial plan. Add bills to track upcoming payments and stay organized."
+              title={t('planning.noPlanningData')}
+              description={t('planning.noPlanningDataDesc')}
               variant="default"
             />
           </CardContent>
@@ -112,11 +118,11 @@ export default function PlanningClient() {
           <div>
             <div className="flex items-center justify-between mb-4">
               <h2 className="text-xl font-semibold text-gray-900 dark:text-white">
-                Financial Goals
+                {t('planning.financialGoals')}
               </h2>
               <Button variant="primary" size="sm">
                 <Plus className="w-4 h-4 mr-2" />
-                Add Goal
+                {t('planning.addGoal')}
               </Button>
             </div>
 
@@ -134,7 +140,7 @@ export default function PlanningClient() {
               <Card>
                 <CardContent className="pt-6">
                   <div className="flex items-center justify-center py-8">
-                    <p className="text-gray-500 dark:text-gray-400">No active goals</p>
+                    <p className="text-gray-500 dark:text-gray-400">{t('planning.noActiveGoals')}</p>
                   </div>
                 </CardContent>
               </Card>
@@ -154,7 +160,7 @@ export default function PlanningClient() {
                               {goal.name}
                             </h3>
                             <p className="text-sm text-gray-500 dark:text-gray-400">
-                              Goal
+                              {t('planning.goal')}
                             </p>
                           </div>
                           <span
@@ -171,7 +177,7 @@ export default function PlanningClient() {
 
                         <div className="space-y-2 mb-4">
                           <div className="flex justify-between text-sm">
-                            <span className="text-gray-600 dark:text-gray-400">Progress</span>
+                            <span className="text-gray-600 dark:text-gray-400">{t('planning.progress')}</span>
                             <span className="font-semibold text-gray-900 dark:text-white">
                               {progress.toFixed(1)}%
                             </span>
@@ -186,15 +192,15 @@ export default function PlanningClient() {
 
                         <div className="grid grid-cols-2 gap-4 mb-4">
                           <div>
-                            <p className="text-xs text-gray-500 dark:text-gray-400">Current</p>
+                            <p className="text-xs text-gray-500 dark:text-gray-400">{t('planning.current')}</p>
                             <p className="font-semibold text-gray-900 dark:text-white">
-                              ${(goal.currentAmount ?? 0).toLocaleString()}
+                              $<BalanceDisplay amount={goal.currentAmount ?? 0} showSign={false} />
                             </p>
                           </div>
                           <div>
-                            <p className="text-xs text-gray-500 dark:text-gray-400">Target</p>
+                            <p className="text-xs text-gray-500 dark:text-gray-400">{t('planning.target')}</p>
                             <p className="font-semibold text-gray-900 dark:text-white">
-                              ${(goal.targetAmount ?? 0).toLocaleString()}
+                              $<BalanceDisplay amount={goal.targetAmount ?? 0} showSign={false} />
                             </p>
                           </div>
                         </div>
@@ -224,13 +230,13 @@ export default function PlanningClient() {
               <CardHeader>
                 <div className="flex items-center gap-2">
                   <Calculator className="w-5 h-5 text-blue-600" />
-                  <CardTitle>Savings Projection Calculator</CardTitle>
+                  <CardTitle>{t('planning.savingsCalculator')}</CardTitle>
                 </div>
               </CardHeader>
               <CardContent className="space-y-4">
                 <div>
                   <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                    Savings Goal ($)
+                    {t('planning.savingsGoal')}
                   </label>
                   <input
                     type="text"
@@ -286,18 +292,18 @@ export default function PlanningClient() {
                       Projected Balance (24 months)
                     </span>
                     <span className="text-lg font-bold text-gray-900 dark:text-white">
-                      ${projectionData[projectionData.length - 1].balance.toLocaleString()}
+                      {formatBalance(projectionData[projectionData.length - 1].balance)}
                     </span>
                   </div>
                   {monthsToGoal > 0 && monthsToGoal <= 24 && (
                     <div className="flex items-center gap-2 text-sm text-green-600 dark:text-green-400">
                       <Target className="w-4 h-4" />
-                      <span>Goal reached in {monthsToGoal} months</span>
+                      <span>{t('common.goalReachedIn', { months: monthsToGoal })}</span>
                     </div>
                   )}
                   {monthsToGoal > 24 && (
                     <p className="text-sm text-yellow-600 dark:text-yellow-400">
-                      Goal will take more than 24 months at this rate
+                      {t('common.goalTakesLonger')}
                     </p>
                   )}
                 </div>
@@ -305,8 +311,8 @@ export default function PlanningClient() {
             </Card>
 
             <ChartContainer
-              title="Savings Growth Projection"
-              description="24-month savings projection with compound interest"
+              title={t('planning.savingsGrowthProjection')}
+              description={t('planning.savingsProjectionDesc')}
             >
               <ResponsiveContainer
                 width="100%"
@@ -329,7 +335,7 @@ export default function PlanningClient() {
                     tickFormatter={(value) => `$${value}`}
                   />
                   <Tooltip
-                    formatter={(value: number) => [`$${value.toFixed(2)}`, 'Balance']}
+                    formatter={(value: number) => [formatBalance(value), 'Balance']}
                     contentStyle={{
                       backgroundColor: '#1f2937',
                       border: 'none',
@@ -353,9 +359,9 @@ export default function PlanningClient() {
           <Card>
             <CardHeader>
               <div className="flex items-center justify-between">
-                <CardTitle>Monthly Budget</CardTitle>
+                <CardTitle>{t('common.monthlyBudget')}</CardTitle>
                 <Button variant="outline" size="sm">
-                  Edit Budget
+                  {t('common.editBudget')}
                 </Button>
               </div>
             </CardHeader>
@@ -368,7 +374,7 @@ export default function PlanningClient() {
                 </div>
               ) : budgets.length === 0 ? (
                 <div className="flex items-center justify-center py-8">
-                  <p className="text-gray-500 dark:text-gray-400">No budgets set for this month</p>
+                  <p className="text-gray-500 dark:text-gray-400">{t('common.noBudgetsThisMonth')}</p>
                 </div>
               ) : (
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
@@ -382,7 +388,7 @@ export default function PlanningClient() {
                       </h4>
                       <div className="flex justify-between text-sm mb-2">
                         <span className="text-gray-600 dark:text-gray-400">
-                          ${(budget.spent ?? 0).toFixed(2)} / ${(Number(budget.limit) ?? 0).toFixed(2)}
+                          $<BalanceDisplay amount={budget.spent ?? 0} showSign={false} /> / $<BalanceDisplay amount={Number(budget.limit) ?? 0} showSign={false} />
                         </span>
                         <span
                           className={`font-semibold ${(budget.percentage ?? 0) > 100
@@ -417,10 +423,10 @@ export default function PlanningClient() {
           <Card>
             <CardHeader>
               <div className="flex items-center justify-between">
-                <CardTitle>Upcoming Bills</CardTitle>
+                <CardTitle>{t('common.upcomingBills')}</CardTitle>
                 <Button variant="outline" size="sm">
                   <Plus className="w-4 h-4 mr-2" />
-                  Add Bill
+                  {t('bills.addBill')}
                 </Button>
               </div>
             </CardHeader>
@@ -433,7 +439,7 @@ export default function PlanningClient() {
                 </div>
               ) : !billsResponse || billsResponse.length === 0 ? (
                 <div className="flex items-center justify-center py-8">
-                  <p className="text-gray-500 dark:text-gray-400">No upcoming bills</p>
+                  <p className="text-gray-500 dark:text-gray-400">{t('common.noUpcomingBills')}</p>
                 </div>
               ) : (
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -467,11 +473,11 @@ export default function PlanningClient() {
                       <div className="flex items-center justify-between mt-3">
                         <div className="flex items-center gap-2 text-sm text-gray-600 dark:text-gray-400">
                           <Calendar className="w-4 h-4" />
-                          <span>Due {format(new Date(bill.dueDate), 'MMM dd, yyyy')}</span>
+                          <span>{t('common.due')} {format(new Date(bill.dueDate), 'MMM dd, yyyy')}</span>
                         </div>
                         <div className="flex items-center gap-1 text-lg font-bold text-gray-900 dark:text-white">
                           <DollarSign className="w-4 h-4" />
-                          {(Number(bill.amount) ?? 0).toFixed(2)}
+                          <BalanceDisplay amount={Number(bill.amount) ?? 0} showSign={false} />
                         </div>
                       </div>
 

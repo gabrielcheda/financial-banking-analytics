@@ -85,7 +85,6 @@ export function useCreateMerchant() {
       queryClient.invalidateQueries({ queryKey: merchantKeys.all })
       queryClient.invalidateQueries({ queryKey: goalKeys.lists() })
       queryClient.invalidateQueries({ queryKey: goalKeys.progress() })
-      toast.success('Merchant created successfully!')
     },
     onError: (error) => {
       showErrorToast(error, 'Failed to Create Merchant')
@@ -107,7 +106,6 @@ export function useUpdateMerchant() {
       queryClient.invalidateQueries({ queryKey: merchantKeys.all })
       queryClient.invalidateQueries({ queryKey: goalKeys.lists() })
       queryClient.invalidateQueries({ queryKey: goalKeys.progress() })
-      toast.success('Merchant updated successfully!')
     },
     onError: (error) => {
       showErrorToast(error, 'Failed to Update Merchant')
@@ -130,7 +128,6 @@ export function useDeleteMerchant() {
       queryClient.invalidateQueries({ queryKey: ['transactions'] })
       queryClient.invalidateQueries({ queryKey: goalKeys.lists() })
       queryClient.invalidateQueries({ queryKey: goalKeys.progress() })
-      toast.success('Merchant deleted successfully!')
     },
     onError: (error) => {
       showErrorToast(error, 'Failed to Delete Merchant')

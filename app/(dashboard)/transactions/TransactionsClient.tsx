@@ -28,6 +28,8 @@ import type { TransactionFiltersDTO, CreateTransactionDTO, TransactionDTO, Updat
 import type { CreateTransactionInput } from '@/lib/validations/transaction'
 import { Modal } from '@/components/ui/Modal'
 import { usePrefetch } from '@/hooks/usePrefetch'
+import { useI18n } from '@/i18n'
+import { BalanceDisplay } from '@/components/BalanceDisplay'
 
 const CSV_TOOLTIP_TEXT =
   'Required columns: date, description, amount, type, category name, account name, status'
@@ -96,6 +98,7 @@ const DynamicTransactionForm = dynamic(
 )
 
 export default function TransactionsClient() {
+  const { t } = useI18n()
   const { prefetchTransactionDetail } = usePrefetch()
 
   const [currentPage, setCurrentPage] = useState(1)
@@ -305,10 +308,10 @@ export default function TransactionsClient() {
       {/* Page Header */}
       <div>
         <h1 className="text-3xl font-bold text-gray-900 dark:text-white">
-          Transactions
+          {t('transactions.title')}
         </h1>
         <p className="text-gray-500 dark:text-gray-400 mt-1">
-          View and manage all your transactions
+          {t('transactions.viewAndManage')}
         </p>
       </div>
 
@@ -330,7 +333,7 @@ export default function TransactionsClient() {
               <CardContent className="pt-6">
                 <div className="text-center">
                   <p className="text-sm text-gray-500 dark:text-gray-400">
-                    Total Transactions
+                    {t('transactions.totalTransactions')}
                   </p>
                   <p className="text-3xl font-bold text-gray-900 dark:text-white mt-2">
                     {totalTransactions}
@@ -342,10 +345,10 @@ export default function TransactionsClient() {
               <CardContent className="pt-6">
                 <div className="text-center">
                   <p className="text-sm text-gray-500 dark:text-gray-400">
-                    Total Income
+                    {t('transactions.totalIncome')}
                   </p>
                   <p className="text-3xl font-bold text-green-600 mt-2">
-                    ${totalIncome.toLocaleString('en-US', { minimumFractionDigits: 2 })}
+                    $<BalanceDisplay amount={totalIncome} showSign={false} />
                   </p>
                 </div>
               </CardContent>
@@ -354,10 +357,10 @@ export default function TransactionsClient() {
               <CardContent className="pt-6">
                 <div className="text-center">
                   <p className="text-sm text-gray-500 dark:text-gray-400">
-                    Total Expenses
+                    {t('transactions.totalExpenses')}
                   </p>
                   <p className="text-3xl font-bold text-red-600 mt-2">
-                    ${totalExpenses.toLocaleString('en-US', { minimumFractionDigits: 2 })}
+                    $<BalanceDisplay amount={totalExpenses} showSign={false} />
                   </p>
                 </div>
               </CardContent>
@@ -376,7 +379,7 @@ export default function TransactionsClient() {
                 <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
                 <input
                   type="text"
-                  placeholder="Search transactions..."
+                  placeholder={t('transactions.searchPlaceholder')}
                   value={searchQuery}
                   onChange={(e) => {
                     setSearchQuery(e.target.value)
@@ -398,7 +401,7 @@ export default function TransactionsClient() {
                 disabled={categoriesLoading}
                 className="w-full px-4 py-2 rounded-lg border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:opacity-50"
               >
-                <option value="all">All Categories</option>
+                <option value="all">{t('transactions.allCategories')}</option>
                 {categories.map((cat) => (
                   <option key={cat.id} value={cat.id}>
                     {cat.name}
@@ -417,10 +420,10 @@ export default function TransactionsClient() {
                 }}
                 className="w-full px-4 py-2 rounded-lg border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
               >
-                <option value="all">All Types</option>
-                <option value="income">Income</option>
-                <option value="expense">Expense</option>
-                <option value="transfer">Transfer</option>
+                <option value="all">{t('transactions.allTypes')}</option>
+                <option value="income">{t('transactions.income')}</option>
+                <option value="expense">{t('transactions.expense')}</option>
+                <option value="transfer">{t('transactions.transfer')}</option>
               </select>
             </div>
           </div>
@@ -429,7 +432,7 @@ export default function TransactionsClient() {
           <div className="flex flex-wrap gap-3 mt-4">
             <Button variant="outline" size="sm" onClick={() => setShowFiltersModal(true)}>
               <Filter className="w-4 h-4 mr-2" />
-              More Filters
+              {t('transactions.advancedFilters')}
             </Button>
             <Button
               variant="outline"
@@ -438,7 +441,7 @@ export default function TransactionsClient() {
               disabled={exportMutation.isPending || isLoading}
             >
               <Download className="w-4 h-4 mr-2" />
-              {exportMutation.isPending ? 'Exporting...' : 'Export CSV'}
+              {exportMutation.isPending ? t('common.exporting') : t('common.exportCSV')}
             </Button>
             <div className="relative group">
               <Button
@@ -448,7 +451,7 @@ export default function TransactionsClient() {
                 disabled={importMutation.isPending || isLoading}
               >
                 <Upload className="w-4 h-4 mr-2" />
-                {importMutation.isPending ? 'Importing...' : 'Import CSV'}
+                {importMutation.isPending ? t('common.importing') : t('common.importCSV')}
               </Button>
               <div className="pointer-events-none absolute left-1/2 top-full z-10 mt-2 w-64 -translate-x-1/2 rounded-md bg-gray-900 text-[11px] text-white px-3 py-2 opacity-0 transition-opacity group-hover:opacity-100">
                 {CSV_TOOLTIP_TEXT}
@@ -456,7 +459,7 @@ export default function TransactionsClient() {
             </div>
             <Button variant="primary" size="sm" onClick={() => setShowAddModal(true)}>
               <Plus className="w-4 h-4 mr-2" />
-              Add Transaction
+              {t('transactions.addTransaction')}
             </Button>
           </div>
         </CardContent>
@@ -475,18 +478,18 @@ export default function TransactionsClient() {
             <div className="p-6">
               <EmptyState
                 icon={Receipt}
-                title="Error Loading Transactions"
-                description="Failed to load transactions. Please try again."
+                title={t('errors.loadingFailed')}
+                description={t('transactions.loadingError')}
               />
             </div>
           ) : transactions.length === 0 ? (
             <div className="p-6">
               <EmptyState
                 icon={Receipt}
-                title="No Transactions Found"
+                title={t('empty.noTransactions')}
                 description={searchQuery || selectedCategory !== 'all' || selectedType !== 'all'
-                  ? "No transactions match your filters. Try adjusting your search."
-                  : "You haven't added any transactions yet. Create your first transaction to get started!"}
+                  ? t('transactions.noMatchingFilters')
+                  : t('transactions.createFirstTransaction')}
               />
             </div>
           ) : useVirtualScrolling ? (
@@ -512,7 +515,7 @@ export default function TransactionsClient() {
                       transaction={{
                         id: transaction.id,
                         date: new Date(transaction.date),
-                        category: category?.name || 'Uncategorized',
+                        category: category?.name || t('categories.uncategorized'),
                         description: transaction.description,
                         merchant: getMerchantName(transaction),
                         amount: normalizeAmount(transaction.amount),
@@ -526,8 +529,8 @@ export default function TransactionsClient() {
               </div>
 
               {/* Desktop Table View */}
-              <div className="hidden md:block overflow-x-auto">
-                <table className="w-full">
+              <div className="hidden md:block overflow-x-auto -mx-6 px-6">
+                <table className="w-full min-w-[800px]">
                   <thead className="bg-gray-50 dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700">
                     <tr>
                       <th
@@ -535,33 +538,33 @@ export default function TransactionsClient() {
                         onClick={() => toggleSort('date')}
                       >
                         <div className="flex items-center gap-2">
-                          Date
+                          {t('transactions.date')}
                           <ArrowUpDown className="w-4 h-4" />
                         </div>
                       </th>
                       <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
-                        Description
+                        {t('transactions.description')}
                       </th>
                       <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
-                        Category
+                        {t('transactions.category')}
                       </th>
                       <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
-                        Merchant
+                        {t('transactions.merchant')}
                       </th>
                       <th
                         className="px-6 py-3 text-right text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-700"
                         onClick={() => toggleSort('amount')}
                       >
                         <div className="flex items-center justify-end gap-2">
-                          Amount
+                          {t('transactions.amount')}
                           <ArrowUpDown className="w-4 h-4" />
                         </div>
                       </th>
                       <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
-                        Status
+                        {t('transactions.status')}
                       </th>
                       <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
-                        Actions
+                        {t('common.actions')}
                       </th>
                     </tr>
                   </thead>
@@ -619,7 +622,7 @@ export default function TransactionsClient() {
                               }}
                             >
                               <Edit className="w-4 h-4 mr-1" />
-                              Edit
+                              {t('common.edit')}
                             </Button>
                           </td>
                         </tr>
@@ -632,8 +635,8 @@ export default function TransactionsClient() {
               {/* Pagination */}
               <div className="px-6 py-4 border-t border-gray-200 dark:border-gray-700 flex items-center justify-between">
                 <div className="text-sm text-gray-500 dark:text-gray-400">
-                  Showing {startIndex + 1} to {endIndex} of{' '}
-                  {totalTransactions} transactions
+                  {t('common.showing')} {startIndex + 1} {t('common.to')} {endIndex} {t('common.of')}{' '}
+                  {totalTransactions} {t('transactions.transactions')}
                 </div>
                 <div className="flex gap-2">
                   <Button
@@ -689,7 +692,7 @@ export default function TransactionsClient() {
       <Modal
         isOpen={showAddModal}
         onClose={() => setShowAddModal(false)}
-        title="Add New Transaction"
+        title={t('transactions.newTransaction')}
         size="lg"
       >
         <DynamicTransactionForm
@@ -704,7 +707,7 @@ export default function TransactionsClient() {
       <Modal
         isOpen={Boolean(editingTransaction)}
         onClose={() => setEditingTransaction(null)}
-        title="Edit Transaction"
+        title={t('transactions.editTransaction')}
         size="lg"
       >
         {editingDefaults && (
@@ -723,7 +726,7 @@ export default function TransactionsClient() {
       <Modal
         isOpen={showFiltersModal}
         onClose={() => setShowFiltersModal(false)}
-        title="Advanced Filters"
+        title={t('transactions.advancedFilters')}
         size="lg"
       >
         <div className="space-y-4">
@@ -731,7 +734,7 @@ export default function TransactionsClient() {
             {/* Date Range */}
             <div>
               <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                From Date
+                {t('transactions.fromDate')}
               </label>
               <input
                 type="date"
@@ -742,7 +745,7 @@ export default function TransactionsClient() {
             </div>
             <div>
               <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                To Date
+                {t('transactions.toDate')}
               </label>
               <input
                 type="date"
@@ -755,27 +758,27 @@ export default function TransactionsClient() {
             {/* Amount Range */}
             <div>
               <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                Min Amount
+                {t('common.minAmount')}
               </label>
               <input
                 type="number"
                 step="0.01"
                 value={minAmount}
                 onChange={(e) => setMinAmount(e.target.value)}
-                placeholder="0.00"
+                placeholder={t('common.amountPlaceholder')}
                 className="w-full px-4 py-2 rounded-lg border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
               />
             </div>
             <div>
               <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                Max Amount
+                {t('common.maxAmount')}
               </label>
               <input
                 type="number"
                 step="0.01"
                 value={maxAmount}
                 onChange={(e) => setMaxAmount(e.target.value)}
-                placeholder="0.00"
+                placeholder={t('common.amountPlaceholder')}
                 className="w-full px-4 py-2 rounded-lg border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
               />
             </div>
@@ -790,10 +793,10 @@ export default function TransactionsClient() {
                 onChange={(e) => setSelectedStatus(e.target.value)}
                 className="w-full px-4 py-2 rounded-lg border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
               >
-                <option value="all">All Statuses</option>
-                <option value="completed">Completed</option>
-                <option value="pending">Pending</option>
-                <option value="cancelled">Cancelled</option>
+                <option value="all">{t('common.allStatuses')}</option>
+                <option value="completed">{t('common.completed')}</option>
+                <option value="pending">{t('common.pending')}</option>
+                <option value="cancelled">{t('common.cancelled')}</option>
               </select>
             </div>
 
@@ -806,7 +809,7 @@ export default function TransactionsClient() {
                 type="text"
                 value={selectedMerchant}
                 onChange={(e) => setSelectedMerchant(e.target.value)}
-                placeholder="Search by merchant..."
+                placeholder={t('common.searchByMerchant')}
                 className="w-full px-4 py-2 rounded-lg border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
               />
             </div>

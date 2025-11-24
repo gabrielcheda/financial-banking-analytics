@@ -2,6 +2,7 @@
 
 import dynamic from 'next/dynamic'
 import { StatCard } from '@/components/StatCard'
+import { BalanceDisplay } from '@/components/BalanceDisplay'
 import { ChartContainer } from '@/components/ChartContainer'
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/Card'
 import { Button } from '@/components/ui/Button'
@@ -25,12 +26,13 @@ import { useCurrentMonthOverview } from '@/hooks/useAnalytics'
 import { useCashFlow } from '@/hooks/useAnalytics'
 import { usePrefetch } from '@/hooks/usePrefetch'
 import { useRouter } from 'next/navigation'
+import { useI18n } from '@/i18n'
 
 type CategoryValue = string | { id?: string; name?: string } | null | undefined
 
-const getCategoryLabel = (category: CategoryValue): string => {
+const getCategoryLabel = (category: CategoryValue, uncategorizedLabel: string): string => {
   if (!category) {
-    return 'Uncategorized'
+    return uncategorizedLabel
   }
 
   if (typeof category === 'string') {
@@ -47,10 +49,11 @@ const getCategoryLabel = (category: CategoryValue): string => {
     }
   }
 
-  return 'Uncategorized'
+  return uncategorizedLabel
 }
 
 export default function DashboardClient() {
+  const { t } = useI18n()
   const router = useRouter()
   const { prefetchTransactionsPage, prefetchTransactions } = usePrefetch()
 
@@ -99,10 +102,10 @@ export default function DashboardClient() {
       {/* Page Header */}
       <div>
         <h1 className="text-3xl font-bold text-gray-900 dark:text-white">
-          Dashboard Overview
+          {t('dashboard.overview')}
         </h1>
         <p className="text-gray-500 dark:text-gray-400 mt-1">
-          Welcome back! Here's your financial summary
+          {t('dashboard.welcome')}
         </p>
       </div>
 
@@ -121,8 +124,8 @@ export default function DashboardClient() {
         ) : (
           <>
             <StatCard
-              title="Total Balance"
-              value={`$${totalBalance.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`}
+              title={t('dashboard.totalBalance')}
+              value={<BalanceDisplay amount={totalBalance} />}
               change=""
               changeType="increase"
               icon={Wallet}
@@ -130,8 +133,8 @@ export default function DashboardClient() {
               iconBg="bg-blue-100 dark:bg-blue-900/30"
             />
             <StatCard
-              title="Monthly Income"
-              value={`$${monthlyIncome.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`}
+              title={t('dashboard.income')}
+              value={<BalanceDisplay amount={monthlyIncome} />}
               change=""
               changeType="increase"
               icon={TrendingUp}
@@ -139,8 +142,8 @@ export default function DashboardClient() {
               iconBg="bg-green-100 dark:bg-green-900/30"
             />
             <StatCard
-              title="Monthly Expenses"
-              value={`$${monthlyExpenses.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`}
+              title={t('dashboard.expenses')}
+              value={<BalanceDisplay amount={monthlyExpenses} />}
               change=""
               changeType="increase"
               icon={TrendingDown}
@@ -148,7 +151,7 @@ export default function DashboardClient() {
               iconBg="bg-red-100 dark:bg-red-900/30"
             />
             <StatCard
-              title="Savings Rate"
+              title={t('dashboard.savings')}
               value={`${savingsRate.toFixed(1)}%`}
               change=""
               changeType="increase"
@@ -165,8 +168,8 @@ export default function DashboardClient() {
         {/* Monthly Spending Chart */}
         <div className="lg:col-span-2">
           <ChartContainer
-            title="Daily Spending Overview"
-            description="Track your daily expenses over time"
+            title={t('analytics.dailySpending')}
+            description={t('analytics.trackDailyExpenses')}
           >
             {cashFlowLoading ? (
               <div className="flex items-center justify-center h-[300px]">
@@ -176,8 +179,8 @@ export default function DashboardClient() {
               <div className="flex items-center justify-center h-[300px]">
                 <EmptyState
                   icon={TrendingDown}
-                  title="No Spending Data"
-                  description="Add transactions to see your spending trends"
+                  title={t('empty.noData')}
+                  description={t('analytics.addTransactionsToSee')}
                 />
               </div>
             ) : (
@@ -189,7 +192,7 @@ export default function DashboardClient() {
         {/* Account Balances */}
         <Card>
           <CardHeader>
-            <CardTitle>Account Balances</CardTitle>
+            <CardTitle>{t('accounts.accountBalances')}</CardTitle>
           </CardHeader>
           <CardContent>
             {accountsLoading || accountsListLoading || accountsFetching || accountsListFetching ? (
@@ -215,17 +218,18 @@ export default function DashboardClient() {
                         {account.type}
                       </p>
                     </div>
-                    <p className={`font-semibold ${account.balance < 0 ? 'text-red-600' : 'text-gray-900 dark:text-white'}`}>
-                      ${Math.abs(account.balance).toLocaleString('en-US', { minimumFractionDigits: 2 })}
-                    </p>
+                    <BalanceDisplay 
+                      amount={account.balance}
+                      className={`font-semibold ${account.balance < 0 ? 'text-red-600' : 'text-gray-900 dark:text-white'}`}
+                    />
                   </div>
                 ))}
               </div>
             ) : (
               <EmptyState
                 icon={Wallet}
-                title="No Accounts"
-                description="Create your first account to get started"
+                title={t('empty.noAccounts')}
+                description={t('accounts.createFirstAccount')}
               />
             )}
           </CardContent>
@@ -237,14 +241,14 @@ export default function DashboardClient() {
         {/* Recent Transactions */}
         <Card>
           <CardHeader className="flex flex-row items-center justify-between">
-            <CardTitle>Recent Transactions</CardTitle>
+            <CardTitle>{t('dashboard.recentTransactions')}</CardTitle>
             <Button
               variant="ghost"
               size="sm"
               onMouseEnter={() => prefetchTransactionsPage()}
               onClick={() => router.push('/transactions')}
             >
-              View All
+              {t('dashboard.viewAll')}
             </Button>
           </CardHeader>
           <CardContent>
@@ -280,7 +284,7 @@ export default function DashboardClient() {
                           {transaction.description}
                         </p>
                         <p className="text-xs text-gray-500 dark:text-gray-400">
-                          {getCategoryLabel(transaction.categoryId as CategoryValue)}
+                          {getCategoryLabel(transaction.categoryId as CategoryValue, t('categories.uncategorized'))}
                         </p>
                       </div>
                     </div>
@@ -292,7 +296,7 @@ export default function DashboardClient() {
                           }`}
                       >
                         {transaction.type === 'income' ? '+' : '-'}$
-                        {Math.abs(Number(transaction.amount ?? 0)).toFixed(2)}
+                        <BalanceDisplay amount={Math.abs(Number(transaction.amount ?? 0))} showSign={false} />
                       </p>
                       <p className="text-xs text-gray-500 dark:text-gray-400">
                         {format(new Date(transaction.date), 'MMM dd')}
@@ -304,8 +308,8 @@ export default function DashboardClient() {
             ) : (
               <EmptyState
                 icon={TrendingDown}
-                title="No Transactions"
-                description="Your recent transactions will appear here"
+                title={t('empty.noTransactions')}
+                description={t('transactions.recentWillAppear')}
               />
             )}
           </CardContent>
@@ -316,7 +320,7 @@ export default function DashboardClient() {
           {/* Budget Progress */}
           <Card>
             <CardHeader>
-              <CardTitle>Budget Overview</CardTitle>
+              <CardTitle>{t('budgets.budgetOverview')}</CardTitle>
             </CardHeader>
             <CardContent>
               {budgetsLoading || budgetsFetching ? (
@@ -335,10 +339,10 @@ export default function DashboardClient() {
                       <div key={budget.id}>
                         <div className="flex justify-between text-sm mb-1">
                           <span className="text-gray-700 dark:text-gray-300">
-                            {getCategoryLabel((budget.categoryName as CategoryValue) ?? budget.category)}
+                            {getCategoryLabel((budget.categoryName as CategoryValue) ?? budget.category, t('categories.uncategorized'))}
                           </span>
                           <span className="text-gray-500 dark:text-gray-400">
-                            ${spent.toFixed(2)} / ${limit.toFixed(2)}
+                            $<BalanceDisplay amount={spent} showSign={false} /> / $<BalanceDisplay amount={limit} showSign={false} />
                           </span>
                         </div>
                         <div className="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-2">
@@ -359,8 +363,8 @@ export default function DashboardClient() {
               ) : (
                 <EmptyState
                   icon={Calendar}
-                  title="No Budgets"
-                  description="Create budgets to track your spending"
+                  title={t('empty.noBudgets')}
+                  description={t('budgets.createToTrack')}
                 />
               )}
             </CardContent>
@@ -369,7 +373,7 @@ export default function DashboardClient() {
           {/* Upcoming Bills */}
           <Card>
             <CardHeader>
-              <CardTitle>Upcoming Bills</CardTitle>
+              <CardTitle>{t('bills.upcomingBills')}</CardTitle>
             </CardHeader>
             <CardContent>
               {billsLoading || billsFetching ? (
@@ -392,12 +396,12 @@ export default function DashboardClient() {
                             {bill.name}
                           </p>
                           <p className="text-xs text-gray-500 dark:text-gray-400">
-                            Due {bill.dueDate ? format(new Date(bill.dueDate), 'MMM dd, yyyy') : 'N/A'}
+                            {t('bills.due')} {bill.dueDate ? format(new Date(bill.dueDate), 'MMM dd, yyyy') : 'N/A'}
                           </p>
                         </div>
                       </div>
                       <p className="font-semibold text-gray-900 dark:text-white">
-                        ${(Number(bill.amount) ?? 0).toFixed(2)}
+                        $<BalanceDisplay amount={Number(bill.amount) ?? 0} showSign={false} />
                       </p>
                     </div>
                   ))}
@@ -405,8 +409,8 @@ export default function DashboardClient() {
               ) : (
                 <EmptyState
                   icon={Calendar}
-                  title="No Upcoming Bills"
-                  description="You have no bills due in the next 7 days"
+                  title={t('bills.noUpcomingBills')}
+                  description={t('bills.noBillsDueNext7Days')}
                 />
               )}
             </CardContent>

@@ -1,7 +1,9 @@
 'use client'
 
+import { memo } from 'react'
 import { format } from 'date-fns'
 import { getCategoryColor } from '@/lib/mockData'
+import { BalanceDisplay } from './BalanceDisplay'
 
 interface Transaction {
   id: string
@@ -19,7 +21,7 @@ interface TransactionCardProps {
   onClick?: () => void
 }
 
-export function TransactionCard({ transaction, onClick }: TransactionCardProps) {
+export const TransactionCard = memo(function TransactionCard({ transaction, onClick }: TransactionCardProps) {
   const merchantLabel = transaction.merchant && transaction.merchant.trim().length > 0 ? transaction.merchant : '—'
 
   const amountPrefix =
@@ -57,8 +59,8 @@ export function TransactionCard({ transaction, onClick }: TransactionCardProps) 
         <div className="text-right flex-shrink-0">
           <p className={`font-semibold text-base ${amountColor}`}>
             {amountPrefix}
-            {amountPrefix === '↔' ? ' ' : ''}$
-            {Math.abs(transaction.amount).toFixed(2)}
+            {amountPrefix === '↔' ? ' ' : ''}
+            <BalanceDisplay amount={transaction.amount} showSign={false} />
           </p>
         </div>
       </div>
@@ -87,4 +89,4 @@ export function TransactionCard({ transaction, onClick }: TransactionCardProps) 
       </div>
     </div>
   )
-}
+})

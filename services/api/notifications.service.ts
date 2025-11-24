@@ -1,22 +1,10 @@
 import { apiClient } from './client'
 import type {
   NotificationDTO,
-  PaginatedResponse,
+  NotificationFilters,
+  NotificationPaginatedResponse,
   ApiResponse,
 } from '@/types/dto'
-
-interface NotificationFilters {
-  unreadOnly?: boolean
-  type?: 'bill' | 'budget' | 'goal' | 'transaction' | 'system'
-  page?: number
-  limit?: number
-}
-
-interface NotificationPaginatedResponse extends PaginatedResponse<NotificationDTO> {
-  pagination: PaginatedResponse<NotificationDTO>['pagination'] & {
-    unreadCount: number
-  }
-}
 
 class NotificationService {
   private readonly baseURL = '/notifications'

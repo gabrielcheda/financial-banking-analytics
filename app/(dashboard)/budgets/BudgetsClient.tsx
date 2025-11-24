@@ -1,10 +1,13 @@
 'use client'
 
 import { useState, useMemo } from 'react'
+import { useI18n } from '@/i18n'
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/Card'
 import { Button } from '@/components/ui/Button'
 import { Skeleton } from '@/components/ui/Skeleton'
 import { EmptyState } from '@/components/EmptyState'
+import { BalanceDisplay } from '@/components/BalanceDisplay'
+import { useBalanceFormatter } from '@/hooks/useBalanceFormatter'
 import { BudgetProgressBar } from '@/components/BudgetProgressBar'
 import { BudgetForm } from '@/components/forms/BudgetForm'
 import {
@@ -30,6 +33,8 @@ import type { BudgetDTO, CreateBudgetDTO, UpdateBudgetDTO } from '@/types/dto'
 type PeriodFilter = 'all' | 'monthly' | 'yearly'
 
 export default function BudgetsClient() {
+  const { t } = useI18n()
+  const { formatBalance } = useBalanceFormatter()
   const [showAddModal, setShowAddModal] = useState(false)
   const [editingBudget, setEditingBudget] = useState<BudgetDTO | null>(null)
   const [periodFilter, setPeriodFilter] = useState<PeriodFilter>('all')
@@ -125,16 +130,9 @@ export default function BudgetsClient() {
   }
 
   const handleDeleteBudget = async (id: string) => {
-    if (confirm('Are you sure you want to delete this budget? This action cannot be undone.')) {
+    if (confirm(t('budgets.deleteConfirmation'))) {
       await deleteBudget.mutateAsync(id)
     }
-  }
-
-  const formatCurrency = (amount: number) => {
-    return `$${Math.abs(amount).toLocaleString('en-US', {
-      minimumFractionDigits: 2,
-      maximumFractionDigits: 2,
-    })}`
   }
 
   return (
@@ -143,10 +141,10 @@ export default function BudgetsClient() {
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
           <h1 className="text-3xl font-bold text-gray-900 dark:text-white">
-            Budgets
+            {t('budgets.title')}
           </h1>
           <p className="text-gray-500 dark:text-gray-400 mt-1">
-            Manage your budgets and spending limits
+            {t('budgets.manageBudgets')}
           </p>
         </div>
         <Button
@@ -155,14 +153,14 @@ export default function BudgetsClient() {
           disabled={createBudget.isPending}
         >
           <Plus className="w-5 h-5 mr-2" />
-          Add Budget
+          {t('budgets.addBudget')}
         </Button>
       </div>
 
       {/* Stats Cards */}
       <section aria-labelledby="budget-summary-heading">
         <h2 id="budget-summary-heading" className="sr-only">
-          Budget summary
+          {t('budgets.budgetSummary')}
         </h2>
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
           {isLoading ? (
@@ -182,10 +180,10 @@ export default function BudgetsClient() {
                 <div className="flex items-center justify-between">
                   <div>
                     <p className="text-sm text-gray-500 dark:text-gray-400">
-                      Total Budgeted
+                      {t('budgets.totalBudgeted')}
                     </p>
                     <p className="text-2xl font-bold text-gray-900 dark:text-white mt-2">
-                      {formatCurrency(stats.totalBudgeted)}
+                      $<BalanceDisplay amount={stats.totalBudgeted ?? 0} showSign={false} />
                     </p>
                   </div>
                   <div className="bg-blue-100 dark:bg-blue-900/30 p-3 rounded-full">
@@ -200,10 +198,10 @@ export default function BudgetsClient() {
                 <div className="flex items-center justify-between">
                   <div>
                     <p className="text-sm text-gray-500 dark:text-gray-400">
-                      Total Spent
+                      {t('budgets.totalSpent')}
                     </p>
                     <p className="text-2xl font-bold text-gray-900 dark:text-white mt-2">
-                      {formatCurrency(stats.totalSpent)}
+                      $<BalanceDisplay amount={stats.totalSpent ?? 0} showSign={false} />
                     </p>
                   </div>
                   <div className="bg-purple-100 dark:bg-purple-900/30 p-3 rounded-full">
@@ -218,10 +216,10 @@ export default function BudgetsClient() {
                 <div className="flex items-center justify-between">
                   <div>
                     <p className="text-sm text-gray-500 dark:text-gray-400">
-                      Remaining
+                      {t('budgets.remaining')}
                     </p>
                     <p className="text-2xl font-bold text-green-700 dark:text-green-300 mt-2">
-                      {formatCurrency(stats.totalRemaining)}
+                      $<BalanceDisplay amount={stats.totalRemaining ?? 0} showSign={false} />
                     </p>
                   </div>
                   <div className="bg-green-100 dark:bg-green-900/30 p-3 rounded-full">
@@ -236,7 +234,7 @@ export default function BudgetsClient() {
                 <div className="flex items-center justify-between">
                   <div>
                     <p className="text-sm text-gray-500 dark:text-gray-400">
-                      Critical Budgets
+                      {t('budgets.criticalBudgets')}
                     </p>
                     <p className="text-2xl font-bold text-red-600 dark:text-red-400 mt-2">
                       {stats.criticalBudgets}
@@ -256,14 +254,14 @@ export default function BudgetsClient() {
       {/* Filters */}
       <section aria-labelledby="budget-filter-heading">
         <h2 id="budget-filter-heading" className="sr-only">
-          Filter budgets
+          {t('budgets.filterBudgets')}
         </h2>
         <Card>
           <CardContent className="pt-6">
             <div className="flex items-center gap-3">
               <Filter className="w-5 h-5 text-gray-400" aria-hidden="true" />
               <span className="text-sm font-medium text-gray-700 dark:text-gray-300">
-                Filter by period:
+                {t('budgets.filterByPeriod')}:
               </span>
               <div className="flex gap-2">
                 {(['all', 'monthly', 'yearly'] as const).map((period) => (
@@ -273,7 +271,7 @@ export default function BudgetsClient() {
                     size="sm"
                     onClick={() => setPeriodFilter(period)}
                   >
-                    {period.charAt(0).toUpperCase() + period.slice(1)}
+                    {t(`budgets.${period}`)}
                   </Button>
                 ))}
               </div>
@@ -285,7 +283,7 @@ export default function BudgetsClient() {
       {/* Budgets Grid */}
       <section aria-labelledby="budget-list-heading">
         <h2 id="budget-list-heading" className="sr-only">
-          Budget list
+          {t('budgets.budgetList')}
         </h2>
         {isLoading ? (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
@@ -302,14 +300,14 @@ export default function BudgetsClient() {
             <CardContent className="p-0">
               <EmptyState
                 icon={Target}
-                title="No Budgets Found"
+                title={t('budgets.noBudgetsFound')}
                 description={
                   periodFilter !== 'all'
                     ? `No ${periodFilter} budgets found. Try adjusting your filter or create a new budget.`
                     : "You haven't created any budgets yet. Set up your first budget to start tracking your spending!"
                 }
                 action={{
-                  label: 'Create Budget',
+                  label: t('budgets.createBudget'),
                   onClick: () => setShowAddModal(true),
                 }}
               />
@@ -352,20 +350,20 @@ export default function BudgetsClient() {
                       size="sm"
                       onClick={() => setEditingBudget(budget)}
                       disabled={updateBudget.isPending}
-                      aria-label={`Edit budget ${categoryName}`}
+                      aria-label={t('common.edit')}
                     >
                       <Pencil className="w-4 h-4" aria-hidden="true" />
-                      <span className="sr-only">Edit budget {categoryName}</span>
+                      <span className="sr-only">{t('common.edit')}</span>
                     </Button>
                     <Button
                       variant="ghost"
                       size="sm"
                       onClick={() => handleDeleteBudget(budget.id)}
                       disabled={deleteBudget.isPending}
-                      aria-label={`Delete budget ${categoryName}`}
+                      aria-label={t('common.delete')}
                     >
                       <Trash2 className="w-4 h-4 text-red-600" aria-hidden="true" />
-                      <span className="sr-only">Delete budget {categoryName}</span>
+                      <span className="sr-only">{t('common.delete')}</span>
                     </Button>
                   </div>
                 </CardHeader>
@@ -386,11 +384,11 @@ export default function BudgetsClient() {
                     {/* Date Range */}
                     <div className="text-xs text-gray-500 dark:text-gray-400">
                       <div className="flex justify-between">
-                        <span>Start:</span>
+                        <span>{t('budgets.start')}:</span>
                         <span>{format(new Date(budget.startDate), 'MMM dd, yyyy')}</span>
                       </div>
                       <div className="flex justify-between mt-1">
-                        <span>End:</span>
+                        <span>{t('budgets.end')}:</span>
                         <span>{format(new Date(budget.endDate), 'MMM dd, yyyy')}</span>
                       </div>
                     </div>
@@ -398,7 +396,7 @@ export default function BudgetsClient() {
                     {/* Alert Settings */}
                     {budget.alerts?.enabled && (
                       <div className="text-xs text-gray-500 dark:text-gray-400 border-t border-gray-200 dark:border-gray-700 pt-3">
-                        Alert at {(budget.alerts.threshold ?? 80)}% usage
+                        {t('budgets.alertAt', { threshold: (budget.alerts.threshold ?? 80) })}
                       </div>
                     )}
 
@@ -408,7 +406,7 @@ export default function BudgetsClient() {
                         <div className="flex items-center gap-2">
                           <AlertTriangle className="w-4 h-4 text-red-600 dark:text-red-400 flex-shrink-0" />
                           <p className="text-xs text-red-800 dark:text-red-300">
-                            Budget exceeded by ${(spent - limit).toFixed(2)}
+                            {t('budgets.budgetExceeded', { amount: formatBalance(spent - limit) })}
                           </p>
                         </div>
                       </div>
@@ -418,7 +416,7 @@ export default function BudgetsClient() {
                         <div className="flex items-center gap-2">
                           <AlertTriangle className="w-4 h-4 text-yellow-600 dark:text-yellow-400 flex-shrink-0" />
                           <p className="text-xs text-yellow-800 dark:text-yellow-300">
-                            Approaching budget limit ({percentage.toFixed(0)}% of {alertThreshold}% threshold)
+                            {t('budgets.approachingLimit', { percentage: percentage.toFixed(0), threshold: alertThreshold })}
                           </p>
                         </div>
                       </div>
@@ -438,17 +436,17 @@ export default function BudgetsClient() {
           <div className="bg-white dark:bg-gray-800 rounded-lg shadow-xl max-w-2xl w-full max-h-[90vh] overflow-y-auto">
             <div className="sticky top-0 bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700 px-6 py-4 flex items-center justify-between">
               <h2 className="text-xl font-semibold text-gray-900 dark:text-white">
-                Create New Budget
+                {t('budgets.createNewBudget')}
               </h2>
               <Button
                 variant="ghost"
                 size="sm"
                 onClick={() => setShowAddModal(false)}
                 disabled={createBudget.isPending}
-                aria-label="Close create budget modal"
+                aria-label={t('budgets.closeCreateModal')}
               >
                 <X className="w-5 h-5" aria-hidden="true" />
-                <span className="sr-only">Close create budget modal</span>
+                <span className="sr-only">{t('budgets.closeCreateModal')}</span>
               </Button>
             </div>
             <div className="p-6">
@@ -468,17 +466,17 @@ export default function BudgetsClient() {
           <div className="bg-white dark:bg-gray-800 rounded-lg shadow-xl max-w-2xl w-full max-h-[90vh] overflow-y-auto">
             <div className="sticky top-0 bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700 px-6 py-4 flex items-center justify-between">
               <h2 className="text-xl font-semibold text-gray-900 dark:text-white">
-                Edit Budget: {editingBudget.categoryId}
+                {t('budgets.editBudget')}: {editingBudget.categoryId}
               </h2>
               <Button
                 variant="ghost"
                 size="sm"
                 onClick={() => setEditingBudget(null)}
                 disabled={updateBudget.isPending}
-                aria-label="Close edit budget modal"
+                aria-label={t('budgets.closeEditModal')}
               >
                 <X className="w-5 h-5" aria-hidden="true" />
-                <span className="sr-only">Close edit budget modal</span>
+                <span className="sr-only">{t('budgets.closeEditModal')}</span>
               </Button>
             </div>
             <div className="p-6">

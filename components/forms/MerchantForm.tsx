@@ -4,6 +4,7 @@ import { useState } from 'react'
 import { Button } from '@/components/ui/Button'
 import type { MerchantDTO, CreateMerchantDTO, UpdateMerchantDTO, LocationDTO } from '@/types/dto'
 import { useCategories } from '@/hooks/useCategories'
+import { useI18n } from '@/i18n'
 
 type MerchantFormInput = CreateMerchantDTO | UpdateMerchantDTO
 
@@ -45,7 +46,9 @@ const COMMON_ICONS = [
 ]
 
 export function MerchantForm({ merchant, onSubmit, onCancel, isLoading }: MerchantFormProps) {
+  const { t } = useI18n()
   const { data: categories = [] } = useCategories()
+  const [isSubmitting, setIsSubmitting] = useState(false)
 
   const [formData, setFormData] = useState<CreateMerchantDTO>({
     name: merchant?.name || '',
@@ -65,6 +68,8 @@ export function MerchantForm({ merchant, onSubmit, onCancel, isLoading }: Mercha
   const [showIconPicker, setShowIconPicker] = useState(false)
   const [customColor, setCustomColor] = useState(formData.color)
 
+  const isFormLoading = isLoading || isSubmitting
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
 
@@ -78,7 +83,12 @@ export function MerchantForm({ merchant, onSubmit, onCancel, isLoading }: Mercha
       cleanedData.location = undefined
     }
 
-    await onSubmit(cleanedData)
+    try {
+      setIsSubmitting(true)
+      await onSubmit(cleanedData)
+    } finally {
+      setIsSubmitting(false)
+    }
   }
 
   const updateLocation = (field: keyof LocationDTO, value: string) => {
@@ -95,12 +105,12 @@ export function MerchantForm({ merchant, onSubmit, onCancel, isLoading }: Mercha
     <form onSubmit={handleSubmit} className="space-y-6">
       {/* Basic Info */}
       <div className="space-y-4">
-        <h3 className="text-lg font-medium text-gray-900 dark:text-white">Basic Information</h3>
+        <h3 className="text-lg font-medium text-gray-900 dark:text-white">{t('common.basicInformation')}</h3>
 
         {/* Name */}
         <div>
           <label htmlFor="name" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-            Name <span className="text-red-500">*</span>
+            {t('forms.merchant.merchantName')} <span className="text-red-500">*</span>
           </label>
           <input
             type="text"
@@ -110,14 +120,14 @@ export function MerchantForm({ merchant, onSubmit, onCancel, isLoading }: Mercha
             required
             maxLength={255}
             className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent dark:bg-gray-800 dark:text-white"
-            placeholder="Whole Foods Market"
+            placeholder={t('forms.merchant.merchantNamePlaceholder')}
           />
         </div>
 
         {/* Phone */}
         <div>
           <label htmlFor="phone" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-            Phone
+            {t('forms.merchant.phoneOptional')}
           </label>
           <input
             type="tel"
@@ -126,14 +136,14 @@ export function MerchantForm({ merchant, onSubmit, onCancel, isLoading }: Mercha
             onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
             maxLength={20}
             className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent dark:bg-gray-800 dark:text-white"
-            placeholder="+1-555-123-4567"
+            placeholder={t('forms.merchant.phonePlaceholder')}
           />
         </div>
 
         {/* Category */}
         <div>
           <label htmlFor="categoryId" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-            Category
+            {t('forms.merchant.categoryOptional')}
           </label>
           <select
             id="categoryId"
@@ -141,7 +151,7 @@ export function MerchantForm({ merchant, onSubmit, onCancel, isLoading }: Mercha
             onChange={(e) => setFormData({ ...formData, categoryId: e.target.value })}
             className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent dark:bg-gray-800 dark:text-white"
           >
-            <option value="">No category</option>
+            <option value="">{t('forms.merchant.selectCategory')}</option>
             {categories.map((category) => (
               <option key={category.id} value={category.id}>
                 {category.icon} {category.name}
@@ -153,12 +163,12 @@ export function MerchantForm({ merchant, onSubmit, onCancel, isLoading }: Mercha
 
       {/* Visual */}
       <div className="space-y-4">
-        <h3 className="text-lg font-medium text-gray-900 dark:text-white">Visual</h3>
+        <h3 className="text-lg font-medium text-gray-900 dark:text-white">{t('common.visual')}</h3>
 
         {/* Color */}
         <div>
           <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-            Color
+            {t('forms.merchant.color')}
           </label>
           <div className="flex flex-wrap gap-2 mb-2">
             {PRESET_COLORS.map((color) => (
@@ -172,14 +182,19 @@ export function MerchantForm({ merchant, onSubmit, onCancel, isLoading }: Mercha
                     : 'border-gray-300 dark:border-gray-600 hover:scale-105'
                 }`}
                 style={{ backgroundColor: color }}
+                aria-label={`Select color ${color}`}
                 title={color}
-              />
+              >
+                {formData.color === color && (
+                  <span className="sr-only">{t('accessibility.selected')}</span>
+                )}
+              </button>
             ))}
             <button
               type="button"
               onClick={() => setShowColorPicker(!showColorPicker)}
               className="w-10 h-10 rounded-lg border-2 border-gray-300 dark:border-gray-600 flex items-center justify-center text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700"
-              title="Custom color"
+              title={t('forms.merchant.customColor')}
             >
               +
             </button>
@@ -198,7 +213,7 @@ export function MerchantForm({ merchant, onSubmit, onCancel, isLoading }: Mercha
                 value={customColor}
                 onChange={(e) => setCustomColor(e.target.value)}
                 className="flex-1 px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg dark:bg-gray-800 dark:text-white"
-                placeholder="#3b82f6"
+                placeholder={t('forms.merchant.hexColor')}
                 pattern="^#[0-9A-Fa-f]{6}$"
               />
               <Button
@@ -209,14 +224,14 @@ export function MerchantForm({ merchant, onSubmit, onCancel, isLoading }: Mercha
                 }}
                 size="sm"
               >
-                Apply
+                {t('common.apply')}
               </Button>
             </div>
           )}
 
           {/* Preview */}
           <div className="mt-3 p-3 rounded-lg border border-gray-200 dark:border-gray-700">
-            <p className="text-sm text-gray-600 dark:text-gray-400 mb-2">Preview:</p>
+            <p className="text-sm text-gray-600 dark:text-gray-400 mb-2">{t('common.preview')}:</p>
             <div className="flex items-center gap-3">
               <div
                 className="w-12 h-12 rounded-full flex items-center justify-center text-2xl"
@@ -232,7 +247,7 @@ export function MerchantForm({ merchant, onSubmit, onCancel, isLoading }: Mercha
         {/* Icon */}
         <div>
           <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-            Icon (Emoji)
+            {t('forms.merchant.icon')}
           </label>
           <div className="flex flex-wrap gap-2 mb-2">
             {COMMON_ICONS.map((icon) => (
@@ -253,7 +268,7 @@ export function MerchantForm({ merchant, onSubmit, onCancel, isLoading }: Mercha
               type="button"
               onClick={() => setShowIconPicker(!showIconPicker)}
               className="w-12 h-12 rounded-lg border-2 border-gray-300 dark:border-gray-600 flex items-center justify-center text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700"
-              title="Custom icon"
+              title={t('forms.merchant.customEmoji')}
             >
               +
             </button>
@@ -266,7 +281,7 @@ export function MerchantForm({ merchant, onSubmit, onCancel, isLoading }: Mercha
                 value={formData.icon}
                 onChange={(e) => setFormData({ ...formData, icon: e.target.value })}
                 className="flex-1 px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg dark:bg-gray-800 dark:text-white"
-                placeholder="Paste an emoji or icon"
+                placeholder={t('forms.merchant.emojiPlaceholder')}
                 maxLength={50}
               />
               <Button
@@ -274,7 +289,7 @@ export function MerchantForm({ merchant, onSubmit, onCancel, isLoading }: Mercha
                 onClick={() => setShowIconPicker(false)}
                 size="sm"
               >
-                Done
+                {t('common.close')}
               </Button>
             </div>
           )}
@@ -283,12 +298,12 @@ export function MerchantForm({ merchant, onSubmit, onCancel, isLoading }: Mercha
 
       {/* Location */}
       <div className="space-y-4">
-        <h3 className="text-lg font-medium text-gray-900 dark:text-white">Location (Optional)</h3>
+        <h3 className="text-lg font-medium text-gray-900 dark:text-white">{t('forms.merchant.locationOptional')}</h3>
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <div className="md:col-span-2">
             <label htmlFor="address" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-              Address
+              {t('forms.merchant.address')}
             </label>
             <input
               type="text"
@@ -296,13 +311,13 @@ export function MerchantForm({ merchant, onSubmit, onCancel, isLoading }: Mercha
               value={formData.location?.address || ''}
               onChange={(e) => updateLocation('address', e.target.value)}
               className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent dark:bg-gray-800 dark:text-white"
-              placeholder="123 Main St"
+              placeholder={t('forms.merchant.addressPlaceholder')}
             />
           </div>
 
           <div>
             <label htmlFor="city" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-              City
+              {t('forms.merchant.city')}
             </label>
             <input
               type="text"
@@ -310,13 +325,13 @@ export function MerchantForm({ merchant, onSubmit, onCancel, isLoading }: Mercha
               value={formData.location?.city || ''}
               onChange={(e) => updateLocation('city', e.target.value)}
               className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent dark:bg-gray-800 dark:text-white"
-              placeholder="New York"
+              placeholder={t('forms.merchant.cityPlaceholder')}
             />
           </div>
 
           <div>
             <label htmlFor="state" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-              State
+              {t('forms.merchant.state')}
             </label>
             <input
               type="text"
@@ -324,13 +339,13 @@ export function MerchantForm({ merchant, onSubmit, onCancel, isLoading }: Mercha
               value={formData.location?.state || ''}
               onChange={(e) => updateLocation('state', e.target.value)}
               className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent dark:bg-gray-800 dark:text-white"
-              placeholder="NY"
+              placeholder={t('forms.merchant.statePlaceholder')}
             />
           </div>
 
           <div className="md:col-span-2">
             <label htmlFor="country" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-              Country
+              {t('forms.merchant.country')}
             </label>
             <input
               type="text"
@@ -338,7 +353,7 @@ export function MerchantForm({ merchant, onSubmit, onCancel, isLoading }: Mercha
               value={formData.location?.country || ''}
               onChange={(e) => updateLocation('country', e.target.value)}
               className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent dark:bg-gray-800 dark:text-white"
-              placeholder="USA"
+              placeholder={t('forms.merchant.countryPlaceholder')}
             />
           </div>
         </div>
@@ -351,18 +366,18 @@ export function MerchantForm({ merchant, onSubmit, onCancel, isLoading }: Mercha
             type="button"
             variant="outline"
             onClick={onCancel}
-            disabled={isLoading}
+            disabled={isFormLoading}
             className="flex-1"
           >
-            Cancel
+            {t('forms.merchant.cancel')}
           </Button>
         )}
         <Button
           type="submit"
-          disabled={isLoading}
+          disabled={isFormLoading}
           className="flex-1"
         >
-          {isLoading ? 'Saving...' : merchant ? 'Update Merchant' : 'Create Merchant'}
+          {isFormLoading ? t('forms.merchant.creating') : merchant ? t('forms.merchant.update') : t('forms.merchant.create')}
         </Button>
       </div>
     </form>

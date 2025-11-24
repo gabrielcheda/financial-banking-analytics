@@ -71,7 +71,6 @@ export function useCreateCategory() {
       queryClient.invalidateQueries({ queryKey: categoryKeys.lists() })
       queryClient.invalidateQueries({ queryKey: goalKeys.lists() })
       queryClient.invalidateQueries({ queryKey: goalKeys.progress() })
-      toast.success('Category created successfully!')
     },
     onError: (error) => {
       showErrorToast(error, 'Failed to Create Category')
@@ -93,7 +92,6 @@ export function useUpdateCategory() {
       queryClient.invalidateQueries({ queryKey: categoryKeys.detail(variables.id) })
       queryClient.invalidateQueries({ queryKey: goalKeys.lists() })
       queryClient.invalidateQueries({ queryKey: goalKeys.progress() })
-      toast.success('Category updated successfully!')
     },
     onError: (error) => {
       showErrorToast(error, 'Failed to Update Category')
@@ -118,34 +116,12 @@ export function useDeleteCategory() {
       queryClient.invalidateQueries({ queryKey: ['budgets'] })
       queryClient.invalidateQueries({ queryKey: goalKeys.lists() })
       queryClient.invalidateQueries({ queryKey: goalKeys.progress() })
-      toast.success(`Category deleted! ${data.transactionsReassigned} transactions reassigned.`)
     },
     onError: (error) => {
       showErrorToast(error, 'Failed to Delete Category')
     },
   })
 }
-
-/**
- * Hook to get category spending
- * TODO: Implement getCategorySpending method in CategoryService
- */
-// export function useCategorySpending(
-//   params: {
-//     startDate: string
-//     endDate: string
-//     type?: 'income' | 'expense'
-//   },
-//   options?: Omit<UseQueryOptions<CategorySpendingDTO[]>, 'queryKey' | 'queryFn'>
-// ) {
-//   return useQuery({
-//     queryKey: categoryKeys.spending(params),
-//     queryFn: () => categoryService.getCategorySpending(params),
-//     enabled: !!params.startDate && !!params.endDate,
-//     staleTime: 1000 * 60 * 5, // 5 minutes
-//     ...options,
-//   })
-// }
 
 /**
  * Hook to get expense categories

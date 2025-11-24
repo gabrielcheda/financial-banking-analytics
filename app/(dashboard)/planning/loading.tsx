@@ -56,7 +56,7 @@ export default function PlanningLoading() {
         </Card>
 
         {/* Right Column - Chart */}
-        <SkeletonChart title="Progress Overview" />
+        <SkeletonChart />
       </div>
 
       {/* Bottom Section */}

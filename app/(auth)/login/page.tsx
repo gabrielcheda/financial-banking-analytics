@@ -1,6 +1,7 @@
 // app/(auth)/login/page.tsx
 'use client'
 
+import { useI18n } from '@/i18n'
 import { useState, useEffect, Suspense } from 'react'
 import { useFormState, useFormStatus } from 'react-dom'
 import { useSearchParams, useRouter } from 'next/navigation'
@@ -8,12 +9,13 @@ import Link from 'next/link'
 import { Button } from '@/components/ui/Button'
 import { Lock, Mail, Eye, EyeOff, AlertCircle, CheckCircle2 } from 'lucide-react'
 import { loginAction } from '@/app/actions/auth'
+import { LanguageSwitcher } from '@/components/LanguageSwitcher'
 
 const APP_NAME = process.env.NEXT_PUBLIC_APP_NAME ?? 'BankDash'
-const APP_TAGLINE = 'Financial intelligence for modern banking'
 
 // Componente separado para o botão submit (necessário para useFormStatus)
 function SubmitButton() {
+  const { t } = useI18n()
   const { pending } = useFormStatus()
 
   return (
@@ -23,13 +25,14 @@ function SubmitButton() {
       className="w-full py-3"
       disabled={pending}
     >
-      {pending ? 'Signing in...' : 'Sign In'}
+      {pending ? t('auth.signingIn') : t('auth.signIn')}
     </Button>
   )
 }
 
 // Componente que usa useSearchParams precisa estar dentro de Suspense
 function SuccessMessages() {
+  const { t } = useI18n()
   const searchParams = useSearchParams()
   const registered = searchParams.get('registered')
   const verified = searchParams.get('verified')
@@ -42,10 +45,10 @@ function SuccessMessages() {
           <AlertCircle className="w-5 h-5 text-yellow-600 dark:text-yellow-400 flex-shrink-0 mt-0.5" />
           <div className="flex-1">
             <p className="text-sm font-medium text-yellow-800 dark:text-yellow-200">
-              Session expired
+              {t('auth.sessionExpired')}
             </p>
             <p className="text-sm text-yellow-700 dark:text-yellow-300 mt-1">
-              Your session has ended. Please sign in again to continue.
+              {t('auth.sessionExpiredMessage')}
             </p>
           </div>
         </div>
@@ -55,10 +58,10 @@ function SuccessMessages() {
           <CheckCircle2 className="w-5 h-5 text-green-600 dark:text-green-400 flex-shrink-0 mt-0.5" />
           <div className="flex-1">
             <p className="text-sm font-medium text-green-800 dark:text-green-200">
-              Registration successful
+              {t('auth.registrationSuccessTitle')}
             </p>
             <p className="text-sm text-green-700 dark:text-green-300 mt-1">
-              You can now sign in with your new account.
+              {t('auth.registrationSuccessMessage')}
             </p>
           </div>
         </div>
@@ -68,10 +71,10 @@ function SuccessMessages() {
           <CheckCircle2 className="w-5 h-5 text-green-600 dark:text-green-400 flex-shrink-0 mt-0.5" />
           <div className="flex-1">
             <p className="text-sm font-medium text-green-800 dark:text-green-200">
-              Email verified
+              {t('auth.emailVerified')}
             </p>
             <p className="text-sm text-green-700 dark:text-green-300 mt-1">
-              Your email is confirmed. Please sign in to continue.
+              {t('auth.emailVerifiedMessage')}
             </p>
           </div>
         </div>
@@ -81,6 +84,7 @@ function SuccessMessages() {
 }
 
 function LoginForm() {
+  const { t } = useI18n()
   const [showPassword, setShowPassword] = useState(false)
   const [rememberMeChecked, setRememberMeChecked] = useState(false)
   const [state, formAction] = useFormState(loginAction, { error: '' })
@@ -105,6 +109,11 @@ function LoginForm() {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-500 via-purple-500 to-pink-500 flex items-center justify-center p-4">
+      {/* Language Switcher - Top Right */}
+      <div className="fixed top-4 right-4 z-10">
+        <LanguageSwitcher />
+      </div>
+
       <div className="w-full max-w-md">
         <div className="bg-white dark:bg-gray-900 rounded-2xl shadow-2xl p-8">
           {/* Logo */}
@@ -113,7 +122,7 @@ function LoginForm() {
               {APP_NAME}
             </h1>
             <p className="text-gray-500 dark:text-gray-400 mt-2">
-              {APP_TAGLINE}
+              {t('auth.appTagline')}
             </p>
           </div>
 
@@ -138,7 +147,7 @@ function LoginForm() {
             {/* Email */}
             <div>
               <label htmlFor="email" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                Email address
+                {t('auth.emailAddress')}
               </label>
               <div className="relative">
                 <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
@@ -148,7 +157,7 @@ function LoginForm() {
                   type="email"
                   autoComplete="email"
                   required
-                  placeholder="Enter your email"
+                  placeholder={t('auth.enterEmail')}
                   className="w-full pl-10 pr-4 py-3 rounded-lg border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-900 dark:text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500"
                 />
               </div>
@@ -157,7 +166,7 @@ function LoginForm() {
             {/* Password */}
             <div>
               <label htmlFor="password" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                Password
+                {t('auth.password')}
               </label>
               <div className="relative">
                 <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
@@ -167,7 +176,7 @@ function LoginForm() {
                   type={showPassword ? 'text' : 'password'}
                   autoComplete="current-password"
                   required
-                  placeholder="Enter your password"
+                  placeholder={t('auth.enterPassword')}
                   className="w-full pl-10 pr-12 py-3 rounded-lg border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-900 dark:text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500"
                 />
                 <button
@@ -191,14 +200,14 @@ function LoginForm() {
                   className="w-4 h-4 text-blue-600 rounded focus:ring-blue-500"
                 />
                 <span className="text-sm text-gray-600 dark:text-gray-400">
-                  Remember me
+                  {t('auth.rememberMe')}
                 </span>
               </label>
               <Link
                 href="/forgot-password"
                 className="text-sm text-blue-600 hover:text-blue-700 dark:text-blue-400"
               >
-                Forgot password?
+                {t('auth.forgotPassword')}
               </Link>
             </div>
 
@@ -208,12 +217,12 @@ function LoginForm() {
 
           {/* Sign Up Link */}
           <p className="text-center text-sm text-gray-600 dark:text-gray-400 mt-6">
-            Don&apos;t have an account?{' '}
+            {t('auth.dontHaveAccount')}{' '}
             <Link
               href="/register"
               className="text-blue-600 hover:text-blue-700 dark:text-blue-400 font-medium"
             >
-              Sign up
+              {t('auth.signUp')}
             </Link>
           </p>
         </div>
@@ -223,9 +232,10 @@ function LoginForm() {
 }
 
 function LoadingFallback() {
+  const { t } = useI18n()
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-500 via-purple-500 to-pink-500 flex items-center justify-center">
-      <div className="text-white">Loading...</div>
+      <div className="text-white">{t('auth.loading')}</div>
     </div>
   )
 }

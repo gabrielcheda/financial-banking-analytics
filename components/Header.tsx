@@ -1,8 +1,9 @@
 'use client'
 
 import { useState, useEffect, useRef } from 'react'
-import { Moon, Sun, Search, Bell, X } from 'lucide-react'
+import { Moon, Sun, Search, Bell, X, Eye, EyeOff } from 'lucide-react'
 import { useTheme } from './ThemeProvider'
+import { useI18n } from '@/i18n'
 import { useDebounce } from '@/hooks/useDebounce'
 import { useSearchTransactions } from '@/hooks/useTransactions'
 import { useRouter } from 'next/navigation'
@@ -12,9 +13,14 @@ import { useUnreadCount, useNotifications, useMarkAsRead } from '@/hooks/useNoti
 import Link from 'next/link'
 import { format } from 'date-fns'
 import type { TransactionDTO } from '@/types/dto'
+import { LanguageSwitcher } from './LanguageSwitcher'
+import { useBalanceVisibility } from '@/contexts/BalanceVisibilityContext'
+import { BalanceDisplay } from './BalanceDisplay'
 
 export function Header() {
   const { theme, setTheme } = useTheme()
+  const { t } = useI18n()
+  const { shouldShowBalance, toggleBalanceVisibility, isToggling } = useBalanceVisibility()
   const [searchQuery, setSearchQuery] = useState('')
   const [isSearchOpen, setIsSearchOpen] = useState(false)
   const [isMobileSearchOpen, setIsMobileSearchOpen] = useState(false)
@@ -35,6 +41,17 @@ export function Header() {
   const notificationsLabel = hasUnread
     ? `Notifications, ${unreadCount > 9 ? '9 or more' : unreadCount} unread`
     : 'Notifications'
+
+  // Helper to translate smart dates (returns translation key or formatted date)
+  const translateSmartDate = (date: Date | string): string => {
+    const result = formatSmartDate(date)
+    // If it's a translation key (starts with 'common.'), translate it
+    if (result.startsWith('common.')) {
+      return t(result as any)
+    }
+    // Otherwise it's already formatted (day name or date)
+    return result
+  }
 
   // Close search and notifications on outside click
   useEffect(() => {
@@ -73,7 +90,7 @@ export function Header() {
                   setIsSearchOpen(true)
                 }}
                 onFocus={() => setIsSearchOpen(true)}
-                placeholder="Search transactions, categories..."
+                placeholder={t('transactions.searchTransactions')}
                 className="w-full pl-10 pr-10 py-2 rounded-lg border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-900 dark:text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500"
               />
               {searchQuery && (
@@ -93,7 +110,7 @@ export function Header() {
                 <div className="absolute top-full mt-2 w-full max-w-[calc(100vw-2rem)] bg-white dark:bg-gray-800 rounded-lg shadow-lg border border-gray-200 dark:border-gray-700 max-h-96 overflow-y-auto">
                   {isLoading ? (
                     <div className="p-4 text-center text-gray-500">
-                      Searching...
+                      {t('search.searching')}
                     </div>
                   ) : searchResults && searchResults.length > 0 ? (
                     <div className="py-2">
@@ -109,7 +126,7 @@ export function Header() {
                                 {transaction.description}
                               </p>
                               <p className="text-xs text-gray-500 dark:text-gray-400">
-                                {formatSmartDate(transaction.date)}
+                                {translateSmartDate(transaction.date)}
                               </p>
                             </div>
                             <p className={`text-sm font-semibold ${
@@ -118,7 +135,7 @@ export function Header() {
                                 : 'text-gray-900 dark:text-white'
                             }`}>
                               {transaction.type === 'income' ? '+' : '-'}
-                              {formatCurrency(Math.abs(transaction.amount))}
+                              <BalanceDisplay amount={Math.abs(transaction.amount)} showSign={false} />
                             </p>
                           </div>
                         </button>
@@ -131,13 +148,13 @@ export function Header() {
                           }}
                           className="text-sm text-blue-600 dark:text-blue-400 hover:underline"
                         >
-                          View all results
+                          {t('search.viewAll', { count: searchResults.length })}
                         </button>
                       </div>
                     </div>
                   ) : (
                     <div className="p-4 text-center text-gray-500">
-                      No results found
+                      {t('common.noResults')}
                     </div>
                   )}
                 </div>
@@ -145,7 +162,7 @@ export function Header() {
 
               {isSearchOpen && debouncedSearch.length > 0 && debouncedSearch.length < 3 && (
                 <div className="absolute top-full mt-2 w-full bg-white dark:bg-gray-800 rounded-lg shadow-lg border border-gray-200 dark:border-gray-700 p-4 text-center text-gray-500 text-sm">
-                  Type at least 3 characters to search
+                  {t('search.minCharacters') || 'Type at least 3 characters to search'}
                 </div>
               )}
             </div>
@@ -157,7 +174,7 @@ export function Header() {
             <button
               onClick={() => setIsMobileSearchOpen(!isMobileSearchOpen)}
               className="md:hidden p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors min-w-[44px] min-h-[44px] flex items-center justify-center"
-              aria-label="Search"
+              aria-label={t('common.search')}
             >
               {isMobileSearchOpen ? (
                 <X className="w-5 h-5 text-gray-700 dark:text-gray-300" />
@@ -165,6 +182,14 @@ export function Header() {
                 <Search className="w-5 h-5 text-gray-700 dark:text-gray-300" />
               )}
             </button>
+
+            {/* Language Switcher */}
+            <div className="sm:hidden">
+              <LanguageSwitcher compact />
+            </div>
+            <div className="hidden sm:block">
+              <LanguageSwitcher />
+            </div>
 
             {/* Notifications */}
             <div className="relative" ref={notificationsRef}>
@@ -186,14 +211,14 @@ export function Header() {
 
               {/* Notifications Dropdown */}
               {isNotificationsOpen && (
-                <div className="absolute right-0 mt-2 w-80 sm:w-96 bg-white dark:bg-gray-800 rounded-lg shadow-xl border border-gray-200 dark:border-gray-700 overflow-hidden z-50">
+                <div className="fixed sm:absolute right-2 sm:right-0 mt-2 w-[calc(100vw-1rem)] max-w-[380px] sm:w-96 bg-white dark:bg-gray-800 rounded-lg shadow-xl border border-gray-200 dark:border-gray-700 overflow-hidden z-50">
                   <div className="px-4 py-3 border-b border-gray-200 dark:border-gray-700 flex items-center justify-between">
                     <h3 className="font-semibold text-gray-900 dark:text-white">
-                      Notifications
+                      {t('notifications.title')}
                     </h3>
                     {unreadCount && unreadCount > 0 && (
                       <span className="text-xs bg-blue-100 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400 px-2 py-1 rounded-full">
-                        {unreadCount} new
+                        {unreadCount} {t('notifications.new') || 'new'}
                       </span>
                     )}
                   </div>
@@ -203,7 +228,7 @@ export function Header() {
                       <div className="p-8 text-center">
                         <Bell className="w-12 h-12 text-gray-400 mx-auto mb-3" />
                         <p className="text-gray-500 dark:text-gray-400">
-                          No notifications yet
+                          {t('notifications.noNotifications')}
                         </p>
                       </div>
                     ) : (
@@ -252,18 +277,33 @@ export function Header() {
                       onClick={() => setIsNotificationsOpen(false)}
                       className="text-sm text-blue-600 dark:text-blue-400 hover:underline font-medium"
                     >
-                      View all notifications →
+                      {t('notifications.viewAll') || 'View all notifications'} →
                     </Link>
                   </div>
                 </div>
               )}
             </div>
 
+            {/* Balance Visibility Toggle */}
+            <button
+              onClick={toggleBalanceVisibility}
+              disabled={isToggling}
+              className="p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors min-w-[44px] min-h-[44px] flex items-center justify-center disabled:opacity-50 disabled:cursor-not-allowed"
+              aria-label={shouldShowBalance ? t('settings.hideBalance') || 'Hide balances' : t('settings.showBalance') || 'Show balances'}
+              title={shouldShowBalance ? t('settings.hideBalance') || 'Hide balances' : t('settings.showBalance') || 'Show balances'}
+            >
+              {shouldShowBalance ? (
+                <Eye className="w-5 h-5 text-gray-700 dark:text-gray-300" />
+              ) : (
+                <EyeOff className="w-5 h-5 text-gray-700 dark:text-gray-300" />
+              )}
+            </button>
+
             {/* Dark mode toggle */}
             <button
               onClick={() => setTheme(theme === 'dark' ? 'light' : 'dark')}
               className="p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors min-w-[44px] min-h-[44px] flex items-center justify-center"
-              aria-label="Toggle theme"
+              aria-label={t('settings.toggleTheme') || 'Toggle theme'}
             >
               {theme === 'dark' ? (
                 <Sun className="w-5 h-5 text-gray-300" />
@@ -287,7 +327,7 @@ export function Header() {
                   setIsSearchOpen(true)
                 }}
                 onFocus={() => setIsSearchOpen(true)}
-                placeholder="Search transactions..."
+                placeholder={t('transactions.searchTransactions')}
                 className="w-full pl-10 pr-10 py-2.5 rounded-lg border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-900 dark:text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 text-base"
                 autoFocus
               />
@@ -308,7 +348,7 @@ export function Header() {
                 <div className="absolute top-full mt-2 w-full bg-white dark:bg-gray-800 rounded-lg shadow-lg border border-gray-200 dark:border-gray-700 max-h-80 overflow-y-auto">
                   {isLoading ? (
                     <div className="p-4 text-center text-gray-500">
-                      Searching...
+                      {t('search.searching')}
                     </div>
                   ) : searchResults && searchResults.length > 0 ? (
                     <div className="divide-y divide-gray-200 dark:divide-gray-700">
@@ -324,14 +364,14 @@ export function Header() {
                                 {result.description}
                               </p>
                               <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">
-                                {result.merchant} • {formatSmartDate(result.date)}
+                                {result.merchant} • {translateSmartDate(result.date)}
                               </p>
                             </div>
                             <div className="text-right flex-shrink-0">
                               <p className={`font-semibold text-sm ${
                                 result.type === 'income' ? 'text-green-600' : 'text-gray-900 dark:text-white'
                               }`}>
-                                {formatCurrency(result.amount)}
+                                <BalanceDisplay amount={result.amount} showSign={true} />
                               </p>
                             </div>
                           </div>
@@ -340,7 +380,7 @@ export function Header() {
                     </div>
                   ) : (
                     <div className="p-4 text-center text-gray-500 text-sm">
-                      No transactions found
+                      {t('empty.noTransactions')}
                     </div>
                   )}
                 </div>
@@ -348,7 +388,7 @@ export function Header() {
 
               {!isSearchOpen && searchQuery.length < 3 && searchQuery.length > 0 && (
                 <div className="absolute top-full mt-2 w-full bg-white dark:bg-gray-800 rounded-lg shadow-lg border border-gray-200 dark:border-gray-700 p-4 text-center text-gray-500 text-sm">
-                  Type at least 3 characters to search
+                  {t('search.minCharacters') || 'Type at least 3 characters to search'}
                 </div>
               )}
             </div>

@@ -230,6 +230,7 @@ export function getUserFriendlyErrorMessage(error: unknown): string {
     INVALID_CREDENTIALS: 'The email or password you entered is incorrect.',
     EMAIL_ALREADY_EXISTS: 'An account with this email address already exists.',
     WEAK_PASSWORD: 'Please choose a stronger password with at least 8 characters.',
+    AUTH_FORBIDDEN: 'This resource is no longer available. It may have been deleted or you no longer have access.',
   }
 
   // Busca por código exato

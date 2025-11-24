@@ -31,22 +31,23 @@ import {
 
 /**
  * Formata data de forma inteligente baseada em quão recente ela é
+ * NOTA: Retorna chaves de tradução que devem ser traduzidas no componente usando t()
  *
  * @example
- * formatSmartDate(new Date()) // "Today"
- * formatSmartDate(yesterday) // "Yesterday"
- * formatSmartDate(lastWeek) // "Last Tuesday"
- * formatSmartDate(lastYear) // "Jan 15, 2023"
+ * formatSmartDate(new Date()) // "common.today"
+ * formatSmartDate(yesterday) // "common.yesterday"
+ * formatSmartDate(lastWeek) // "Last Tuesday" (formatado)
+ * formatSmartDate(lastYear) // "Jan 15, 2023" (formatado)
  */
 export function formatSmartDate(date: Date | string): string {
   const dateObj = typeof date === 'string' ? parseISO(date) : date
 
   if (isToday(dateObj)) {
-    return 'Today'
+    return 'common.today'
   }
 
   if (isYesterday(dateObj)) {
-    return 'Yesterday'
+    return 'common.yesterday'
   }
 
   if (isThisWeek(dateObj)) {
@@ -100,55 +101,56 @@ export function formatTime(date: Date | string): string {
 
 /**
  * Períodos predefinidos para filtros
+ * NOTA: Os labels são chaves de tradução e devem ser traduzidos com t() quando exibidos
  */
 export const dateRanges = {
   today: {
-    label: 'Today',
+    label: 'common.today',
     start: startOfDay(new Date()),
     end: endOfDay(new Date()),
   },
   yesterday: {
-    label: 'Yesterday',
+    label: 'common.yesterday',
     start: startOfDay(subDays(new Date(), 1)),
     end: endOfDay(subDays(new Date(), 1)),
   },
   last7days: {
-    label: 'Last 7 days',
+    label: 'common.last7Days',
     start: startOfDay(subDays(new Date(), 7)),
     end: endOfDay(new Date()),
   },
   last30days: {
-    label: 'Last 30 days',
+    label: 'common.last30Days',
     start: startOfDay(subDays(new Date(), 30)),
     end: endOfDay(new Date()),
   },
   thisWeek: {
-    label: 'This week',
+    label: 'common.thisWeek',
     start: startOfWeek(new Date()),
     end: endOfWeek(new Date()),
   },
   thisMonth: {
-    label: 'This month',
+    label: 'common.thisMonth',
     start: startOfMonth(new Date()),
     end: endOfMonth(new Date()),
   },
   lastMonth: {
-    label: 'Last month',
+    label: 'common.lastMonth',
     start: startOfMonth(subMonths(new Date(), 1)),
     end: endOfMonth(subMonths(new Date(), 1)),
   },
   thisYear: {
-    label: 'This year',
+    label: 'common.thisYear',
     start: startOfYear(new Date()),
     end: endOfYear(new Date()),
   },
   lastYear: {
-    label: 'Last year',
+    label: 'common.lastYear',
     start: startOfYear(subDays(new Date(), 365)),
     end: endOfYear(subDays(new Date(), 365)),
   },
   allTime: {
-    label: 'All time',
+    label: 'common.allTime',
     start: new Date('2020-01-01'),
     end: new Date(),
   },

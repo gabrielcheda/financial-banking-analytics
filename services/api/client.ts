@@ -134,9 +134,6 @@ class ApiClient {
       async (error: AxiosError<ApiError>) => {
         // Log error em desenvolvimento
         if (process.env.NODE_ENV === 'development') {
-
-          console.log('❌ API normalized error:', this.normalizeError(error));
-
           console.error('❌ API Error:', {
             url: error.config?.url,
             status: error.response?.status,

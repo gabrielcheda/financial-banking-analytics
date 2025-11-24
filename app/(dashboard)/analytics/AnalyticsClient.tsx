@@ -1,10 +1,13 @@
 'use client'
 
 import { useState, useMemo } from 'react'
+import { useI18n } from '@/i18n'
 import { ChartContainer } from '@/components/ChartContainer'
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/Card'
 import { EmptyState } from '@/components/EmptyState'
 import { Skeleton } from '@/components/ui/Skeleton'
+import { BalanceDisplay } from '@/components/BalanceDisplay'
+import { useBalanceFormatter } from '@/hooks/useBalanceFormatter'
 import {
   PieChart,
   Pie,
@@ -33,6 +36,9 @@ import { useTransactions } from '@/hooks/useTransactions'
 import { format, subMonths } from 'date-fns'
 
 export default function AnalyticsClient() {
+  const { t } = useI18n()
+  const { formatBalance } = useBalanceFormatter()
+  
   // Date range state - default to last 12 months
   const [startDate, setStartDate] = useState(
     format(subMonths(new Date(), 11), 'yyyy-MM-dd')
@@ -153,10 +159,10 @@ export default function AnalyticsClient() {
       {/* Page Header */}
       <div>
         <h1 className="text-3xl font-bold text-gray-900 dark:text-white">
-          Analytics
+          {t('analytics.title')}
         </h1>
         <p className="text-gray-500 dark:text-gray-400 mt-1">
-          Detailed insights into your spending patterns
+          {t('analytics.description')}
         </p>
       </div>
 
@@ -167,7 +173,7 @@ export default function AnalyticsClient() {
             <div className="flex items-center gap-2">
               <Calendar className="w-5 h-5 text-gray-500" />
               <label className="text-sm font-medium text-gray-700 dark:text-gray-300">
-                Date Range:
+                {t('analytics.dateRange')}
               </label>
             </div>
             <div className="flex flex-wrap items-center gap-2">
@@ -177,7 +183,7 @@ export default function AnalyticsClient() {
                 onChange={(e) => setStartDate(e.target.value)}
                 className="px-3 py-2 rounded-lg border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
               />
-              <span className="text-gray-500">to</span>
+              <span className="text-gray-500">{t('analytics.to')}</span>
               <input
                 type="date"
                 value={endDate}
@@ -205,8 +211,8 @@ export default function AnalyticsClient() {
           <CardContent className="p-6">
             <EmptyState
               icon={BarChart3}
-              title="No Data to Analyze"
-              description="Start adding transactions to see your spending analytics and insights. Your charts and statistics will appear here once you have transaction data."
+              title={t('analytics.noDataToAnalyze')}
+              description={t('analytics.startAddingTransactions')}
               variant="default"
             />
           </CardContent>
@@ -217,12 +223,12 @@ export default function AnalyticsClient() {
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
             {/* Spending by Category - Pie Chart */}
             <ChartContainer
-              title="Spending by Category"
-              description="Distribution of expenses across categories"
+              title={t('analytics.spendingByCategory')}
+              description={t('analytics.distributionAcrossCategories')}
             >
               {categorySpending.length === 0 ? (
                 <div className="flex items-center justify-center h-64">
-                  <p className="text-gray-500 dark:text-gray-400">No category data available</p>
+                  <p className="text-gray-500 dark:text-gray-400">{t('analytics.noCategoryData')}</p>
                 </div>
               ) : (
             <ResponsiveContainer width="100%" height={300} className="min-h-[200px] sm:min-h-[250px] md:min-h-[300px]">
@@ -245,7 +251,7 @@ export default function AnalyticsClient() {
                   ))}
                 </Pie>
                 <Tooltip
-                  formatter={(value: number) => `$${value.toFixed(2)}`}
+                  formatter={(value: number) => formatBalance(value)}
                   contentStyle={{
                     backgroundColor: '#1f2937',
                     border: 'none',
@@ -260,12 +266,12 @@ export default function AnalyticsClient() {
 
         {/* Category Comparison - Bar Chart */}
         <ChartContainer
-          title="Monthly Category Comparison"
-          description="This month vs last month spending"
+          title={t('analytics.monthlyCategoryComparison')}
+          description={t('analytics.thisVsLastMonth')}
         >
           {categoryComparison.length === 0 ? (
             <div className="flex items-center justify-center h-64">
-              <p className="text-gray-500 dark:text-gray-400">No comparison data available</p>
+              <p className="text-gray-500 dark:text-gray-400">{t('analytics.noComparisonData')}</p>
             </div>
           ) : (
             <ResponsiveContainer width="100%" height={300} className="min-h-[200px] sm:min-h-[250px] md:min-h-[300px]">
@@ -287,7 +293,7 @@ export default function AnalyticsClient() {
                   tickFormatter={(value) => `$${value}`}
                 />
                 <Tooltip
-                  formatter={(value: number) => `$${value.toFixed(2)}`}
+                  formatter={(value: number) => formatBalance(value)}
                   contentStyle={{
                     backgroundColor: '#1f2937',
                     border: 'none',
@@ -296,8 +302,8 @@ export default function AnalyticsClient() {
                   }}
                 />
                 <Legend />
-                <Bar dataKey="lastMonth" fill="#6366f1" name="Last Month" />
-                <Bar dataKey="thisMonth" fill="#3b82f6" name="This Month" />
+                <Bar dataKey="lastMonth" fill="#6366f1" name={t('analytics.lastMonth')} />
+                <Bar dataKey="thisMonth" fill="#3b82f6" name={t('analytics.thisMonth')} />
               </BarChart>
             </ResponsiveContainer>
           )}
@@ -305,12 +311,12 @@ export default function AnalyticsClient() {
 
         {/* Income vs Expenses - Area Chart */}
         <ChartContainer
-          title="Income vs Expenses"
-          description="Monthly comparison over time"
+          title={t('analytics.incomeVsExpenses')}
+          description={t('analytics.monthlyComparison')}
         >
           {monthlyTrend.length === 0 ? (
             <div className="flex items-center justify-center h-64">
-              <p className="text-gray-500 dark:text-gray-400">No cash flow data available</p>
+              <p className="text-gray-500 dark:text-gray-400">{t('analytics.noCashFlowData')}</p>
             </div>
           ) : (
             <ResponsiveContainer width="100%" height={300} className="min-h-[200px] sm:min-h-[250px] md:min-h-[300px]">
@@ -324,7 +330,7 @@ export default function AnalyticsClient() {
                   tickFormatter={(value) => `$${value}`}
                 />
                 <Tooltip
-                  formatter={(value: number) => `$${value.toFixed(2)}`}
+                  formatter={(value: number) => formatBalance(value)}
                   contentStyle={{
                     backgroundColor: '#1f2937',
                     border: 'none',
@@ -356,12 +362,12 @@ export default function AnalyticsClient() {
 
         {/* Monthly Spending Trend - Line Chart */}
         <ChartContainer
-          title="Net Income Trend"
-          description="Monthly net income (income - expenses)"
+          title={t('analytics.netIncomeTrend')}
+          description={t('analytics.monthlyNetIncome')}
         >
           {monthlyTrend.length === 0 ? (
             <div className="flex items-center justify-center h-64">
-              <p className="text-gray-500 dark:text-gray-400">No trend data available</p>
+              <p className="text-gray-500 dark:text-gray-400">{t('analytics.noTrendData')}</p>
             </div>
           ) : (
             <ResponsiveContainer width="100%" height={300} className="min-h-[200px] sm:min-h-[250px] md:min-h-[300px]">
@@ -375,7 +381,7 @@ export default function AnalyticsClient() {
                   tickFormatter={(value) => `$${value}`}
                 />
                 <Tooltip
-                  formatter={(value: number) => `$${value.toFixed(2)}`}
+                  formatter={(value: number) => formatBalance(value)}
                   contentStyle={{
                     backgroundColor: '#1f2937',
                     border: 'none',
@@ -401,12 +407,12 @@ export default function AnalyticsClient() {
         {/* Top Merchants */}
         <Card>
           <CardHeader>
-            <CardTitle>Top Merchants</CardTitle>
+            <CardTitle>{t('analytics.topMerchants')}</CardTitle>
           </CardHeader>
           <CardContent>
             {merchantSpending.length === 0 ? (
               <div className="flex items-center justify-center py-8">
-                <p className="text-gray-500 dark:text-gray-400">No merchant data available</p>
+                <p className="text-gray-500 dark:text-gray-400">{t('analytics.noMerchantData')}</p>
               </div>
             ) : (
               <div className="space-y-3">
@@ -424,12 +430,12 @@ export default function AnalyticsClient() {
                           {merchant.merchant}
                         </p>
                         <p className="text-xs text-gray-500 dark:text-gray-400">
-                          {merchant.count} transactions
+                          {merchant.count} {t('analytics.transactions')}
                         </p>
                       </div>
                     </div>
                     <p className="font-semibold text-gray-900 dark:text-white">
-                      ${(merchant.amount ?? 0).toFixed(2)}
+                      $<BalanceDisplay amount={merchant.amount ?? 0} showSign={false} />
                     </p>
                   </div>
                 ))}
@@ -441,12 +447,12 @@ export default function AnalyticsClient() {
         {/* Category Breakdown with Change */}
         <Card>
           <CardHeader>
-            <CardTitle>Category Breakdown</CardTitle>
+            <CardTitle>{t('analytics.categoryBreakdown')}</CardTitle>
           </CardHeader>
           <CardContent>
             {categoryComparison.length === 0 ? (
               <div className="flex items-center justify-center py-8">
-                <p className="text-gray-500 dark:text-gray-400">No category data available</p>
+                <p className="text-gray-500 dark:text-gray-400">{t('analytics.noCategoryData')}</p>
               </div>
             ) : (
               <div className="space-y-3">
@@ -460,7 +466,7 @@ export default function AnalyticsClient() {
                         {cat.category}
                       </p>
                       <p className="text-sm text-gray-500 dark:text-gray-400">
-                        ${(cat.thisMonth ?? 0).toFixed(2)} this month
+                        $<BalanceDisplay amount={cat.thisMonth ?? 0} showSign={false} /> {t('analytics.thisMonthValue')}
                       </p>
                     </div>
                     <div className="flex items-center gap-2">

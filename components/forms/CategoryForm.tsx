@@ -1,10 +1,12 @@
 'use client'
 
+import { useCallback } from 'react'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
 import { Button } from '@/components/ui/Button'
 import type { CreateCategoryDTO, UpdateCategoryDTO } from '@/types/dto'
+import { useI18n } from '@/i18n'
 
 const categorySchema = z.object({
   name: z.string().min(2, 'Name must be at least 2 characters').max(50, 'Name is too long'),
@@ -44,6 +46,15 @@ export function CategoryForm({
   defaultValues,
   isLoading = false,
 }: CategoryFormProps) {
+  const { t } = useI18n()
+  
+  const categorySchema = z.object({
+    name: z.string().min(2, t('forms.category.categoryNameMin')).max(50, t('forms.category.categoryNameMax')),
+    type: z.enum(['income', 'expense']),
+    color: z.string().regex(/^#[0-9A-F]{6}$/i, t('forms.category.validHexColor')),
+    icon: z.string().optional(),
+  })
+  
   const {
     register,
     handleSubmit,
@@ -63,6 +74,8 @@ export function CategoryForm({
   const selectedColor = watch('color')
   const selectedIcon = watch('icon')
 
+  const isFormLoading = isLoading || isSubmitting
+
   const handleFormSubmit = async (data: CategoryFormInput) => {
     await onSubmit(data)
   }
@@ -75,13 +88,13 @@ export function CategoryForm({
           htmlFor="name"
           className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1"
         >
-          Category Name <span className="text-red-500">*</span>
+          {t('forms.category.categoryName')} <span className="text-red-500">*</span>
         </label>
         <input
           type="text"
           id="name"
           {...register('name')}
-          placeholder="e.g., Groceries, Salary"
+          placeholder={t('forms.category.categoryNamePlaceholder')}
           className="w-full px-4 py-2 rounded-lg border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-900 dark:text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500"
         />
         {errors.name && (
@@ -94,7 +107,7 @@ export function CategoryForm({
       {/* Category Type */}
       <div>
         <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-          Type <span className="text-red-500">*</span>
+          {t('forms.category.type')} <span className="text-red-500">*</span>
         </label>
         <div className="grid grid-cols-2 gap-3">
           <label
@@ -107,10 +120,10 @@ export function CategoryForm({
             <input type="radio" {...register('type')} value="income" className="sr-only" />
             <div className="flex flex-1 flex-col items-center text-center">
               <span className="block text-sm font-medium text-gray-900 dark:text-white">
-                Income
+                {t('forms.category.income')}
               </span>
               <span className="mt-1 text-xs text-gray-500 dark:text-gray-400">
-                Money received
+                {t('categories.moneyReceived')}
               </span>
             </div>
           </label>
@@ -125,10 +138,10 @@ export function CategoryForm({
             <input type="radio" {...register('type')} value="expense" className="sr-only" />
             <div className="flex flex-1 flex-col items-center text-center">
               <span className="block text-sm font-medium text-gray-900 dark:text-white">
-                Expense
+                {t('forms.category.expense')}
               </span>
               <span className="mt-1 text-xs text-gray-500 dark:text-gray-400">
-                Money spent
+                {t('categories.moneySpent')}
               </span>
             </div>
           </label>
@@ -141,7 +154,7 @@ export function CategoryForm({
       {/* Color Picker */}
       <div>
         <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-          Color <span className="text-red-500">*</span>
+          {t('forms.category.color')} <span className="text-red-500">*</span>
         </label>
         <div className="grid grid-cols-8 gap-2">
           {PRESET_COLORS.map((color) => (
@@ -156,12 +169,17 @@ export function CategoryForm({
               }`}
               style={{ backgroundColor: color }}
               aria-label={`Select color ${color}`}
-            />
+              title={color}
+            >
+              {selectedColor === color && (
+                <span className="sr-only">{t('accessibility.selected')}</span>
+              )}
+            </button>
           ))}
         </div>
         <div className="mt-3">
           <label htmlFor="customColor" className="block text-xs text-gray-500 dark:text-gray-400 mb-1">
-            Or enter custom hex color:
+            {t('forms.category.hexColor')}
           </label>
           <input
             type="text"
@@ -181,7 +199,7 @@ export function CategoryForm({
       {/* Icon Picker */}
       <div>
         <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-          Icon (Optional)
+          {t('forms.category.iconOptional')}
         </label>
         <div className="grid grid-cols-8 gap-2">
           {COMMON_ICONS.map((icon) => (
