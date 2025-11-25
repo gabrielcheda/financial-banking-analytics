@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
-import { renderHook, waitFor } from '@testing-library/react'
+import { renderHook, waitFor, act } from '@testing-library/react'
 import { useDebounce } from '@/hooks/useDebounce'
 
 describe('useDebounce', () => {
@@ -9,6 +9,7 @@ describe('useDebounce', () => {
 
   afterEach(() => {
     vi.restoreAllMocks()
+    vi.useRealTimers()
   })
 
   it('should return initial value immediately', () => {
@@ -27,17 +28,20 @@ describe('useDebounce', () => {
     expect(result.current).toBe('initial')
 
     // Update value
-    rerender({ value: 'updated', delay: 500 })
+    act(() => {
+      rerender({ value: 'updated', delay: 500 })
+    })
 
     // Value should still be initial before delay
     expect(result.current).toBe('initial')
 
-    // Fast-forward time
-    vi.advanceTimersByTime(500)
-
-    await waitFor(() => {
-      expect(result.current).toBe('updated')
+    // Fast-forward time and let state update
+    act(() => {
+      vi.advanceTimersByTime(500)
     })
+
+    // Value should now be updated
+    expect(result.current).toBe('updated')
   })
 
   it('should reset timer on rapid changes', async () => {
@@ -49,25 +53,32 @@ describe('useDebounce', () => {
     )
 
     // First update
-    rerender({ value: 'update1', delay: 500 })
-    vi.advanceTimersByTime(200)
+    act(() => {
+      rerender({ value: 'update1', delay: 500 })
+      vi.advanceTimersByTime(200)
+    })
 
     // Second update before first completes
-    rerender({ value: 'update2', delay: 500 })
-    vi.advanceTimersByTime(200)
+    act(() => {
+      rerender({ value: 'update2', delay: 500 })
+      vi.advanceTimersByTime(200)
+    })
 
     // Third update before second completes
-    rerender({ value: 'final', delay: 500 })
+    act(() => {
+      rerender({ value: 'final', delay: 500 })
+    })
 
     // Should still have initial value
     expect(result.current).toBe('initial')
 
     // Complete the debounce
-    vi.advanceTimersByTime(500)
-
-    await waitFor(() => {
-      expect(result.current).toBe('final')
+    act(() => {
+      vi.advanceTimersByTime(500)
     })
+
+    // Value should now be 'final'
+    expect(result.current).toBe('final')
   })
 
   it('should work with different delay values', async () => {
@@ -78,16 +89,21 @@ describe('useDebounce', () => {
       }
     )
 
-    rerender({ value: 'updated', delay: 1000 })
-
-    vi.advanceTimersByTime(500)
+    act(() => {
+      rerender({ value: 'updated', delay: 1000 })
+    })
+    
+    act(() => {
+      vi.advanceTimersByTime(500)
+    })
+    
     expect(result.current).toBe('initial')
 
-    vi.advanceTimersByTime(500)
-
-    await waitFor(() => {
-      expect(result.current).toBe('updated')
+    act(() => {
+      vi.advanceTimersByTime(500)
     })
+
+    expect(result.current).toBe('updated')
   })
 
   it('should handle number values', async () => {
@@ -98,12 +114,15 @@ describe('useDebounce', () => {
       }
     )
 
-    rerender({ value: 42, delay: 300 })
-    vi.advanceTimersByTime(300)
-
-    await waitFor(() => {
-      expect(result.current).toBe(42)
+    act(() => {
+      rerender({ value: 42, delay: 300 })
     })
+    
+    act(() => {
+      vi.advanceTimersByTime(300)
+    })
+
+    expect(result.current).toBe(42)
   })
 
   it('should handle object values', async () => {
@@ -117,12 +136,15 @@ describe('useDebounce', () => {
       }
     )
 
-    rerender({ value: obj2, delay: 300 })
-    vi.advanceTimersByTime(300)
-
-    await waitFor(() => {
-      expect(result.current).toBe(obj2)
+    act(() => {
+      rerender({ value: obj2, delay: 300 })
     })
+    
+    act(() => {
+      vi.advanceTimersByTime(300)
+    })
+
+    expect(result.current).toBe(obj2)
   })
 
   it('should cleanup timer on unmount', () => {
@@ -131,7 +153,9 @@ describe('useDebounce', () => {
     unmount()
 
     // Should not throw error
-    vi.advanceTimersByTime(500)
+    act(() => {
+      vi.advanceTimersByTime(500)
+    })
   })
 
   it('should work with zero delay', async () => {
@@ -142,11 +166,14 @@ describe('useDebounce', () => {
       }
     )
 
-    rerender({ value: 'updated', delay: 0 })
-    vi.advanceTimersByTime(0)
-
-    await waitFor(() => {
-      expect(result.current).toBe('updated')
+    act(() => {
+      rerender({ value: 'updated', delay: 0 })
     })
+    
+    act(() => {
+      vi.advanceTimersByTime(0)
+    })
+
+    expect(result.current).toBe('updated')
   })
 })

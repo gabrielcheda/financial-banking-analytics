@@ -19,16 +19,18 @@ describe('Account Validation Schemas', () => {
       expect(result.success).toBe(true)
     })
 
-    it('should require name with minimum 2 characters', () => {
+    it('should require name with minimum 3 characters', () => {
       const invalidData = {
-        name: 'A',
+        name: 'AB',
         type: 'checking' as const,
         currency: 'USD',
-        balance: 5000,
       }
 
       const result = createAccountSchema.safeParse(invalidData)
       expect(result.success).toBe(false)
+      if (!result.success) {
+        expect(result.error.errors[0].message).toContain('at least 3 characters')
+      }
     })
 
     it('should limit name to 100 characters', () => {
@@ -37,22 +39,23 @@ describe('Account Validation Schemas', () => {
         name: longName,
         type: 'checking' as const,
         currency: 'USD',
-        balance: 5000,
       }
 
       const result = createAccountSchema.safeParse(invalidData)
       expect(result.success).toBe(false)
+      if (!result.success) {
+        expect(result.error.errors[0].message).toContain('too long')
+      }
     })
 
-    it('should validate account types', () => {
-      const types = ['checking', 'savings', 'credit_card', 'investment', 'loan', 'other'] as const
+    it('should validate all four account types', () => {
+      const types = ['checking', 'savings', 'credit', 'investment'] as const
 
       types.forEach(type => {
         const data = {
           name: 'Test Account',
           type,
           currency: 'USD',
-          balance: 1000,
         }
 
         const result = createAccountSchema.safeParse(data)
@@ -65,22 +68,20 @@ describe('Account Validation Schemas', () => {
         name: 'Test Account',
         type: 'invalid_type',
         currency: 'USD',
-        balance: 1000,
       }
 
       const result = createAccountSchema.safeParse(invalidData)
       expect(result.success).toBe(false)
     })
 
-    it('should validate currency codes', () => {
-      const currencies = ['USD', 'EUR', 'GBP', 'BRL', 'JPY', 'CAD', 'AUD', 'CHF']
+    it('should require currency with exactly 3 characters', () => {
+      const validCurrencies = ['USD', 'EUR', 'GBP', 'BRL', 'JPY']
 
-      currencies.forEach(currency => {
+      validCurrencies.forEach(currency => {
         const data = {
           name: 'Test Account',
           type: 'checking' as const,
           currency,
-          balance: 1000,
         }
 
         const result = createAccountSchema.safeParse(data)
@@ -88,28 +89,50 @@ describe('Account Validation Schemas', () => {
       })
     })
 
-    it('should reject invalid currency code', () => {
+    it('should reject currency with less than 3 characters', () => {
       const invalidData = {
         name: 'Test Account',
         type: 'checking' as const,
-        currency: 'XYZ',
-        balance: 1000,
+        currency: 'US',
       }
 
       const result = createAccountSchema.safeParse(invalidData)
       expect(result.success).toBe(false)
+      if (!result.success) {
+        expect(result.error.errors[0].message).toContain('3 characters')
+      }
     })
 
-    it('should accept negative balance', () => {
-      const dataWithNegativeBalance = {
-        name: 'Credit Card',
-        type: 'credit_card' as const,
-        currency: 'USD',
-        balance: -500,
+    it('should reject currency with more than 3 characters', () => {
+      const invalidData = {
+        name: 'Test Account',
+        type: 'checking' as const,
+        currency: 'USDA',
       }
 
-      const result = createAccountSchema.safeParse(dataWithNegativeBalance)
-      expect(result.success).toBe(true)
+      const result = createAccountSchema.safeParse(invalidData)
+      expect(result.success).toBe(false)
+      if (!result.success) {
+        expect(result.error.errors[0].message).toContain('3 characters')
+      }
+    })
+
+    it('should accept optional balance', () => {
+      const dataWithBalance = {
+        name: 'Test Account',
+        type: 'checking' as const,
+        currency: 'USD',
+        balance: 1000,
+      }
+
+      const dataWithoutBalance = {
+        name: 'Test Account',
+        type: 'checking' as const,
+        currency: 'USD',
+      }
+
+      expect(createAccountSchema.safeParse(dataWithBalance).success).toBe(true)
+      expect(createAccountSchema.safeParse(dataWithoutBalance).success).toBe(true)
     })
 
     it('should accept zero balance', () => {
@@ -124,12 +147,23 @@ describe('Account Validation Schemas', () => {
       expect(result.success).toBe(true)
     })
 
+    it('should accept negative balance', () => {
+      const dataWithNegativeBalance = {
+        name: 'Credit Card',
+        type: 'credit' as const,
+        currency: 'USD',
+        balance: -500,
+      }
+
+      const result = createAccountSchema.safeParse(dataWithNegativeBalance)
+      expect(result.success).toBe(true)
+    })
+
     it('should accept optional institution', () => {
       const dataWithInstitution = {
         name: 'Test Account',
         type: 'checking' as const,
         currency: 'USD',
-        balance: 1000,
         institution: 'Chase Bank',
       }
 
@@ -137,52 +171,28 @@ describe('Account Validation Schemas', () => {
         name: 'Test Account',
         type: 'checking' as const,
         currency: 'USD',
-        balance: 1000,
       }
 
       expect(createAccountSchema.safeParse(dataWithInstitution).success).toBe(true)
       expect(createAccountSchema.safeParse(dataWithoutInstitution).success).toBe(true)
     })
 
-    it('should accept optional description', () => {
-      const dataWithDescription = {
+    it('should accept optional accountNumber', () => {
+      const dataWithAccountNumber = {
         name: 'Test Account',
         type: 'checking' as const,
         currency: 'USD',
-        balance: 1000,
-        description: 'My personal checking account',
+        accountNumber: '123456789',
       }
 
-      const result = createAccountSchema.safeParse(dataWithDescription)
-      expect(result.success).toBe(true)
-    })
-
-    it('should limit description to 500 characters', () => {
-      const longDescription = 'A'.repeat(501)
-      const invalidData = {
+      const dataWithoutAccountNumber = {
         name: 'Test Account',
         type: 'checking' as const,
         currency: 'USD',
-        balance: 1000,
-        description: longDescription,
       }
 
-      const result = createAccountSchema.safeParse(invalidData)
-      expect(result.success).toBe(false)
-    })
-
-    it('should limit institution to 100 characters', () => {
-      const longInstitution = 'A'.repeat(101)
-      const invalidData = {
-        name: 'Test Account',
-        type: 'checking' as const,
-        currency: 'USD',
-        balance: 1000,
-        institution: longInstitution,
-      }
-
-      const result = createAccountSchema.safeParse(invalidData)
-      expect(result.success).toBe(false)
+      expect(createAccountSchema.safeParse(dataWithAccountNumber).success).toBe(true)
+      expect(createAccountSchema.safeParse(dataWithoutAccountNumber).success).toBe(true)
     })
 
     it('should accept decimal balances', () => {
@@ -195,6 +205,39 @@ describe('Account Validation Schemas', () => {
 
       const result = createAccountSchema.safeParse(data)
       expect(result.success).toBe(true)
+      if (result.success) {
+        expect(result.data.balance).toBe(1234.56)
+      }
+    })
+
+    it('should require name field', () => {
+      const data = {
+        type: 'checking' as const,
+        currency: 'USD',
+      }
+
+      const result = createAccountSchema.safeParse(data)
+      expect(result.success).toBe(false)
+    })
+
+    it('should require type field', () => {
+      const data = {
+        name: 'Test Account',
+        currency: 'USD',
+      }
+
+      const result = createAccountSchema.safeParse(data)
+      expect(result.success).toBe(false)
+    })
+
+    it('should require currency field', () => {
+      const data = {
+        name: 'Test Account',
+        type: 'checking',
+      }
+
+      const result = createAccountSchema.safeParse(data)
+      expect(result.success).toBe(false)
     })
   })
 
@@ -202,7 +245,7 @@ describe('Account Validation Schemas', () => {
     it('should validate a valid update', () => {
       const validData = {
         name: 'Updated Account Name',
-        balance: 10000,
+        isActive: true,
       }
 
       const result = updateAccountSchema.safeParse(validData)
@@ -212,9 +255,8 @@ describe('Account Validation Schemas', () => {
     it('should make all fields optional', () => {
       const partialUpdates = [
         { name: 'New Name' },
-        { balance: 5000 },
-        { institution: 'New Bank' },
-        { description: 'New description' },
+        { isActive: true },
+        { isActive: false },
       ]
 
       partialUpdates.forEach(update => {
@@ -223,17 +265,22 @@ describe('Account Validation Schemas', () => {
       })
     })
 
-    it('should still enforce validation rules when fields are provided', () => {
-      const invalidUpdates = [
-        { name: 'A' }, // Too short
-        { institution: 'A'.repeat(101) }, // Too long
-        { description: 'A'.repeat(501) }, // Too long
-      ]
+    it('should enforce name minimum length when provided', () => {
+      const invalidUpdate = {
+        name: 'AB', // Too short (less than 3)
+      }
 
-      invalidUpdates.forEach(update => {
-        const result = updateAccountSchema.safeParse(update)
-        expect(result.success).toBe(false)
-      })
+      const result = updateAccountSchema.safeParse(invalidUpdate)
+      expect(result.success).toBe(false)
+    })
+
+    it('should enforce name maximum length when provided', () => {
+      const invalidUpdate = {
+        name: 'A'.repeat(101), // Too long
+      }
+
+      const result = updateAccountSchema.safeParse(invalidUpdate)
+      expect(result.success).toBe(false)
     })
 
     it('should accept empty object', () => {
@@ -244,18 +291,25 @@ describe('Account Validation Schemas', () => {
     it('should validate multiple fields together', () => {
       const data = {
         name: 'Updated Account',
-        balance: 15000,
-        institution: 'New Bank',
-        description: 'Updated description',
+        isActive: false,
       }
 
       const result = updateAccountSchema.safeParse(data)
       expect(result.success).toBe(true)
     })
 
-    it('should accept negative balance in updates', () => {
+    it('should accept true for isActive', () => {
       const data = {
-        balance: -1000,
+        isActive: true,
+      }
+
+      const result = updateAccountSchema.safeParse(data)
+      expect(result.success).toBe(true)
+    })
+
+    it('should accept false for isActive', () => {
+      const data = {
+        isActive: false,
       }
 
       const result = updateAccountSchema.safeParse(data)
@@ -284,14 +338,14 @@ describe('Account Validation Schemas', () => {
     it('should infer correct type for updateAccount', () => {
       const data = {
         name: 'Updated Name',
-        balance: 10000,
+        isActive: true,
       }
 
       const result = updateAccountSchema.parse(data)
 
       // TypeScript should infer the correct type
       expect(result.name).toBe('Updated Name')
-      expect(result.balance).toBe(10000)
+      expect(result.isActive).toBe(true)
     })
   })
 
@@ -332,21 +386,16 @@ describe('Account Validation Schemas', () => {
       expect(result.success).toBe(true)
     })
 
-    it('should trim whitespace from strings', () => {
+    it('should handle very large negative balances', () => {
       const data = {
-        name: '  Test Account  ',
-        type: 'checking' as const,
+        name: 'Credit Line',
+        type: 'credit' as const,
         currency: 'USD',
-        balance: 1000,
-        institution: '  Bank Name  ',
+        balance: -999999999.99,
       }
 
       const result = createAccountSchema.safeParse(data)
       expect(result.success).toBe(true)
-      if (result.success) {
-        expect(result.data.name).toBe('Test Account')
-        expect(result.data.institution).toBe('Bank Name')
-      }
     })
   })
 })

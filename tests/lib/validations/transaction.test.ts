@@ -8,12 +8,12 @@ describe('Transaction Validation Schemas', () => {
   describe('createTransactionSchema', () => {
     it('should validate a valid transaction', () => {
       const validData = {
-        accountId: 'acc-123',
+        accountId: '550e8400-e29b-41d4-a716-446655440000',
+        categoryId: '550e8400-e29b-41d4-a716-446655440001',
         date: new Date(),
         description: 'Grocery shopping',
         amount: 150.50,
         type: 'expense' as const,
-        category: 'Food',
         merchant: 'Whole Foods',
       }
 
@@ -21,13 +21,14 @@ describe('Transaction Validation Schemas', () => {
       expect(result.success).toBe(true)
     })
 
-    it('should require accountId', () => {
+    it('should require accountId as UUID', () => {
       const invalidData = {
+        accountId: 'invalid-uuid',
+        categoryId: '550e8400-e29b-41d4-a716-446655440001',
         date: new Date(),
         description: 'Test',
         amount: 100,
         type: 'expense' as const,
-        category: 'Food',
       }
 
       const result = createTransactionSchema.safeParse(invalidData)
@@ -37,14 +38,31 @@ describe('Transaction Validation Schemas', () => {
       }
     })
 
-    it('should require description with minimum 3 characters', () => {
+    it('should require categoryId as UUID', () => {
       const invalidData = {
-        accountId: 'acc-123',
+        accountId: '550e8400-e29b-41d4-a716-446655440000',
+        categoryId: 'invalid-uuid',
         date: new Date(),
-        description: 'Ab',
+        description: 'Test',
         amount: 100,
         type: 'expense' as const,
-        category: 'Food',
+      }
+
+      const result = createTransactionSchema.safeParse(invalidData)
+      expect(result.success).toBe(false)
+      if (!result.success) {
+        expect(result.error.errors[0].path).toContain('categoryId')
+      }
+    })
+
+    it('should require description with minimum 1 character', () => {
+      const invalidData = {
+        accountId: '550e8400-e29b-41d4-a716-446655440000',
+        categoryId: '550e8400-e29b-41d4-a716-446655440001',
+        date: new Date(),
+        description: '',
+        amount: 100,
+        type: 'expense' as const,
       }
 
       const result = createTransactionSchema.safeParse(invalidData)
@@ -54,12 +72,12 @@ describe('Transaction Validation Schemas', () => {
     it('should limit description to 255 characters', () => {
       const longDescription = 'A'.repeat(256)
       const invalidData = {
-        accountId: 'acc-123',
+        accountId: '550e8400-e29b-41d4-a716-446655440000',
+        categoryId: '550e8400-e29b-41d4-a716-446655440001',
         date: new Date(),
         description: longDescription,
         amount: 100,
         type: 'expense' as const,
-        category: 'Food',
       }
 
       const result = createTransactionSchema.safeParse(invalidData)
@@ -68,12 +86,12 @@ describe('Transaction Validation Schemas', () => {
 
     it('should require positive amount', () => {
       const invalidData = {
-        accountId: 'acc-123',
+        accountId: '550e8400-e29b-41d4-a716-446655440000',
+        categoryId: '550e8400-e29b-41d4-a716-446655440001',
         date: new Date(),
         description: 'Test transaction',
         amount: -50,
         type: 'expense' as const,
-        category: 'Food',
       }
 
       const result = createTransactionSchema.safeParse(invalidData)
@@ -82,16 +100,30 @@ describe('Transaction Validation Schemas', () => {
 
     it('should not accept zero amount', () => {
       const invalidData = {
-        accountId: 'acc-123',
+        accountId: '550e8400-e29b-41d4-a716-446655440000',
+        categoryId: '550e8400-e29b-41d4-a716-446655440001',
         date: new Date(),
         description: 'Test transaction',
         amount: 0,
         type: 'expense' as const,
-        category: 'Food',
       }
 
       const result = createTransactionSchema.safeParse(invalidData)
       expect(result.success).toBe(false)
+    })
+
+    it('should require minimum amount of 0.01', () => {
+      const validData = {
+        accountId: '550e8400-e29b-41d4-a716-446655440000',
+        categoryId: '550e8400-e29b-41d4-a716-446655440001',
+        date: new Date(),
+        description: 'Test',
+        amount: 0.01,
+        type: 'expense' as const,
+      }
+
+      const result = createTransactionSchema.safeParse(validData)
+      expect(result.success).toBe(true)
     })
 
     it('should validate transaction types', () => {
@@ -99,12 +131,13 @@ describe('Transaction Validation Schemas', () => {
 
       types.forEach(type => {
         const data = {
-          accountId: 'acc-123',
+          accountId: '550e8400-e29b-41d4-a716-446655440000',
+          categoryId: '550e8400-e29b-41d4-a716-446655440001',
           date: new Date(),
           description: 'Test',
           amount: 100,
           type,
-          category: 'Test',
+          toAccountId: type === 'transfer' ? '550e8400-e29b-41d4-a716-446655440002' : undefined,
         }
 
         const result = createTransactionSchema.safeParse(data)
@@ -114,64 +147,102 @@ describe('Transaction Validation Schemas', () => {
 
     it('should reject invalid transaction type', () => {
       const invalidData = {
-        accountId: 'acc-123',
+        accountId: '550e8400-e29b-41d4-a716-446655440000',
+        categoryId: '550e8400-e29b-41d4-a716-446655440001',
         date: new Date(),
         description: 'Test',
         amount: 100,
         type: 'invalid_type',
-        category: 'Test',
       }
 
       const result = createTransactionSchema.safeParse(invalidData)
       expect(result.success).toBe(false)
     })
 
-    it('should require category', () => {
+    it('should require toAccountId for transfer transactions', () => {
       const invalidData = {
-        accountId: 'acc-123',
+        accountId: '550e8400-e29b-41d4-a716-446655440000',
+        categoryId: '550e8400-e29b-41d4-a716-446655440001',
         date: new Date(),
-        description: 'Test',
+        description: 'Transfer',
         amount: 100,
-        type: 'expense' as const,
-        category: '',
+        type: 'transfer' as const,
       }
 
       const result = createTransactionSchema.safeParse(invalidData)
       expect(result.success).toBe(false)
+      if (!result.success) {
+        expect(result.error.errors[0].path).toContain('toAccountId')
+      }
+    })
+
+    it('should reject transfer to same account', () => {
+      const accountId = '550e8400-e29b-41d4-a716-446655440000'
+      const invalidData = {
+        accountId,
+        toAccountId: accountId,
+        categoryId: '550e8400-e29b-41d4-a716-446655440001',
+        date: new Date(),
+        description: 'Transfer',
+        amount: 100,
+        type: 'transfer' as const,
+      }
+
+      const result = createTransactionSchema.safeParse(invalidData)
+      expect(result.success).toBe(false)
+      if (!result.success) {
+        expect(result.error.errors[0].message).toContain('different')
+      }
     })
 
     it('should accept optional merchant', () => {
       const dataWithMerchant = {
-        accountId: 'acc-123',
+        accountId: '550e8400-e29b-41d4-a716-446655440000',
+        categoryId: '550e8400-e29b-41d4-a716-446655440001',
         date: new Date(),
         description: 'Test',
         amount: 100,
         type: 'expense' as const,
-        category: 'Food',
         merchant: 'Test Store',
       }
 
       const dataWithoutMerchant = {
-        accountId: 'acc-123',
+        accountId: '550e8400-e29b-41d4-a716-446655440000',
+        categoryId: '550e8400-e29b-41d4-a716-446655440001',
         date: new Date(),
         description: 'Test',
         amount: 100,
         type: 'expense' as const,
-        category: 'Food',
       }
 
       expect(createTransactionSchema.safeParse(dataWithMerchant).success).toBe(true)
       expect(createTransactionSchema.safeParse(dataWithoutMerchant).success).toBe(true)
     })
 
-    it('should accept optional notes', () => {
-      const dataWithNotes = {
-        accountId: 'acc-123',
+    it('should limit merchant to 255 characters', () => {
+      const longMerchant = 'A'.repeat(256)
+      const invalidData = {
+        accountId: '550e8400-e29b-41d4-a716-446655440000',
+        categoryId: '550e8400-e29b-41d4-a716-446655440001',
         date: new Date(),
         description: 'Test',
         amount: 100,
         type: 'expense' as const,
-        category: 'Food',
+        merchant: longMerchant,
+      }
+
+      const result = createTransactionSchema.safeParse(invalidData)
+      expect(result.success).toBe(false)
+    })
+
+    it('should accept optional notes', () => {
+      const dataWithNotes = {
+        accountId: '550e8400-e29b-41d4-a716-446655440000',
+        categoryId: '550e8400-e29b-41d4-a716-446655440001',
+        date: new Date(),
+        description: 'Test',
+        amount: 100,
+        type: 'expense' as const,
         notes: 'Some additional notes',
       }
 
@@ -181,12 +252,12 @@ describe('Transaction Validation Schemas', () => {
 
     it('should coerce string date to Date object', () => {
       const data = {
-        accountId: 'acc-123',
+        accountId: '550e8400-e29b-41d4-a716-446655440000',
+        categoryId: '550e8400-e29b-41d4-a716-446655440001',
         date: '2025-11-03',
         description: 'Test',
         amount: 100,
         type: 'expense' as const,
-        category: 'Food',
       }
 
       const result = createTransactionSchema.safeParse(data)
@@ -194,6 +265,69 @@ describe('Transaction Validation Schemas', () => {
       if (result.success) {
         expect(result.data.date).toBeInstanceOf(Date)
       }
+    })
+
+    it('should accept optional status', () => {
+      const statuses = ['pending', 'completed', 'cancelled'] as const
+
+      statuses.forEach(status => {
+        const data = {
+          accountId: '550e8400-e29b-41d4-a716-446655440000',
+          categoryId: '550e8400-e29b-41d4-a716-446655440001',
+          date: new Date(),
+          description: 'Test',
+          amount: 100,
+          type: 'expense' as const,
+          status,
+        }
+
+        expect(createTransactionSchema.safeParse(data).success).toBe(true)
+      })
+    })
+
+    it('should accept optional tags array', () => {
+      const dataWithTags = {
+        accountId: '550e8400-e29b-41d4-a716-446655440000',
+        categoryId: '550e8400-e29b-41d4-a716-446655440001',
+        date: new Date(),
+        description: 'Test',
+        amount: 100,
+        type: 'expense' as const,
+        tags: ['groceries', 'healthy'],
+      }
+
+      const result = createTransactionSchema.safeParse(dataWithTags)
+      expect(result.success).toBe(true)
+    })
+
+    it('should accept empty string for toAccountId', () => {
+      const data = {
+        accountId: '550e8400-e29b-41d4-a716-446655440000',
+        categoryId: '550e8400-e29b-41d4-a716-446655440001',
+        date: new Date(),
+        description: 'Test',
+        amount: 100,
+        type: 'expense' as const,
+        toAccountId: '',
+      }
+
+      const result = createTransactionSchema.safeParse(data)
+      expect(result.success).toBe(true)
+    })
+
+    it('should accept empty string for merchantId', () => {
+      const data = {
+        accountId: '550e8400-e29b-41d4-a716-446655440000',
+        categoryId: '550e8400-e29b-41d4-a716-446655440001',
+        date: new Date(),
+        description: 'Test',
+        amount: 100,
+        type: 'expense' as const,
+        merchantId: '',
+      }
+
+      const result = createTransactionSchema.safeParse(data)
+      expect(result.success).toBe(true)
     })
   })
 
@@ -212,9 +346,10 @@ describe('Transaction Validation Schemas', () => {
       const partialUpdates = [
         { description: 'New description' },
         { amount: 150 },
-        { category: 'New Category' },
+        { categoryId: '550e8400-e29b-41d4-a716-446655440001' },
         { merchant: 'New Merchant' },
         { notes: 'New notes' },
+        { status: 'completed' as const },
       ]
 
       partialUpdates.forEach(update => {
@@ -225,9 +360,10 @@ describe('Transaction Validation Schemas', () => {
 
     it('should still enforce validation rules when fields are provided', () => {
       const invalidUpdates = [
-        { description: 'Ab' }, // Too short
+        { description: '' }, // Empty
         { amount: -50 }, // Negative
         { amount: 0 }, // Zero
+        { accountId: 'invalid-uuid' }, // Invalid UUID
       ]
 
       invalidUpdates.forEach(update => {
@@ -245,7 +381,7 @@ describe('Transaction Validation Schemas', () => {
       const data = {
         description: 'Updated transaction',
         amount: 300,
-        category: 'Updated Category',
+        categoryId: '550e8400-e29b-41d4-a716-446655440001',
         merchant: 'Updated Merchant',
       }
 
@@ -257,18 +393,18 @@ describe('Transaction Validation Schemas', () => {
   describe('Type Inference', () => {
     it('should infer correct type for createTransaction', () => {
       const data = {
-        accountId: 'acc-123',
+        accountId: '550e8400-e29b-41d4-a716-446655440000',
+        categoryId: '550e8400-e29b-41d4-a716-446655440001',
         date: new Date(),
         description: 'Test',
         amount: 100,
         type: 'expense' as const,
-        category: 'Food',
       }
 
       const result = createTransactionSchema.parse(data)
 
       // TypeScript should infer the correct type
-      expect(result.accountId).toBe('acc-123')
+      expect(result.accountId).toBe('550e8400-e29b-41d4-a716-446655440000')
       expect(result.description).toBe('Test')
       expect(result.amount).toBe(100)
       expect(result.type).toBe('expense')
@@ -285,6 +421,49 @@ describe('Transaction Validation Schemas', () => {
       // TypeScript should infer the correct type
       expect(result.description).toBe('Updated')
       expect(result.amount).toBe(200)
+    })
+  })
+
+  describe('Edge Cases', () => {
+    it('should handle very large amounts', () => {
+      const data = {
+        accountId: '550e8400-e29b-41d4-a716-446655440000',
+        categoryId: '550e8400-e29b-41d4-a716-446655440001',
+        date: new Date(),
+        description: 'Large transaction',
+        amount: 999999999.99,
+        type: 'expense' as const,
+      }
+
+      const result = createTransactionSchema.safeParse(data)
+      expect(result.success).toBe(true)
+    })
+
+    it('should handle minimum valid amount', () => {
+      const data = {
+        accountId: '550e8400-e29b-41d4-a716-446655440000',
+        categoryId: '550e8400-e29b-41d4-a716-446655440001',
+        date: new Date(),
+        description: 'Small transaction',
+        amount: 0.01,
+        type: 'expense' as const,
+      }
+
+      const result = createTransactionSchema.safeParse(data)
+      expect(result.success).toBe(true)
+    })
+
+    it('should require date field', () => {
+      const data = {
+        accountId: '550e8400-e29b-41d4-a716-446655440000',
+        categoryId: '550e8400-e29b-41d4-a716-446655440001',
+        description: 'Test',
+        amount: 100,
+        type: 'expense' as const,
+      }
+
+      const result = createTransactionSchema.safeParse(data)
+      expect(result.success).toBe(false)
     })
   })
 })
